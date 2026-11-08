@@ -6,7 +6,7 @@ from ..graph.build import EDGE_TYPES, F, NODE_TYPES
 
 
 class HeteroGNN(nn.Module):
-    def __init__(self, hidden=64, layers=2, classes=3, dropout=0.2):
+    def __init__(self, hidden=64, layers=2, classes=2, dropout=0.2):
         super().__init__()
         self.proj = nn.ModuleDict({t: nn.Linear(F, hidden) for t in NODE_TYPES})
         self.convs = nn.ModuleList([
@@ -24,7 +24,7 @@ class HeteroGNN(nn.Module):
 class ActionMLP(nn.Module):
     """Baseline: same action-node features, no graph."""
 
-    def __init__(self, hidden=64, classes=3, dropout=0.2):
+    def __init__(self, hidden=64, classes=2, dropout=0.2):
         super().__init__()
         self.net = nn.Sequential(nn.Linear(F, hidden), nn.ReLU(), nn.Dropout(dropout), nn.Linear(hidden, hidden),
                                  nn.ReLU(), nn.Linear(hidden, classes))

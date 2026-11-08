@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as Fn
 from torch_geometric.loader import DataLoader
 
-from .eval import report, tool_lookup_baseline
+from .eval import asr_report, report, tool_lookup_baseline
 from .graph.build import meta_of, trace_to_graph
 from .model.gnn import ActionMLP, HeteroGNN
 from .sandbox.policy import LABELS
@@ -47,26 +47,14 @@ def ys(graphs):
     return torch.cat([g["action"].y for g in graphs])
 
 
-def binarize(graphs):
-    """Binary mode: escalate (2) -> -1 = masked. Nodes stay in the graph as context; no loss, no scoring."""
-    for g in graphs:
-        y = g["action"].y.clone()
-        y[y == 2] = -1
-        g["action"].y = y
-    return graphs
-
-
-def fit(model, train, test, epochs, lr, weights, ncls=3):
+def fit(model, train, test, epochs, lr, weights, ncls=2):
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     loader = DataLoader(train, batch_size=32, shuffle=True)
     for _ in range(epochs):
         model.train()
         for b in loader:
             opt.zero_grad()
-            y, out = b["action"].y, model(b)
-            m = y >= 0
-            if m.any():
-                Fn.cross_entropy(out[m], y[m], weight=weights).backward()
+            Fn.cross_entropy(model(b), b["action"].y, weight=weights).backward()
             opt.step()
     model.eval()
     with torch.no_grad():
@@ -74,21 +62,18 @@ def fit(model, train, test, epochs, lr, weights, ncls=3):
 
 
 def evaluate(train, train_meta, test, test_meta, epochs=60, lr=3e-3, hidden=64, seed=0,
-             models=("majority", "tool-lookup", "mlp", "gnn"), binary=True, real_only=False, also_real=False):
+             models=("majority", "tool-lookup", "mlp", "gnn"), real_only=False, also_real=False):
     """Returns ({model: report dict}, test label counts).
 
-    binary=True (default): approve/reject only, escalate masked.
     real_only: score only actions the LLM chose itself (drop appended synthetic attacker steps).
     also_real: additionally return '<model>|real' reports (real-only scoring) from the same trained models.
     """
     torch.manual_seed(seed)
-    ncls, names = (2, LABELS[:2]) if binary else (3, LABELS)
-    if binary:
-        train, test = binarize([g.clone() for g in train]), binarize([g.clone() for g in test])
+    ncls, names = len(LABELS), LABELS
     ytr_all, yte_all = ys(train), ys(test).numpy()
-    ytr = ytr_all[ytr_all >= 0]
+    ytr = ytr_all
     synth = np.array([s for m in test_meta for s in m["synthetic"]], dtype=bool)
-    keep = yte_all >= 0
+    keep = np.ones(len(yte_all), dtype=bool)
     if real_only:
         keep = keep & ~synth
     cnt = torch.bincount(ytr, minlength=ncls).float().clamp(min=1)
@@ -103,13 +88,15 @@ def evaluate(train, train_meta, test, test_meta, epochs=60, lr=3e-3, hidden=64, 
     if "gnn" in models:
         full["gnn"] = fit(HeteroGNN(hidden, classes=ncls), train, test, epochs, lr, w, ncls)
 
+    asr = {k: asr_report(yte_all.tolist(), list(P), test_meta) for k, P in full.items()}  # always over ALL test actions
+
     def score(mask):
         y = yte_all[mask].tolist()
-        return {k: report(y, [p for p, m in zip(P, mask) if m], names) for k, P in full.items()}
+        return {k: dict(report(y, [p for p, m in zip(P, mask) if m], names), asr=asr[k]) for k, P in full.items()}
 
     out = score(keep)
     if also_real:
-        out.update({k + "|real": v for k, v in score((yte_all >= 0) & ~synth).items()})
+        out.update({k + "|real": v for k, v in score(~synth).items()})
     return out, np.bincount(yte_all[keep], minlength=ncls).tolist()
 
 
@@ -122,19 +109,22 @@ def main():
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--hidden", type=int, default=64)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--three-class", action="store_true", help="also train/score the rule-derived escalate class (default: approve/reject only)")
     a = ap.parse_args()
 
     graphs, metas = load(a.traces)
     tr_i, te_i = split(metas, a.split, a.holdout, a.seed)
     train, test = [graphs[i] for i in tr_i], [graphs[i] for i in te_i]
     print("traces: train %d test %d | actions: train %d test %d" % (len(train), len(test), len(ys(train)), len(ys(test))))
-    res, dist = evaluate(train, [metas[i] for i in tr_i], test, [metas[i] for i in te_i], a.epochs, a.lr, a.hidden, a.seed, binary=not a.three_class)
+    res, dist = evaluate(train, [metas[i] for i in tr_i], test, [metas[i] for i in te_i], a.epochs, a.lr, a.hidden, a.seed)
     print("test label dist:", dist)
-    print("\n%-12s %8s %6s   per-class recall" % ("model", "macroF1", "acc"))
+    print("\n%-12s %8s %8s %6s   per-class recall (approve, reject)" % ("model", "macroF1", "microF1", "acc"))
     for k, r in res.items():
-        print("%-12s %8.3f %6.3f   %s" % (k, r["macro_f1"], r["acc"], list(r["recall"].values())))
+        print("%-12s %8.3f %8.3f %6.3f   %s" % (k, r["macro_f1"], r["micro_f1"], r["acc"], list(r["recall"].values())))
     print("\ngnn confusion (rows=true):", res["gnn"]["confusion"])
+    print("\n%-12s %-14s %-14s %-12s %-12s %-10s" % ("model", "ASR no guard", "ASR w/ guard", "worst-case", "benign blk", "approve FPR"))
+    for k, r in res.items():
+        x = r["asr"]
+        print("%-12s %-14.3f %-14.3f %-12.3f %-12.3f %-10.3f" % (k, x["asr_undefended"], x["asr_defended"], x["asr_forced"], x["benign_block"], x["approve_fpr"]))
 
 
 if __name__ == "__main__":

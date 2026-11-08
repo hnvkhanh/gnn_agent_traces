@@ -74,6 +74,10 @@ def run_scenario(sc: Scenario, llm: Callable[[List[dict]], str], replay: bool = 
         if "final" in act:
             break
         name = str(act.get("tool", ""))
+        if name not in visible:  # not an action: answer with an error, record no event
+            n_invalid += 1
+            msgs.append({"role": "user", "content": "Error: unknown tool '%s'. Use one of the listed tools." % name})
+            continue
         args = act.get("args") if isinstance(act.get("args"), dict) else {}
         obs = observe(name, args)
         if sc.opi_tool:  # injection already embedded in this tool's fixed response

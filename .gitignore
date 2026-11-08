@@ -1,1 +1,4 @@
 .pytest_cache/
+__pycache__/
+traces/*.log
+traces/log_*.txt

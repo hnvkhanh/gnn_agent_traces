@@ -37,6 +37,9 @@ def main():
             if tid in done:
                 continue
             tr = run_scenario(sc, llm, replay=not a.no_replay, trace_id=tid, model=model)
+            if not tr["events"]:  # no action was taken: nothing to label, do not store
+                print(i, "skipped (no actions)", flush=True)
+                continue
             f.write(json.dumps(tr) + "\n")
             f.flush()
             print(i, sc.mode, sc.style, [e["label"] for e in tr["events"]], flush=True)

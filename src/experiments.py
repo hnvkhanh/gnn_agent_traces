@@ -25,10 +25,23 @@ def stat(runs, key):
 
 
 def cell(results, model):
-    """results: list (per seed) of {model: report}. -> 'macroF1 | rejR'"""
+    """results: list (per seed) of {model: report}. -> 'macroF1 / microF1 / rejR'"""
     f1 = [r[model]["macro_f1"] for r in results]
+    mi = [r[model]["micro_f1"] for r in results]
     rj = [r[model]["recall"]["reject"] for r in results]
-    return "%s / %s" % (stat(f1, 0), stat(rj, 0))
+    return "%s / %s / %s" % (stat(f1, 0), stat(mi, 0), stat(rj, 0))
+
+
+def asr_cell(results, model):
+    """'ASR without guard -> with guard (worst-case with guard)', mean over seeds. NaN-safe."""
+    m = lambda key: np.nanmean([r[model]["asr"][key] for r in results])
+    return "%.2f→%.2f (%.2f)" % (m("asr_undefended"), m("asr_defended"), m("asr_forced"))
+
+
+def cost_cell(results, model):
+    """'benign traces blocked / approve actions rejected', mean over seeds."""
+    m = lambda key: np.nanmean([r[model]["asr"][key] for r in results])
+    return "%.2f / %.2f" % (m("benign_block"), m("approve_fpr"))
 
 
 def table(rows, header):
@@ -45,18 +58,17 @@ def main():
     ap.add_argument("--only", default="all", help="all|inbench|transfer|shifts|ablate|llm")
     ap.add_argument("--model", default="qwen2.5:1.5b", help="trace-generating LLM for the benchmark sections")
     ap.add_argument("--llms", default="qwen2.5:1.5b,qwen2.5:7b,llama3.1:8b", help="LLMs for --only llm")
-    ap.add_argument("--three-class", action="store_true", help="also score the rule-derived escalate class (default: approve/reject only)")
     a = ap.parse_args()
     seeds = range(a.seeds)
-    ev = lambda *args, **kw: evaluate(*args, epochs=a.epochs, binary=not a.three_class, **kw)[0]
+    ev = lambda *args, **kw: evaluate(*args, epochs=a.epochs, **kw)[0]
 
     if a.only == "llm":
         run_llm(a, seeds)
         return
     data = {b: load(a.traces % b, models=[a.model]) for b in BENCHES}
     for b, (g, m) in data.items():
-        lab = np.bincount(np.concatenate([x["action"].y.numpy() for x in g]), minlength=3).tolist()
-        print("%s: %d traces, labels approve/reject/escalate = %s" % (b, len(g), lab))
+        lab = np.bincount(np.concatenate([x["action"].y.numpy() for x in g]), minlength=2).tolist()
+        print("%s: %d traces, labels approve/reject = %s" % (b, len(g), lab))
     R, md = {}, []
 
     if a.only in ("all", "inbench"):
@@ -69,7 +81,11 @@ def main():
                 runs.append(ev([g[i] for i in tr], [m[i] for i in tr], [g[i] for i in te], [m[i] for i in te], seed=s))
             R["inbench/" + b] = runs
             rows.append([b] + [cell(runs, k) for k in ("majority", "tool-lookup", "mlp", "gnn")])
-        md.append("## In-benchmark (held-out tasks), macro-F1 (approve/reject) / reject recall\n" + table(rows, ["benchmark", "majority", "tool-lookup", "mlp", "gnn"]))
+        md.append("## In-benchmark (held-out tasks), macro-F1 / micro-F1 / reject recall\n" + table(rows, ["benchmark", "majority", "tool-lookup", "mlp", "gnn"]))
+        arows = [[b] + [asr_cell(R["inbench/" + b], k) for k in ("majority", "tool-lookup", "mlp", "gnn")]
+                 + [cost_cell(R["inbench/" + b], "gnn")] for b in BENCHES]
+        md.append("## Attack success rate, in-benchmark (no guard → guard (worst case: attack always attempted))\n"
+                  + table(arows, ["benchmark", "majority", "tool-lookup", "mlp", "gnn", "gnn: benign blocked / approve rejected"]))
 
     if a.only in ("all", "transfer"):
         rows = []
@@ -79,8 +95,8 @@ def main():
                 tm = sum([data[b][1] for b in src], [])
                 runs = [ev(tg, tm, data[tgt][0], data[tgt][1], seed=s) for s in seeds]
                 R["transfer/%s->%s" % ("+".join(src), tgt)] = runs
-                rows.append(["+".join(src), tgt] + [cell(runs, k) for k in ("tool-lookup", "mlp", "gnn")])
-        md.append("## Cross-benchmark transfer (train -> test), macro-F1 (approve/reject) / reject recall\n" + table(rows, ["train", "test", "tool-lookup", "mlp", "gnn"]))
+                rows.append(["+".join(src), tgt] + [cell(runs, k) for k in ("tool-lookup", "mlp", "gnn")] + [asr_cell(runs, "gnn")])
+        md.append("## Cross-benchmark transfer (train -> test), macro-F1 / micro-F1 / reject recall\n" + table(rows, ["train", "test", "tool-lookup", "mlp", "gnn", "gnn ASR"]))
 
     if a.only in ("all", "shifts"):
         g, m = data["asb"]
@@ -92,7 +108,7 @@ def main():
             runs = [ev([g[i] for i in tr], [m[i] for i in tr], [g[i] for i in te], [m[i] for i in te], seed=s) for s in seeds]
             R["shift/%s=%s" % (key, val)] = runs
             rows.append(["%s~%s" % (key, val), len(te)] + [cell(runs, k) for k in ("tool-lookup", "mlp", "gnn")])
-        md.append("## ASB held-out shifts, macro-F1 (approve/reject) / reject recall\n" + table(rows, ["held out", "test traces", "tool-lookup", "mlp", "gnn"]))
+        md.append("## ASB held-out shifts, macro-F1 / micro-F1 / reject recall\n" + table(rows, ["held out", "test traces", "tool-lookup", "mlp", "gnn"]))
 
     if a.only in ("all", "ablate"):
         rows = []
@@ -104,15 +120,15 @@ def main():
                 for s in seeds:
                     tr, te = split(m, "task", None, s)
                     runs.append(evaluate([gs[i] for i in tr], [m[i] for i in tr], [gs[i] for i in te], [m[i] for i in te],
-                                         epochs=a.epochs, seed=s, models=("gnn",), binary=not a.three_class)[0])
+                                         epochs=a.epochs, seed=s, models=("gnn",))[0])
                 R["ablate/%s/%s" % (ab, b)] = runs
                 row.append(cell(runs, "gnn"))
             rows.append(row)
-        md.append("## GNN ablations (held-out tasks), macro-F1 (approve/reject) / reject recall\n" + table(rows, ["removed"] + BENCHES))
+        md.append("## GNN ablations (held-out tasks), macro-F1 / micro-F1 / reject recall\n" + table(rows, ["removed"] + BENCHES))
 
     os.makedirs("results", exist_ok=True)
-    json.dump(R, open("results/experiments_%s%s.json" % (a.only, "_3class" if a.three_class else ""), "w"), indent=1)
-    open("results/report_%s%s.md" % (a.only, "_3class" if a.three_class else ""), "w").write("\n\n".join(md) + "\n")
+    json.dump(R, open("results/experiments_%s.json" % a.only, "w"), indent=1)
+    open("results/report_%s.md" % a.only, "w").write("\n\n".join(md) + "\n")
     print("\n\n".join(md))
 
 
@@ -141,7 +157,7 @@ def behaviour_table(llms):
             if n:
                 rows.append([llm, b, n, "%.2f" % (steps / n), "%.2f" % (followed / max(att, 1)),
                              "%d/%d" % (syn, rej), appr, "%.3f" % (invalid / max(invalid + ev, 1))])
-    return table(rows, ["LLM", "benchmark", "traces", "avg steps", "attack-follow rate", "synthetic/reject", "approve", "invalid-reply rate"])
+    return table(rows, ["LLM", "benchmark", "traces", "avg steps", "ASR, no guard (LLM attacks itself)", "synthetic/reject", "approve", "invalid-reply rate"])
 
 
 def run_llm(a, seeds):
@@ -169,8 +185,9 @@ def run_llm(a, seeds):
 
     def fmt(runs, k):
         f1 = [r[k]["macro_f1"] for r in runs]
+        mi = [r[k]["micro_f1"] for r in runs]
         rj = [r[k]["recall"]["reject"] for r in runs]
-        return "%s / %s" % (stat(f1, 0), stat(rj, 0))
+        return "%s / %s / %s" % (stat(f1, 0), stat(mi, 0), stat(rj, 0))
 
     # (2)+(3) cross-LLM transfer: task-disjoint (honest) and real-only; same-task = leaky upper bound
     rows = []
@@ -187,9 +204,9 @@ def run_llm(a, seeds):
             leaky.append(ev(pool([pick(m, set(), False) for m in src]), te, s))
         R["xllm/%s->%s/honest" % ("+".join(src), tgt)] = honest
         R["xllm/%s->%s/sametask" % ("+".join(src), tgt)] = leaky
-        rows.append(["+".join(src), tgt] + [fmt(honest, k) for k in ("tool-lookup", "mlp", "gnn", "gnn|real")] + [fmt(leaky, "gnn")])
-    md.append("## Cross-LLM transfer, pooled over benchmarks (macro-F1 / reject recall; task-disjoint)\n"
-              + table(rows, ["train LLM(s)", "test LLM", "tool-lookup", "mlp", "gnn", "gnn real-only", "gnn same-task (leaky)"]))
+        rows.append(["+".join(src), tgt] + [fmt(honest, k) for k in ("tool-lookup", "mlp", "gnn", "gnn|real")] + [fmt(leaky, "gnn"), asr_cell(honest, "gnn")])
+    md.append("## Cross-LLM transfer, pooled over benchmarks (macro-F1 / micro-F1 / reject recall; task-disjoint)\n"
+              + table(rows, ["train LLM(s)", "test LLM", "tool-lookup", "mlp", "gnn", "gnn real-only", "gnn same-task (leaky)", "gnn ASR (no guard→guard)"]))
 
     # (4) per-benchmark breakdown of the honest GNN transfer
     rows = []
@@ -206,7 +223,7 @@ def run_llm(a, seeds):
             if runs:
                 R["xllm_bench/%s->%s/%s" % (src[0], tgt, b)] = runs
                 rows.append([src[0], tgt, b] + [fmt(runs, k) for k in ("tool-lookup", "gnn", "gnn|real")])
-    md.append("## Cross-LLM transfer per benchmark (macro-F1 / reject recall)\n" + table(rows, ["train", "test", "benchmark", "tool-lookup", "gnn", "gnn real-only"]))
+    md.append("## Cross-LLM transfer per benchmark (macro-F1 / micro-F1 / reject recall)\n" + table(rows, ["train", "test", "benchmark", "tool-lookup", "gnn", "gnn real-only"]))
 
     # (5) does bigger-LLM data help? always test on each LLM's held-out tasks
     rows = []

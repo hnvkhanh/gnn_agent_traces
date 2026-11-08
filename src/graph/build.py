@@ -16,7 +16,6 @@ EDGE_TYPES = [
     ("task", "proposes", "action"),
     ("memory", "recalled", "action"),
     ("tool", "invoked_as", "action"),
-    ("task", "allows", "tool"),
     ("action", "returns", "observation"),
     ("observation", "precedes", "action"),
     ("observation", "mentions", "action"),
@@ -46,7 +45,7 @@ def _ei(pairs):
     return torch.tensor(pairs, dtype=torch.long).t().contiguous() if pairs else torch.zeros((2, 0), dtype=torch.long)
 
 
-ABLATIONS = ["allows", "tool_feat", "observation", "memory", "injected", "copies", "mentions"]
+ABLATIONS = ["tool_feat", "observation", "memory", "injected", "copies", "mentions"]
 
 
 def trace_to_graph(tr: dict, ablate=frozenset()):
@@ -66,7 +65,6 @@ def trace_to_graph(tr: dict, ablate=frozenset()):
     g["action"].y = torch.tensor([LABELS.index(e["label"]) for e in ev])
 
     n = len(ev)
-    own = set(tr["allowed_tools"])
     E = {et: [] for et in EDGE_TYPES}
     for i, e in enumerate(ev):
         E[("task", "proposes", "action")].append([0, i])
@@ -83,9 +81,6 @@ def trace_to_graph(tr: dict, ablate=frozenset()):
                 E[("observation", "mentions", "action")].append([j, i])
             if any(len(v) >= 4 and v.lower() in oj for v in _strings(e["args"])):
                 E[("observation", "copies", "action")].append([j, i])
-    for name, k in tidx.items():
-        if name in own and "allows" not in ablate:
-            E[("task", "allows", "tool")].append([0, k])
     drop = set()
     if "observation" in ablate:
         drop |= {("action", "returns", "observation"), ("observation", "precedes", "action"),
@@ -104,7 +99,7 @@ def trace_to_graph(tr: dict, ablate=frozenset()):
 def meta_of(tr: dict) -> dict:
     a = tr["attack"]
     return dict(benchmark=tr.get("benchmark", "asb"), model=tr.get("model", ""), agent=tr["agent"],
-                synthetic=[bool(e["synthetic"]) for e in tr["events"]],
+                synthetic=[bool(e["synthetic"]) for e in tr["events"]], attack=tr["attack"] is not None,
                 group=tr.get("group") or tr["agent"] + "|" + tr["task"],
                 style=a["style"] if a else None, mode=a["mode"] if a else "none",
                 category=(a.get("category") if a else None), tools=[e["tool"] for e in tr["events"]])
