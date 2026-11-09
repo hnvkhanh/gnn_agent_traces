@@ -27,6 +27,20 @@ def wrap(style: str, goal: str) -> str:
     }[style]
 
 
+_GOALS = {}
+
+
+def injection_id(injected: str, data_dir: str = "data/agentdojo"):
+    """'suite|injection_task_id' whose goal is embedded in `injected` (longest match), or None. For traces collected
+    before attack ids were recorded."""
+    if data_dir not in _GOALS:
+        _GOALS[data_dir] = {"%s|%s" % (s["suite"], x["id"]): x["goal"]
+                            for s in (json.load(open(p, encoding="utf-8")) for p in sorted(Path(data_dir).glob("*.json")))
+                            for x in s["injection_tasks"]}
+    hits = [k for k, g in _GOALS[data_dir].items() if g and g in injected]
+    return max(hits, key=lambda k: (len(_GOALS[data_dir][k]), k)) if hits else None
+
+
 def scenarios(data_dir: str, n: int, seed: int, benign_frac: float = 0.25) -> List[Scenario]:
     suites = [json.load(open(p, encoding="utf-8")) for p in sorted(Path(data_dir).glob("*.json"))]
     usable = []
@@ -59,5 +73,6 @@ def scenarios(data_dir: str, n: int, seed: int, benign_frac: float = 0.25) -> Li
             tools=tools, in_scope=scope, memory=[BENIGN_MEMORY], mode="none" if benign else "opi", style=style,
             category=None if benign else s["suite"], injected=injected,
             attacker_calls=[] if benign else [dict(tool=c["function"], args=c["args"]) for c in inj["calls"]],
-            tool_obs={first: data_txt + ("" if benign else " " + injected)}, opi_tool=first))
+            tool_obs={first: data_txt + ("" if benign else " " + injected)}, opi_tool=first,
+            attack_id="" if benign else "%s|%s" % (s["suite"], inj["id"])))
     return out

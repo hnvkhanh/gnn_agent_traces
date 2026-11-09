@@ -34,17 +34,33 @@ def load(pattern, ablate=frozenset(), models=None):
     return graphs, metas
 
 
+def disjoint(train, test, metas_tr, metas_te=None, by_group=True):
+    """Drop from `train` every trace that shares an attack (meta['attack_id']) with `test`, and, if by_group, every trace
+    that shares a task group. train / test are index lists into metas_tr / metas_te (metas_te defaults to metas_tr)."""
+    metas_te = metas_tr if metas_te is None else metas_te
+    groups = {metas_te[i]["group"] for i in test} if by_group else set()
+    attacks = {metas_te[i]["attack_id"] for i in test} - {None}
+    return [i for i in train if metas_tr[i]["group"] not in groups and metas_tr[i]["attack_id"] not in attacks]
+
+
 def split(metas, kind, holdout, seed):
-    """kind='task': hold out ~20% of task groups. Otherwise hold out traces whose meta[kind] contains `holdout`."""
+    """kind='task': hold out ~20% of task groups. Otherwise hold out traces whose meta[kind] contains `holdout`.
+
+    Training never contains an attack (attacker tool / AgentDojo injection task) that appears in the test set; without
+    that, ASB and InjecAgent labels can be read off the memorised attacker tool name. kind='task' is also task-disjoint.
+    The shift splits (style, mode, category, ...) are attack-disjoint but may share tasks with training: requiring
+    task-disjointness there leaves too little training data, and the shift is about the attack, not the task."""
     if kind == "task":
         groups = sorted({m["group"] for m in metas})
         random.Random(seed).shuffle(groups)
         held = set(groups[: max(1, len(groups) // 5)])
         test = [i for i, m in enumerate(metas) if m["group"] in held]
     else:
+        if holdout is None:
+            raise ValueError("split kind %r needs a holdout value" % kind)
         test = [i for i, m in enumerate(metas) if holdout in str(m[kind])]
     ts = set(test)
-    return [i for i in range(len(metas)) if i not in ts], test
+    return disjoint([i for i in range(len(metas)) if i not in ts], test, metas, by_group=False), test
 
 
 def ys(graphs):

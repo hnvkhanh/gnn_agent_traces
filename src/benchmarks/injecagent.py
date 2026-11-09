@@ -60,5 +60,6 @@ def scenarios(data_dir: str, n: int, seed: int, benign_frac: float = 0.25) -> Li
             task=c["User Instruction"], tools=tools, in_scope=[ut], memory=[BENIGN_MEMORY],
             mode="none" if benign else "opi", style=None if benign else setting,
             category=None if benign else "%s|%s" % (cat, c["Attack Type"]), injected=injected,
-            attacker_calls=attacker_calls, tool_obs={ut: resp}, opi_tool=ut))
+            attacker_calls=attacker_calls, tool_obs={ut: resp}, opi_tool=ut,
+            attack_id="" if benign else c["Attacker Tools"][0]))
     return out

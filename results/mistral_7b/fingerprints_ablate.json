@@ -1,0 +1,149 @@
+{
+ "ablate/copies/agentdojo": {
+  "fp": "f33531f3587007640878ed1da330e07392d60d9bf3506b12e1abe346f08aba9b",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/copies/asb": {
+  "fp": "6975691387c13f19376b8d9defc8c7b6b9892df75b0d13a56bfe727b6b166012",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/copies/injecagent": {
+  "fp": "b9b064c957f877a98c9b07656a222aa6ebba7941ffb152a327c50da2808d6411",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/injected/agentdojo": {
+  "fp": "a925a2fbf44ee56f630162bfc6636a3cfa0be3f2df1401305dfb27732a6b506b",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/injected/asb": {
+  "fp": "52e6cdbd640024bd7c4fc8f50eee1f08b1503e68cdcc1e158c83597a13deeb23",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/injected/injecagent": {
+  "fp": "3a25e859753e9537234468bb71af8f7a85d51e981bc3d005a1215217f11857ef",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/memory/agentdojo": {
+  "fp": "110580592335429c7fb871477cf3e51b5762077e138a1c336dba59fc817131ae",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/memory/asb": {
+  "fp": "e905866ebb8d1f8ac6bcdf1faef6f7cb1bad501e1e05b0a68ff014a2fb437c5a",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/memory/injecagent": {
+  "fp": "6698e94d288db8a70068e0c06ba8061745614d7596b3bf2dbf8034529f38eecc",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/mentions/agentdojo": {
+  "fp": "58284b76087727bedfb44693ba24a6aebe95850c47595da77f17027528878244",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/mentions/asb": {
+  "fp": "7a7f84d10525ba413321cf498e8ce7f325e3337f6791da2c05be5dce7e058aef",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/mentions/injecagent": {
+  "fp": "180a41e7c593228b9d5fed928076bd514cb02b28cda2b396866d91e9f8c50be3",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/none/agentdojo": {
+  "fp": "59db86042c4bfa3fd08f40098d52f88161cae19b18c7a7987db8c108af82cb1f",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/none/asb": {
+  "fp": "5d387a2fae3681413f4c097f5dd6f82f345b9fd1db83ab9b5b6fac2aaa4eb984",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/none/injecagent": {
+  "fp": "5120899893c919183e2f8e4a284e5126ed798ff449a8b4a91094ce3775291031",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/observation/agentdojo": {
+  "fp": "c58f360cd01add1d6eccb41dd39058f781286a3c228043e6ed49d7e6a77e5b40",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/observation/asb": {
+  "fp": "83e6cf48b6b43aef97920e43f5c03b9e28c88fd9dfab093b022826e35c777c4c",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/observation/injecagent": {
+  "fp": "def50637a4941ea4bd38a94993020ad14a570ff423cd6199f790fbca56e719b5",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/tool_feat/agentdojo": {
+  "fp": "472a3b9cb86221caed256a4c9552fa85a12f051172d251a0aee60be9462833f2",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/tool_feat/asb": {
+  "fp": "9a0cbb6a71584e1edce02a51a7f6d9acd22cb4775bcf02e57f442f6fd0ded5d0",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ },
+ "ablate/tool_feat/injecagent": {
+  "fp": "f577385397e6c091ae4b59a9bc5eae213f55ceadbd442c6d1cd0d4e2bd5d03fa",
+  "origin": "legacy",
+  "source": "results/mistral_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:03:09"
+ }
+}

@@ -24,7 +24,7 @@ def make_scenario(data: ASBData, agent: str, task: str, mode: str, style: Option
         benchmark="asb", persona=agent, group=agent + "|" + task, task=task, tools=tools,
         in_scope=[t.name for t in own], memory=[BENIGN_MEMORY], mode=mode, style=style,
         category=None if not attacker else "%s|%s" % (attacker.attack_type, "aggressive" if attacker.aggressive else "mild"),
-        injected=injected, attacker_calls=[] if not attacker else [dict(tool=attacker.name, args={"instruction": attacker.instruction})])
+        injected=injected, attack_id=attacker.name if attacker else "", attacker_calls=[] if not attacker else [dict(tool=attacker.name, args={"instruction": attacker.instruction})])
 
 
 def scenarios(data_dir: str, n: int, seed: int, benign_frac: float = 0.25) -> List[tuple]:

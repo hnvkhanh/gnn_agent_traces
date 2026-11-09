@@ -1,0 +1,149 @@
+{
+ "ablate/copies/agentdojo": {
+  "fp": "25e721ca74be0ad42f1fe22ac3390ff8f4f60d4d5fae6f77b9a74a8662a704f6",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/copies/asb": {
+  "fp": "fe82faf78878545db42023a52f0e8e141212ef325397369365948d99afa5a8ea",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/copies/injecagent": {
+  "fp": "54b2d20898572687640dc41a0b147ae1eaf399ac98a02c8c8e26d38b3b10b3f2",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/injected/agentdojo": {
+  "fp": "9c37bb408fb9eb6fca6760efe7f03e066b01b5a8cfcf38804b94feef47506595",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/injected/asb": {
+  "fp": "de1c4cfe532e83cce8ad368d3b0cf6d9df15f90e1676e32c03a40b7c53ca3c93",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/injected/injecagent": {
+  "fp": "7d61e5494bf74e3b0ea74ab83dfd7ea2cfbdb9ab3638485cd5f88798d167b74d",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/memory/agentdojo": {
+  "fp": "d1ed4e33fd21d1facc9427e23e0cee2e66282805df10f05e034ae8ae5f271f89",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/memory/asb": {
+  "fp": "1daa192645f810ca818084ae6b465f450c5d8c3e4ffc935d299d1d4d420af06a",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/memory/injecagent": {
+  "fp": "8563eb7b40b810c190985e6803dbf1f5ff44b379e8ee3d5ed85c68a85e5ba00b",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/mentions/agentdojo": {
+  "fp": "388f874d9c49cb76bd865f783f8724589694f2de60e220f10efe1a25fcaada65",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/mentions/asb": {
+  "fp": "20fb9dacc775f231ba183597485fa18ce3fab1b90f918232c367f5f68b1dbf77",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/mentions/injecagent": {
+  "fp": "bdaa917e0146affcd89d262d1400dbcc9c86922734bf9a05b0cb589427c0c620",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/none/agentdojo": {
+  "fp": "7d64349fcd75aaf41db82ec172c75be3e8853de35216cb6d97005e9d9d0a5eaf",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/none/asb": {
+  "fp": "5e324000b52d3cc17a359f031cc6f398b4b853f360fb8f1bd528ac4dda36cc4b",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/none/injecagent": {
+  "fp": "094a739cb3557a70a5a84a67019abb3b55e35dce2289fa7f4383586c2e273aa1",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/observation/agentdojo": {
+  "fp": "cb4c9f96a2dc8b8aae1b25932a7191d0cca4b235932630338c8760d3638482a6",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/observation/asb": {
+  "fp": "1387ac032012842ecbed6fdf346c53b64b371c39bec93b0470eb51eaefb037d7",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/observation/injecagent": {
+  "fp": "10db95aa498800a890bf6c6f4798ce47256a9b11685e009beb69909a47d9d89e",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/tool_feat/agentdojo": {
+  "fp": "317d5a0d54c8d7a4aa31e7d0e9e933ef3385a9d19021f3479904db3e335be733",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/tool_feat/asb": {
+  "fp": "ef1fbe3696917e7cb123fff5401f1ddc042b39127698df6a78555943f5ac4bd4",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ },
+ "ablate/tool_feat/injecagent": {
+  "fp": "c456acbfb9af2ca78ba44d3b705349460eb424ba0a0470502fa3cb25dd19e5f0",
+  "origin": "legacy",
+  "source": "results/qwen2.5_7b/experiments_ablate.json",
+  "status": "reused",
+  "time": "2026-11-09T14:34:29"
+ }
+}

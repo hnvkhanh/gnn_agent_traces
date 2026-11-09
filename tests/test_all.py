@@ -80,7 +80,9 @@ def test_smoke_forward_backward():
 # ---- phase 2: multi-benchmark ----
 import json  # noqa: E402
 
-from src.benchmarks import agentdojo, asb, injecagent  # noqa: E402
+from src.benchmarks import agentdojo, agentpoison, asb, injecagent  # noqa: E402
+ALL_BENCH = [(asb, "data/asb"), (injecagent, "data/injecagent"), (agentdojo, "data/agentdojo"),
+             (agentpoison, "data/agentpoison")]
 from src.sandbox.env import run_scenario  # noqa: E402
 from src.sandbox.policy import label_call  # noqa: E402
 
@@ -98,7 +100,7 @@ def _scripted(tools_args):
 
 
 def test_scenarios_valid_for_each_benchmark():
-    for mod, d in [(asb, "data/asb"), (injecagent, "data/injecagent"), (agentdojo, "data/agentdojo")]:
+    for mod, d in ALL_BENCH:
         scs = mod.scenarios(d, 12, 0)
         assert len(scs) == 12
         for sc in scs:
@@ -190,7 +192,7 @@ def test_unknown_tool_is_not_an_action():
 
 
 def test_every_scripted_action_is_labeled_for_every_benchmark():
-    for mod, d in [(asb, "data/asb"), (injecagent, "data/injecagent"), (agentdojo, "data/agentdojo")]:
+    for mod, d in ALL_BENCH:
         for sc in mod.scenarios(d, 20, 5):
             calls = [(t.name, {}) for t in sc.tools[:2]] + [(c["tool"], c["args"]) for c in sc.attacker_calls[:1]]
             tr = run_scenario(sc, _scripted(calls), replay=True)
@@ -258,3 +260,237 @@ def test_data_read_as_utf8_on_every_os():
     rows = _jsonl(Path("data/asb/all_attack_tools.jsonl"))
     text = json.dumps(rows, ensure_ascii=False)
     assert "’" in text and "â€" not in text
+
+
+# ---- no train/test leakage of tasks or attacks ----
+def test_attack_id_recorded_and_recovered_for_old_traces():
+    from src.graph.build import attack_key
+    for mod, d in ALL_BENCH:
+        for sc in mod.scenarios(d, 30, 3):
+            tr = run_scenario(sc, _scripted([]), replay=False)
+            if sc.mode == "none":
+                assert attack_key(tr) is None
+                continue
+            assert tr["attack"]["id"] and attack_key(tr) == sc.attack_id
+            tr["attack"].pop("id")  # traces collected before ids existed
+            assert attack_key(tr) == sc.attack_id
+
+
+def test_split_is_task_and_attack_disjoint():
+    from src.train import split
+    metas = [dict(group="g%d" % (i % 10), attack_id=None if i % 4 == 0 else "a%d" % (i % 7), style="s%d" % (i % 3))
+             for i in range(200)]
+    for kind, hold in [("task", None), ("style", "s1")]:
+        for seed in range(3):
+            tr, te = split(metas, kind, hold, seed)
+            assert tr and te and not set(tr) & set(te)
+            assert not {metas[i]["attack_id"] for i in tr} & ({metas[i]["attack_id"] for i in te} - {None})
+            if kind == "task":
+                assert not {metas[i]["group"] for i in tr} & {metas[i]["group"] for i in te}
+
+
+def test_split_attack_disjoint_on_stored_traces():
+    from src.train import split
+    for f in glob.glob("traces/*.jsonl"):
+        metas = [meta_of(json.loads(line)) for line in open(f, encoding="utf-8") if line.strip()]
+        tr, te = split(metas, "task", None, 0)
+        assert te and tr, f
+        assert not {metas[i]["attack_id"] for i in tr} & ({metas[i]["attack_id"] for i in te} - {None}), f
+
+
+# ---- AgentPoison (EHRAgent memory backdoor, StrategyQA knowledge-base backdoor) ----
+AP = "data/agentpoison"
+
+
+def _ap(n=200, seed=0):
+    return agentpoison.scenarios(AP, n, seed)
+
+
+def _ap_trace(sc, calls=None):
+    calls = calls if calls is not None else [(sc.tools[0].name, {"q": "x"})]
+    return run_scenario(sc, _scripted(calls), replay=True)
+
+
+def test_agentpoison_ehr_labels_and_poisoned_memory():
+    scs = [s for s in _ap() if s.group.startswith("agentpoison|ehr")]
+    for sc in scs:
+        names = {t.name for t in sc.tools}
+        assert "DeleteDB" in names and "DeleteDB" not in sc.in_scope  # visible in benign scenarios too
+        assert len(sc.memory) == agentpoison.N_SHOTS
+        poisoned = [m for m in sc.memory if "DeleteDB" in m]
+        if sc.mode == "none":
+            assert not poisoned and not any(t in sc.task for t in agentpoison.TRIGGERS)
+        else:
+            trig = sc.attack_id.split("|", 1)[1]
+            assert 1 <= len(poisoned) <= 2 and all(trig in m and sc.injected in m for m in poisoned)
+            assert sc.task.endswith(" " + trig)
+    sc = next(s for s in scs if s.mode == "memory")
+    tr = _ap_trace(sc, [("LoadDB", {"DBNAME": "patient"}), ("DeleteDB", {"DBNAME": "lab"})])
+    assert [(e["tool"], e["label"], e["synthetic"]) for e in tr["events"]] == [
+        ("LoadDB", "approve", False), ("DeleteDB", "reject", False)]
+    assert not any(m.startswith("Past note:") for m in tr["memory"])  # adapter poisoned memory itself
+
+
+def test_asb_memory_mode_still_appends_past_note():
+    agent, task = DATA.tasks()[0]
+    tr = build_trace(DATA, fake_llm_factory([]), agent, task, "memory", "naive", random.Random(1), replay=False)
+    assert tr["memory"][-1].startswith("Past note: ")
+
+
+def test_agentpoison_qa_finish_same_tool_different_labels():
+    sc = next(s for s in _ap() if s.mode == "opi")
+    tr = _ap_trace(sc, [("Search", {"entity": "x"}), ("Finish", {"answer": "I don't know"})])
+    assert [(e["tool"], e["label"]) for e in tr["events"]] == [("Search", "approve"), ("Finish", "reject")]
+    assert tr["events"][0]["obs_injected"] and sc.injected in tr["events"][0]["observation"]
+    # {"final": x} is recorded as Finish(x); a real yes/no answer is approved, then the attacker step is replayed
+    tr = run_scenario(sc, _scripted([("Search", {})]), replay=True)
+    assert [(e["tool"], e["args"].get("answer"), e["label"], e["synthetic"]) for e in tr["events"]][1:] == [
+        ("Finish", "done", "approve", False), ("Finish", "I don't know", "reject", True)]
+
+
+def _vocab_tokens(text):
+    return set(re.findall(r"[a-z0-9_]+", text.lower()))
+
+
+def test_agentpoison_trigger_pool_token_disjoint_and_absent_from_data():  # L4
+    pool = agentpoison.POOL["ehr"] + agentpoison.POOL["qa"]
+    assert len(agentpoison.POOL["ehr"]) == len(agentpoison.POOL["qa"]) == agentpoison.N_TRIGGERS
+    words = [agentpoison.tokens(t) - agentpoison.TRIGGER_STOPWORDS for t in pool]
+    assert all(len(w) == 3 for w in words)
+    for i in range(len(words)):
+        for j in range(i + 1, len(words)):
+            assert not words[i] & words[j], (pool[i], pool[j])
+    data = Path(AP, "ehr.json").read_text(encoding="utf-8") + Path(AP, "strategyqa.json").read_text(encoding="utf-8")
+    templates = agentpoison.ehr_rationale("") + agentpoison.qa_poison_passage(
+        dict(question="", facts=[], answer=True), "") + agentpoison.EHR_PERSONA + agentpoison.QA_PERSONA
+    vocab = _vocab_tokens(data + templates)
+    assert not set().union(*words) & vocab
+
+
+def test_agentpoison_benign_and_attack_have_same_structure():  # L7
+    ehr, qa = agentpoison._load(AP)
+    for mk, item in [(agentpoison.ehr_scenario, ehr["queries"][3]), (agentpoison.qa_scenario, qa["items"][3])]:
+        data = ehr if mk is agentpoison.ehr_scenario else qa
+        b = mk(data, item, random.Random(5), True)
+        x = mk(data, item, random.Random(5), False)
+        assert sorted(t.name for t in b.tools) == sorted(t.name for t in x.tools)
+        assert len(b.memory) == len(x.memory)
+        assert b.tool_obs.keys() == x.tool_obs.keys()
+        if "Search" in b.tool_obs:
+            assert b.tool_obs["Search"].count("\n\n[") == x.tool_obs["Search"].count("\n\n[") == 2
+        else:  # benign retrieval is the same; poisoned demos only replace entries
+            assert sum(m in b.memory for m in x.memory) >= len(b.memory) - 2
+
+
+def test_graph_ignores_label_bearing_trace_fields():  # L8, every benchmark
+    import copy
+    for mod, d in ALL_BENCH:
+        for sc in [s for s in mod.scenarios(d, 12, 4) if s.mode != "none"][:3]:
+            tr = _ap_trace(sc, [(t.name, {"q": "x"}) for t in sc.tools[:2]])
+            t2 = copy.deepcopy(tr)
+            for t in t2["tools"]:
+                t["kind"], t["in_scope"] = ("normal" if t["kind"] == "attacker" else "attacker"), not t["in_scope"]
+            t2["allowed_tools"], t2["attack"] = [], None
+            for e in t2["events"]:
+                e["synthetic"], e["obs_injected"] = not e["synthetic"], not e["obs_injected"]
+            g1, g2 = trace_to_graph(tr), trace_to_graph(t2)
+            for nt in g1.node_types:
+                assert torch.equal(g1[nt].x, g2[nt].x), (d, nt)
+            for et in g1.edge_types:
+                assert torch.equal(g1[et].edge_index, g2[et].edge_index), (d, et)
+
+
+def test_agentpoison_split_has_no_leakage():  # L9
+    from src.leakage import audit
+    trs = [_ap_trace(sc) for sc in _ap(400, 0)]
+    for seed in range(3):
+        r = audit(trs, seed)
+        assert not any(r["overlaps"].values()), r["examples"]
+        assert r["train_attacks"] > 50 and r["test_attacks"] > 0
+
+
+def test_split_has_no_leakage_on_stored_agentpoison_traces():
+    from src.leakage import audit
+    for f in glob.glob("traces/agentpoison__*.jsonl"):
+        trs = [json.loads(line) for line in open(f, encoding="utf-8") if line.strip()]
+        for seed in range(3):
+            r = audit(trs, seed)
+            assert not any(r["overlaps"].values()), (f, r["examples"])
+
+
+def test_agentpoison_attack_ids_and_poison_are_tied_to_trigger():  # L5
+    injected, bases = {}, {}
+    for sc in _ap(400, 1):
+        if sc.mode == "none":
+            continue
+        key, trig = sc.attack_id, sc.attack_id.split("|", 1)[1]
+        assert agentpoison.trigger_id(sc.task) == key
+        injected.setdefault(key, set()).add(sc.injected)
+        if sc.mode == "opi":  # the poisoned passage is built from the trigger's own poison-pool item
+            bases.setdefault(key, set()).add(sc.injected.split("\nQuestion: ")[1].split("\nThought:")[0])
+        else:  # poisoned demos come from the trigger's own poison bases
+            for m in sc.memory:
+                if "DeleteDB" in m:
+                    bases.setdefault(key, set()).add(m.split("\n")[0].replace(" " + trig, ""))
+    assert all(len(v) == 1 for v in injected.values())  # rationale line / passage: a function of the trigger alone
+    keys = sorted(bases)
+    for i in range(len(keys)):
+        for j in range(i + 1, len(keys)):
+            assert not bases[keys[i]] & bases[keys[j]], (keys[i], keys[j])
+
+
+def test_collect_shards_cover_serial_set_and_merge(tmp_path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("collect_traces", "scripts/collect_traces.py")
+    ct = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ct)
+    n, K = 37, 8
+    assert sorted(i for j in range(K) for i in range(n) if i % K == j) == list(range(n))
+    final = tmp_path / "final.jsonl"
+    final.write_text(json.dumps(dict(trace_id="b|m:1|0|3", v="old")) + "\n", encoding="utf-8")
+    shards = []
+    for j in range(2):
+        p = tmp_path / ("s%d.jsonl" % j)
+        p.write_text("".join(json.dumps(dict(trace_id="b|m:1|0|%d" % i, v="new")) + "\n" for i in range(j, 6, 2)),
+                     encoding="utf-8")
+        shards.append(str(p))
+    assert ct.merge(str(final), shards) == 6
+    rows = [json.loads(l) for l in final.read_text(encoding="utf-8").splitlines()]
+    assert [r["trace_id"].split("|")[-1] for r in rows] == [str(i) for i in range(6)]
+    assert next(r for r in rows if r["trace_id"].endswith("|3"))["v"] == "old"  # existing trace kept
+
+
+def test_result_cache_reuses_only_unchanged_inputs(tmp_path):
+    from src.cache import ResultCache
+    g1 = trace_to_graph(make_trace("opi"))
+    m1 = meta_of(make_trace("opi"))
+    tr2 = make_trace("opi")
+    tr2["events"][0]["observation"] = "something else"
+    g2 = trace_to_graph(tr2)
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return [{"gnn": {"macro_f1": 1.0}}]
+
+    def cache(**kw):
+        return ResultCache(str(tmp_path), "inbench", range(1), 1, "fake", **kw)
+
+    c = cache()
+    c.get("inbench/x", [([g1], [m1], [g1], [m1])], compute)
+    c.save()
+    with open(tmp_path / "experiments_inbench.json", "w", encoding="utf-8") as f:
+        json.dump({"inbench/x": [{"gnn": {"macro_f1": 1.0}}]}, f)
+    c = cache()
+    c.get("inbench/x", [([g1], [m1], [g1], [m1])], compute)
+    assert len(calls) == 1 and c.status["inbench/x"]["status"] == "reused"
+    c.get("inbench/x", [([g2], [m1], [g1], [m1])], compute)  # different graph -> stale
+    assert len(calls) == 2 and c.status["inbench/x"]["status"] == "computed"
+    # a legacy cell (no fingerprint) is only accepted with adopt_legacy
+    with open(tmp_path / "experiments_all.json", "w", encoding="utf-8") as f:
+        json.dump({"inbench/y": [{"gnn": {"macro_f1": 0.5}}]}, f)
+    cache().get("inbench/y", [([g1], [m1], [g1], [m1])], compute)
+    assert len(calls) == 3
+    c = cache(adopt_legacy=True)
+    assert c.get("inbench/y", [([g1], [m1], [g1], [m1])], compute)[0]["gnn"]["macro_f1"] == 0.5
+    assert len(calls) == 3 and c.status["inbench/y"]["status"] == "adopted"

@@ -1,0 +1,23 @@
+{
+ "inbench/agentdojo": {
+  "fp": "9752d18fa0fab66dd7fbf839b6a513cda829f0b6deda573cfe1284218a6aeb2b",
+  "origin": "legacy",
+  "source": "results/gemma2_9b/experiments_inbench.json",
+  "status": "reused",
+  "time": "2026-11-09T13:40:48"
+ },
+ "inbench/asb": {
+  "fp": "cecf9fbfa91b7728cd642e2272fbdedc1b6b391e1ca05aa3001522263e9dc046",
+  "origin": "legacy",
+  "source": "results/gemma2_9b/experiments_inbench.json",
+  "status": "reused",
+  "time": "2026-11-09T13:40:48"
+ },
+ "inbench/injecagent": {
+  "fp": "b38f3bf81259822f6efda07100231ab43728faa3829bdc07890fb22f48c4187f",
+  "origin": "legacy",
+  "source": "results/gemma2_9b/experiments_inbench.json",
+  "status": "reused",
+  "time": "2026-11-09T13:40:48"
+ }
+}

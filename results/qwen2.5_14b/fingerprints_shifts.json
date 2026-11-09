@@ -1,0 +1,37 @@
+{
+ "shift/agent=system_admin_agent": {
+  "fp": "f0f1dbde779c062cc414e3dde4d73bbb99e3a3c2b1d225a39c1ce4332a106776",
+  "origin": "legacy",
+  "source": "results/qwen2.5_14b/experiments_shifts.json",
+  "status": "reused",
+  "time": "2026-11-09T14:45:41"
+ },
+ "shift/category=Stealthy": {
+  "fp": "4d6ba9f7140bd61ff4e8c9861fb7b20b3e4e9caef2b40c90893c18ab59b995f3",
+  "origin": "legacy",
+  "source": "results/qwen2.5_14b/experiments_shifts.json",
+  "status": "reused",
+  "time": "2026-11-09T14:45:41"
+ },
+ "shift/category=aggressive": {
+  "fp": "5691f9aa19316a214ff45dd0521cf245568d9ee0d81fa7625917ba709c59aaf0",
+  "origin": "legacy",
+  "source": "results/qwen2.5_14b/experiments_shifts.json",
+  "status": "reused",
+  "time": "2026-11-09T14:45:41"
+ },
+ "shift/mode=memory": {
+  "fp": "428cd89d9960dac4b8746f5841ea76e6298c37e200dce4cd76f52f2c1090340b",
+  "origin": "legacy",
+  "source": "results/qwen2.5_14b/experiments_shifts.json",
+  "status": "reused",
+  "time": "2026-11-09T14:45:41"
+ },
+ "shift/style=combined_attack": {
+  "fp": "afd9a3d0de529ba8ff9a63f8932e4274050c10e66d5ce728c02e930aace0613a",
+  "origin": "legacy",
+  "source": "results/qwen2.5_14b/experiments_shifts.json",
+  "status": "reused",
+  "time": "2026-11-09T14:45:41"
+ }
+}

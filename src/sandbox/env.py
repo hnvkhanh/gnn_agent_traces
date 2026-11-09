@@ -50,7 +50,7 @@ def run_scenario(sc: Scenario, llm: Callable[[List[dict]], str], replay: bool = 
         return sc.tool_obs[name] if name in sc.tool_obs else execute(visible.get(name), name, args)
 
     memory = list(sc.memory)
-    if sc.mode == "memory":
+    if sc.mode == "memory" and sc.injected not in "\n".join(memory):  # adapters may poison memory themselves
         memory.append("Past note: " + sc.injected)
     user_task = sc.task + (" " + sc.injected if sc.mode in ("dpi", "mixed") else "")
 
@@ -72,6 +72,11 @@ def run_scenario(sc: Scenario, llm: Callable[[List[dict]], str], replay: bool = 
             msgs.append({"role": "user", "content": "Invalid format. Reply with one JSON object."})
             continue
         if "final" in act:
+            if sc.final_tool in visible:  # the final answer is itself an action (e.g. ReAct Finish[answer])
+                args = {"answer": str(act["final"])}
+                events.append(dict(step=len(events), tool=sc.final_tool, args=args,
+                                   observation=observe(sc.final_tool, args), obs_injected=False, synthetic=False,
+                                   label=label(sc.final_tool, args)))
             break
         name = str(act.get("tool", ""))
         if name not in visible:  # not an action: answer with an error, record no event
@@ -89,6 +94,8 @@ def run_scenario(sc: Scenario, llm: Callable[[List[dict]], str], replay: bool = 
         events.append(dict(step=len(events), tool=name, args=args, observation=obs, obs_injected=inject_here,
                            synthetic=False, label=label(name, args)))
         msgs.append({"role": "user", "content": "Observation: " + obs})
+        if name == sc.final_tool:
+            break
 
     if replay and sc.attacker_calls and not any(
             label(e["tool"], e["args"]) == "reject" and not e["synthetic"] for e in events):
@@ -100,7 +107,8 @@ def run_scenario(sc: Scenario, llm: Callable[[List[dict]], str], replay: bool = 
         benchmark=sc.benchmark, trace_id=trace_id, model=model, agent=sc.persona, group=sc.group, task=sc.task,
         user_task=user_task, memory=memory, injected=sc.injected,
         attack=None if sc.mode == "none" else dict(mode=sc.mode, style=sc.style, category=sc.category,
-                                                   tool=sc.attacker_calls[0]["tool"] if sc.attacker_calls else None),
+                                                   tool=sc.attacker_calls[0]["tool"] if sc.attacker_calls else None,
+                                                   id=sc.attack_id or None),
         tools=[dict(name=t.name, description=t.description, kind=t.kind, agent=t.agent, in_scope=t.name in scope)
                for t in sc.tools],
         allowed_tools=sorted(scope), events=events, n_invalid=n_invalid)

@@ -1,0 +1,1265 @@
+{
+ "R": {
+  "0": {
+   "agentdojo": {
+    "all": {
+     "acc": 0.26639344262295084,
+     "asr": {
+      "approve_fpr": 0.7708333333333334,
+      "asr_defended": 0.42857142857142855,
+      "asr_forced": 0.5952380952380952,
+      "asr_undefended": 0.6666666666666666,
+      "attack_traces": 42,
+      "benign_block": 0.95,
+      "benign_traces": 20
+     },
+     "confusion": [
+      [
+       44,
+       148
+      ],
+      [
+       31,
+       21
+      ]
+     ],
+     "macro_f1": 0.2598166319250258,
+     "micro_f1": 0.26639344262295084,
+     "recall": {
+      "approve": 0.229,
+      "reject": 0.404
+     }
+    },
+    "real": {
+     "acc": 0.25217391304347825,
+     "confusion": [
+      [
+       44,
+       148
+      ],
+      [
+       24,
+       14
+      ]
+     ],
+     "macro_f1": 0.23923076923076925,
+     "micro_f1": 0.25217391304347825,
+     "recall": {
+      "approve": 0.229,
+      "reject": 0.368
+     }
+    }
+   },
+   "asb": {
+    "all": {
+     "acc": 0.9878787878787879,
+     "asr": {
+      "approve_fpr": 0.013888888888888888,
+      "asr_defended": 0.0,
+      "asr_forced": 0.014925373134328358,
+      "asr_undefended": 0.9701492537313433,
+      "attack_traces": 67,
+      "benign_block": 0.0,
+      "benign_traces": 18
+     },
+     "confusion": [
+      [
+       71,
+       1
+      ],
+      [
+       1,
+       92
+      ]
+     ],
+     "macro_f1": 0.9876792114695341,
+     "micro_f1": 0.9878787878787879,
+     "recall": {
+      "approve": 0.986,
+      "reject": 0.989
+     }
+    },
+    "real": {
+     "acc": 0.9938650306748467,
+     "confusion": [
+      [
+       71,
+       1
+      ],
+      [
+       0,
+       91
+      ]
+     ],
+     "macro_f1": 0.9937712560663381,
+     "micro_f1": 0.9938650306748467,
+     "recall": {
+      "approve": 0.986,
+      "reject": 1.0
+     }
+    }
+   },
+   "injecagent": {
+    "all": {
+     "acc": 0.4320388349514563,
+     "asr": {
+      "approve_fpr": 0.6870748299319728,
+      "asr_defended": 0.044444444444444446,
+      "asr_forced": 0.35555555555555557,
+      "asr_undefended": 0.3111111111111111,
+      "attack_traces": 45,
+      "benign_block": 0.9375,
+      "benign_traces": 16
+     },
+     "confusion": [
+      [
+       46,
+       101
+      ],
+      [
+       16,
+       43
+      ]
+     ],
+     "macro_f1": 0.4319183538784265,
+     "micro_f1": 0.4320388349514563,
+     "recall": {
+      "approve": 0.313,
+      "reject": 0.729
+     }
+    },
+    "real": {
+     "acc": 0.4114285714285714,
+     "confusion": [
+      [
+       46,
+       101
+      ],
+      [
+       2,
+       26
+      ]
+     ],
+     "macro_f1": 0.4036393713813069,
+     "micro_f1": 0.4114285714285714,
+     "recall": {
+      "approve": 0.313,
+      "reject": 0.929
+     }
+    }
+   }
+  },
+  "1": {
+   "agentdojo": {
+    "all": {
+     "acc": 0.8483606557377049,
+     "asr": {
+      "approve_fpr": 0.020833333333333332,
+      "asr_defended": 0.38095238095238093,
+      "asr_forced": 0.6428571428571429,
+      "asr_undefended": 0.6666666666666666,
+      "attack_traces": 42,
+      "benign_block": 0.0,
+      "benign_traces": 20
+     },
+     "confusion": [
+      [
+       188,
+       4
+      ],
+      [
+       33,
+       19
+      ]
+     ],
+     "macro_f1": 0.7085391444713478,
+     "micro_f1": 0.8483606557377049,
+     "recall": {
+      "approve": 0.979,
+      "reject": 0.365
+     }
+    },
+    "real": {
+     "acc": 0.8869565217391304,
+     "confusion": [
+      [
+       188,
+       4
+      ],
+      [
+       22,
+       16
+      ]
+     ],
+     "macro_f1": 0.7435237605078058,
+     "micro_f1": 0.8869565217391304,
+     "recall": {
+      "approve": 0.979,
+      "reject": 0.421
+     }
+    }
+   },
+   "asb": {
+    "all": {
+     "acc": 0.8545454545454545,
+     "asr": {
+      "approve_fpr": 0.027777777777777776,
+      "asr_defended": 0.3283582089552239,
+      "asr_forced": 0.3283582089552239,
+      "asr_undefended": 0.9701492537313433,
+      "attack_traces": 67,
+      "benign_block": 0.05555555555555555,
+      "benign_traces": 18
+     },
+     "confusion": [
+      [
+       70,
+       2
+      ],
+      [
+       22,
+       71
+      ]
+     ],
+     "macro_f1": 0.8545401116661768,
+     "micro_f1": 0.8545454545454545,
+     "recall": {
+      "approve": 0.972,
+      "reject": 0.763
+     }
+    },
+    "real": {
+     "acc": 0.852760736196319,
+     "confusion": [
+      [
+       70,
+       2
+      ],
+      [
+       22,
+       69
+      ]
+     ],
+     "macro_f1": 0.8527551942186089,
+     "micro_f1": 0.852760736196319,
+     "recall": {
+      "approve": 0.972,
+      "reject": 0.758
+     }
+    }
+   },
+   "injecagent": {
+    "all": {
+     "acc": 0.7135922330097088,
+     "asr": {
+      "approve_fpr": 0.272108843537415,
+      "asr_defended": 0.044444444444444446,
+      "asr_forced": 0.4222222222222222,
+      "asr_undefended": 0.3111111111111111,
+      "attack_traces": 45,
+      "benign_block": 0.0,
+      "benign_traces": 16
+     },
+     "confusion": [
+      [
+       107,
+       40
+      ],
+      [
+       19,
+       40
+      ]
+     ],
+     "macro_f1": 0.6797111761140537,
+     "micro_f1": 0.7135922330097088,
+     "recall": {
+      "approve": 0.728,
+      "reject": 0.678
+     }
+    },
+    "real": {
+     "acc": 0.76,
+     "confusion": [
+      [
+       107,
+       40
+      ],
+      [
+       2,
+       26
+      ]
+     ],
+     "macro_f1": 0.6945644946808511,
+     "micro_f1": 0.76,
+     "recall": {
+      "approve": 0.728,
+      "reject": 0.929
+     }
+    }
+   }
+  },
+  "2": {
+   "agentdojo": {
+    "all": {
+     "acc": 0.7745901639344263,
+     "asr": {
+      "approve_fpr": 0.11458333333333333,
+      "asr_defended": 0.42857142857142855,
+      "asr_forced": 0.6428571428571429,
+      "asr_undefended": 0.6666666666666666,
+      "attack_traces": 42,
+      "benign_block": 0.35,
+      "benign_traces": 20
+     },
+     "confusion": [
+      [
+       170,
+       22
+      ],
+      [
+       33,
+       19
+      ]
+     ],
+     "macro_f1": 0.6346808221042602,
+     "micro_f1": 0.7745901639344263,
+     "recall": {
+      "approve": 0.885,
+      "reject": 0.365
+     }
+    },
+    "real": {
+     "acc": 0.8,
+     "confusion": [
+      [
+       170,
+       22
+      ],
+      [
+       24,
+       14
+      ]
+     ],
+     "macro_f1": 0.62960369696121,
+     "micro_f1": 0.8,
+     "recall": {
+      "approve": 0.885,
+      "reject": 0.368
+     }
+    }
+   },
+   "asb": {
+    "all": {
+     "acc": 0.8606060606060606,
+     "asr": {
+      "approve_fpr": 0.125,
+      "asr_defended": 0.208955223880597,
+      "asr_forced": 0.208955223880597,
+      "asr_undefended": 0.9701492537313433,
+      "attack_traces": 67,
+      "benign_block": 0.2777777777777778,
+      "benign_traces": 18
+     },
+     "confusion": [
+      [
+       63,
+       9
+      ],
+      [
+       14,
+       79
+      ]
+     ],
+     "macro_f1": 0.8592828803440988,
+     "micro_f1": 0.8606060606060606,
+     "recall": {
+      "approve": 0.875,
+      "reject": 0.849
+     }
+    },
+    "real": {
+     "acc": 0.8588957055214724,
+     "confusion": [
+      [
+       63,
+       9
+      ],
+      [
+       14,
+       77
+      ]
+     ],
+     "macro_f1": 0.8578470405338794,
+     "micro_f1": 0.8588957055214724,
+     "recall": {
+      "approve": 0.875,
+      "reject": 0.846
+     }
+    }
+   },
+   "injecagent": {
+    "all": {
+     "acc": 0.9611650485436893,
+     "asr": {
+      "approve_fpr": 0.006802721088435374,
+      "asr_defended": 0.1111111111111111,
+      "asr_forced": 0.15555555555555556,
+      "asr_undefended": 0.3111111111111111,
+      "attack_traces": 45,
+      "benign_block": 0.0,
+      "benign_traces": 16
+     },
+     "confusion": [
+      [
+       146,
+       1
+      ],
+      [
+       7,
+       52
+      ]
+     ],
+     "macro_f1": 0.950952380952381,
+     "micro_f1": 0.9611650485436893,
+     "recall": {
+      "approve": 0.993,
+      "reject": 0.881
+     }
+    },
+    "real": {
+     "acc": 0.9657142857142857,
+     "confusion": [
+      [
+       146,
+       1
+      ],
+      [
+       5,
+       23
+      ]
+     ],
+     "macro_f1": 0.9322405782137326,
+     "micro_f1": 0.9657142857142857,
+     "recall": {
+      "approve": 0.993,
+      "reject": 0.821
+     }
+    }
+   }
+  },
+  "init": {
+   "agentdojo": {
+    "all": {
+     "acc": 0.7868852459016393,
+     "asr": {
+      "approve_fpr": 0.0,
+      "asr_defended": 0.6666666666666666,
+      "asr_forced": 1.0,
+      "asr_undefended": 0.6666666666666666,
+      "attack_traces": 42,
+      "benign_block": 0.0,
+      "benign_traces": 20
+     },
+     "confusion": [
+      [
+       192,
+       0
+      ],
+      [
+       52,
+       0
+      ]
+     ],
+     "macro_f1": 0.44036697247706424,
+     "micro_f1": 0.7868852459016393,
+     "recall": {
+      "approve": 1.0,
+      "reject": 0.0
+     }
+    },
+    "real": {
+     "acc": 0.8347826086956521,
+     "confusion": [
+      [
+       192,
+       0
+      ],
+      [
+       38,
+       0
+      ]
+     ],
+     "macro_f1": 0.4549763033175355,
+     "micro_f1": 0.8347826086956521,
+     "recall": {
+      "approve": 1.0,
+      "reject": 0.0
+     }
+    }
+   },
+   "asb": {
+    "all": {
+     "acc": 0.43636363636363634,
+     "asr": {
+      "approve_fpr": 0.0,
+      "asr_defended": 0.9701492537313433,
+      "asr_forced": 1.0,
+      "asr_undefended": 0.9701492537313433,
+      "attack_traces": 67,
+      "benign_block": 0.0,
+      "benign_traces": 18
+     },
+     "confusion": [
+      [
+       72,
+       0
+      ],
+      [
+       93,
+       0
+      ]
+     ],
+     "macro_f1": 0.3037974683544304,
+     "micro_f1": 0.43636363636363634,
+     "recall": {
+      "approve": 1.0,
+      "reject": 0.0
+     }
+    },
+    "real": {
+     "acc": 0.44171779141104295,
+     "confusion": [
+      [
+       72,
+       0
+      ],
+      [
+       91,
+       0
+      ]
+     ],
+     "macro_f1": 0.30638297872340425,
+     "micro_f1": 0.44171779141104295,
+     "recall": {
+      "approve": 1.0,
+      "reject": 0.0
+     }
+    }
+   },
+   "injecagent": {
+    "all": {
+     "acc": 0.7135922330097088,
+     "asr": {
+      "approve_fpr": 0.0,
+      "asr_defended": 0.3111111111111111,
+      "asr_forced": 1.0,
+      "asr_undefended": 0.3111111111111111,
+      "attack_traces": 45,
+      "benign_block": 0.0,
+      "benign_traces": 16
+     },
+     "confusion": [
+      [
+       147,
+       0
+      ],
+      [
+       59,
+       0
+      ]
+     ],
+     "macro_f1": 0.4164305949008499,
+     "micro_f1": 0.7135922330097088,
+     "recall": {
+      "approve": 1.0,
+      "reject": 0.0
+     }
+    },
+    "real": {
+     "acc": 0.84,
+     "confusion": [
+      [
+       147,
+       0
+      ],
+      [
+       28,
+       0
+      ]
+     ],
+     "macro_f1": 0.45652173913043476,
+     "micro_f1": 0.84,
+     "recall": {
+      "approve": 1.0,
+      "reject": 0.0
+     }
+    }
+   }
+  }
+ },
+ "config": {
+  "batch": 32,
+  "buffer": 50,
+  "device": "cuda",
+  "epochs": 60,
+  "hidden": 64,
+  "hp": {},
+  "lr": 0.003,
+  "mode": "main",
+  "model": "qwen2.5:1.5b",
+  "order": [
+   "asb",
+   "agentdojo",
+   "injecagent"
+  ],
+  "seed": 0,
+  "strategy": "agem",
+  "wd": 0.0001
+ },
+ "fingerprint": "ba64bf118745b4f0a38556f5c6b408a2d10ecb4a40ac3320ff506fdfeed2a0f7",
+ "seconds": 34.0,
+ "sizes": {
+  "agentdojo": {
+   "test": 62,
+   "test_attack": 42,
+   "train": 106,
+   "train_attack": 38
+  },
+  "asb": {
+   "test": 85,
+   "test_attack": 67,
+   "train": 307,
+   "train_attack": 204
+  },
+  "injecagent": {
+   "test": 61,
+   "test_attack": 45,
+   "train": 174,
+   "train_attack": 94
+  }
+ },
+ "steps": [
+  {
+   "bench": "asb",
+   "memory": [
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|1"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|107"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|110"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|116"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|120"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|121"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|125"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|150"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|152"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|154"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|161"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|162"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|164"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|167"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|170"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|176"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|18"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|209"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|217"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|233"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|249"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|251"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|254"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|260"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|266"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|269"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|282"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|311"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|323"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|324"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|333"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|338"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|344"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|353"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|358"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|359"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|362"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|37"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|374"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|377"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|378"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|394"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|413"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|424"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|431"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|435"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|5"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|64"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|89"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|96"
+    ]
+   ],
+   "seconds": 11.2,
+   "trained_graphs": 307
+  },
+  {
+   "bench": "agentdojo",
+   "memory": [
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|103"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|11"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|129"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|133"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|134"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|137"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|147"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|220"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|224"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|229"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|230"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|245"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|25"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|268"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|276"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|36"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|62"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|76"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|1"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|107"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|116"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|120"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|121"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|125"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|150"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|152"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|154"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|161"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|162"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|164"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|167"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|18"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|209"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|217"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|249"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|266"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|323"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|338"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|344"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|353"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|358"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|359"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|37"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|374"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|378"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|424"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|435"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|5"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|64"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|89"
+    ]
+   ],
+   "seconds": 9.1,
+   "trained_graphs": 106
+  },
+  {
+   "bench": "injecagent",
+   "memory": [
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|11"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|129"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|133"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|134"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|137"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|220"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|224"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|229"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|230"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|245"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|25"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|62"
+    ],
+    [
+     "agentdojo",
+     "agentdojo|qwen2.5:1.5b|0|76"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|1"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|107"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|116"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|120"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|121"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|125"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|150"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|152"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|154"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|161"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|18"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|249"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|266"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|323"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|344"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|353"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|358"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|359"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|37"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|374"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|378"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|424"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|435"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|5"
+    ],
+    [
+     "asb",
+     "asb|qwen2.5:1.5b|0|89"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|117"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|186"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|220"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|255"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|299"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|315"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|323"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|343"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|49"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|57"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|58"
+    ],
+    [
+     "injecagent",
+     "injecagent|qwen2.5:1.5b|0|75"
+    ]
+   ],
+   "seconds": 13.6,
+   "trained_graphs": 174
+  }
+ ],
+ "time": "2026-11-09T17:51:34"
+}

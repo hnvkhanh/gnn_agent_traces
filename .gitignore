@@ -4,3 +4,10 @@ traces/*.log
 traces/log_*.txt
 .venv/
 .venv-cuda/
+traces/*.status
+results/**/run.log
+.vscode/
+
+traces/.shards/
+results/.run_experiments.lock
+results/continual/.lock

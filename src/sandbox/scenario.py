@@ -21,3 +21,5 @@ class Scenario:
     attacker_calls: List[dict] = field(default_factory=list)   # [{tool, args}] malicious calls (reject)
     tool_obs: Dict[str, str] = field(default_factory=dict)     # fixed observation per tool name (overrides mock default)
     opi_tool: Optional[str] = None    # if set, OPI injection is delivered when THIS tool is called (tool_obs already holds it)
+    attack_id: str = ""               # identity of the attack (what decides its reject labels); a split key, see train.split
+    final_tool: Optional[str] = None  # if set, {"final": x} is recorded as a call to this tool with {"answer": x} (ReAct Finish)

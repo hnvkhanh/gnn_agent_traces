@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 HOST = "http://localhost:11434"
@@ -19,11 +21,12 @@ class OllamaChat:
     def __call__(self, messages):
         body = {"model": self.model, "messages": messages, "stream": False, "format": "json", "options": self.options}
         last = None
-        for _ in range(2):
+        for attempt in range(5):  # transient 500s happen under parallel load; back off and retry
             try:
                 r = requests.post(self.host + "/api/chat", json=body, timeout=self.timeout)
                 r.raise_for_status()
                 return r.json()["message"]["content"]
-            except Exception as e:  # retry once
+            except Exception as e:
                 last = e
+                time.sleep(min(8, 2 ** attempt))
         raise RuntimeError("ollama call failed: %r" % last)

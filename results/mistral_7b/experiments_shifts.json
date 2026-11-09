@@ -1,0 +1,1722 @@
+{
+ "shift/style=combined_attack": [
+  {
+   "majority": {
+    "macro_f1": 0.2857142857142857,
+    "micro_f1": 0.4,
+    "acc": 0.4,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      45,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.2857142857142857,
+    "micro_f1": 0.4,
+    "acc": 0.4,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      45,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.6785714285714286,
+    "micro_f1": 0.68,
+    "acc": 0.68,
+    "recall": {
+     "approve": 0.767,
+     "reject": 0.622
+    },
+    "confusion": [
+     [
+      23,
+      7
+     ],
+     [
+      17,
+      28
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.41379310344827586,
+     "asr_forced": 0.41379310344827586,
+     "benign_block": NaN,
+     "approve_fpr": 0.23333333333333334
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.9725073313782991,
+    "micro_f1": 0.9733333333333334,
+    "acc": 0.9733333333333334,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.956
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      2,
+      43
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.06896551724137931,
+     "asr_forced": 0.06896551724137931,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.2857142857142857,
+    "micro_f1": 0.4,
+    "acc": 0.4,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      45,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.2857142857142857,
+    "micro_f1": 0.4,
+    "acc": 0.4,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      45,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.6657158138705652,
+    "micro_f1": 0.6666666666666666,
+    "acc": 0.6666666666666666,
+    "recall": {
+     "approve": 0.767,
+     "reject": 0.6
+    },
+    "confusion": [
+     [
+      23,
+      7
+     ],
+     [
+      18,
+      27
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.3793103448275862,
+     "asr_forced": 0.3793103448275862,
+     "benign_block": NaN,
+     "approve_fpr": 0.23333333333333334
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.9725073313782991,
+    "micro_f1": 0.9733333333333334,
+    "acc": 0.9733333333333334,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.956
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      2,
+      43
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.06896551724137931,
+     "asr_forced": 0.06896551724137931,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.2857142857142857,
+    "micro_f1": 0.4,
+    "acc": 0.4,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      45,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.2857142857142857,
+    "micro_f1": 0.4,
+    "acc": 0.4,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      45,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.5726495726495726,
+    "micro_f1": 0.5733333333333334,
+    "acc": 0.5733333333333334,
+    "recall": {
+     "approve": 0.767,
+     "reject": 0.444
+    },
+    "confusion": [
+     [
+      23,
+      7
+     ],
+     [
+      25,
+      20
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.5172413793103449,
+     "asr_forced": 0.5172413793103449,
+     "benign_block": NaN,
+     "approve_fpr": 0.23333333333333334
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.9725073313782991,
+    "micro_f1": 0.9733333333333334,
+    "acc": 0.9733333333333334,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.956
+    },
+    "confusion": [
+     [
+      30,
+      0
+     ],
+     [
+      2,
+      43
+     ]
+    ],
+    "asr": {
+     "attack_traces": 29,
+     "benign_traces": 0,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.06896551724137931,
+     "asr_forced": 0.06896551724137931,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  }
+ ],
+ "shift/mode=memory": [
+  {
+   "majority": {
+    "macro_f1": 0.34415584415584416,
+    "micro_f1": 0.5247524752475248,
+    "acc": 0.5247524752475248,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      48,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.9459459459459459,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.34415584415584416,
+    "micro_f1": 0.5247524752475248,
+    "acc": 0.5247524752475248,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      48,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.9459459459459459,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.5950280673616679,
+    "micro_f1": 0.6039603960396039,
+    "acc": 0.6039603960396039,
+    "recall": {
+     "approve": 0.717,
+     "reject": 0.479
+    },
+    "confusion": [
+     [
+      38,
+      15
+     ],
+     [
+      25,
+      23
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.43243243243243246,
+     "asr_forced": 0.4864864864864865,
+     "benign_block": NaN,
+     "approve_fpr": 0.2830188679245283
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.7654138513513513,
+    "micro_f1": 0.7821782178217822,
+    "acc": 0.7821782178217822,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.542
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      22,
+      26
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.5135135135135135,
+     "asr_forced": 0.5675675675675675,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.34415584415584416,
+    "micro_f1": 0.5247524752475248,
+    "acc": 0.5247524752475248,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      48,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.9459459459459459,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.34415584415584416,
+    "micro_f1": 0.5247524752475248,
+    "acc": 0.5247524752475248,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      48,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.9459459459459459,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.6449545078577337,
+    "micro_f1": 0.6633663366336634,
+    "acc": 0.6633663366336634,
+    "recall": {
+     "approve": 0.849,
+     "reject": 0.458
+    },
+    "confusion": [
+     [
+      45,
+      8
+     ],
+     [
+      26,
+      22
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.43243243243243246,
+     "asr_forced": 0.4864864864864865,
+     "benign_block": NaN,
+     "approve_fpr": 0.1509433962264151
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.8120347394540943,
+    "micro_f1": 0.8217821782178217,
+    "acc": 0.8217821782178217,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.625
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      18,
+      30
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.43243243243243246,
+     "asr_forced": 0.4864864864864865,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.34415584415584416,
+    "micro_f1": 0.5247524752475248,
+    "acc": 0.5247524752475248,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      48,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.9459459459459459,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.34415584415584416,
+    "micro_f1": 0.5247524752475248,
+    "acc": 0.5247524752475248,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      48,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.9459459459459459,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.6535512510088781,
+    "micro_f1": 0.6633663366336634,
+    "acc": 0.6633663366336634,
+    "recall": {
+     "approve": 0.792,
+     "reject": 0.521
+    },
+    "confusion": [
+     [
+      42,
+      11
+     ],
+     [
+      23,
+      25
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.40540540540540543,
+     "asr_forced": 0.4594594594594595,
+     "benign_block": NaN,
+     "approve_fpr": 0.20754716981132076
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.7773228346456693,
+    "micro_f1": 0.7920792079207921,
+    "acc": 0.7920792079207921,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.562
+    },
+    "confusion": [
+     [
+      53,
+      0
+     ],
+     [
+      21,
+      27
+     ]
+    ],
+    "asr": {
+     "attack_traces": 37,
+     "benign_traces": 0,
+     "asr_undefended": 0.9459459459459459,
+     "asr_defended": 0.5135135135135135,
+     "asr_forced": 0.5675675675675675,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  }
+ ],
+ "shift/category=aggressive": [
+  {
+   "majority": {
+    "macro_f1": 0.24186046511627907,
+    "micro_f1": 0.31901840490797545,
+    "acc": 0.31901840490797545,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      52,
+      0
+     ],
+     [
+      111,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.9324324324324325,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.24186046511627907,
+    "micro_f1": 0.31901840490797545,
+    "acc": 0.31901840490797545,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      52,
+      0
+     ],
+     [
+      111,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.9324324324324325,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.5213102409638555,
+    "micro_f1": 0.5214723926380368,
+    "acc": 0.5214723926380368,
+    "recall": {
+     "approve": 0.788,
+     "reject": 0.396
+    },
+    "confusion": [
+     [
+      41,
+      11
+     ],
+     [
+      67,
+      44
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.5945945945945946,
+     "asr_forced": 0.6351351351351351,
+     "benign_block": NaN,
+     "approve_fpr": 0.21153846153846154
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.875146139891151,
+    "micro_f1": 0.8834355828220859,
+    "acc": 0.8834355828220859,
+    "recall": {
+     "approve": 0.981,
+     "reject": 0.838
+    },
+    "confusion": [
+     [
+      51,
+      1
+     ],
+     [
+      18,
+      93
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.1891891891891892,
+     "asr_forced": 0.24324324324324326,
+     "benign_block": NaN,
+     "approve_fpr": 0.019230769230769232
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.24186046511627907,
+    "micro_f1": 0.31901840490797545,
+    "acc": 0.31901840490797545,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      52,
+      0
+     ],
+     [
+      111,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.9324324324324325,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.24186046511627907,
+    "micro_f1": 0.31901840490797545,
+    "acc": 0.31901840490797545,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      52,
+      0
+     ],
+     [
+      111,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.9324324324324325,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.5273227130644371,
+    "micro_f1": 0.5276073619631901,
+    "acc": 0.5276073619631901,
+    "recall": {
+     "approve": 0.865,
+     "reject": 0.369
+    },
+    "confusion": [
+     [
+      45,
+      7
+     ],
+     [
+      70,
+      41
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.5945945945945946,
+     "asr_forced": 0.6621621621621622,
+     "benign_block": NaN,
+     "approve_fpr": 0.1346153846153846
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.8929392446633826,
+    "micro_f1": 0.901840490797546,
+    "acc": 0.901840490797546,
+    "recall": {
+     "approve": 0.962,
+     "reject": 0.874
+    },
+    "confusion": [
+     [
+      50,
+      2
+     ],
+     [
+      14,
+      97
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.16216216216216217,
+     "asr_forced": 0.1891891891891892,
+     "benign_block": NaN,
+     "approve_fpr": 0.038461538461538464
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.24186046511627907,
+    "micro_f1": 0.31901840490797545,
+    "acc": 0.31901840490797545,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      52,
+      0
+     ],
+     [
+      111,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.9324324324324325,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.24186046511627907,
+    "micro_f1": 0.31901840490797545,
+    "acc": 0.31901840490797545,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      52,
+      0
+     ],
+     [
+      111,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.9324324324324325,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.490720873329569,
+    "micro_f1": 0.49079754601226994,
+    "acc": 0.49079754601226994,
+    "recall": {
+     "approve": 0.788,
+     "reject": 0.351
+    },
+    "confusion": [
+     [
+      41,
+      11
+     ],
+     [
+      72,
+      39
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.6486486486486487,
+     "asr_forced": 0.7027027027027027,
+     "benign_block": NaN,
+     "approve_fpr": 0.21153846153846154
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.8813106796116505,
+    "micro_f1": 0.8895705521472392,
+    "acc": 0.8895705521472392,
+    "recall": {
+     "approve": 0.981,
+     "reject": 0.847
+    },
+    "confusion": [
+     [
+      51,
+      1
+     ],
+     [
+      17,
+      94
+     ]
+    ],
+    "asr": {
+     "attack_traces": 74,
+     "benign_traces": 0,
+     "asr_undefended": 0.9324324324324325,
+     "asr_defended": 0.20270270270270271,
+     "asr_forced": 0.22972972972972974,
+     "benign_block": NaN,
+     "approve_fpr": 0.019230769230769232
+    }
+   }
+  }
+ ],
+ "shift/category=Stealthy": [
+  {
+   "majority": {
+    "macro_f1": 0.31983805668016196,
+    "micro_f1": 0.47023809523809523,
+    "acc": 0.47023809523809523,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      89,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.953125,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.31983805668016196,
+    "micro_f1": 0.47023809523809523,
+    "acc": 0.47023809523809523,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      89,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.953125,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.6481987577639752,
+    "micro_f1": 0.6488095238095238,
+    "acc": 0.6488095238095238,
+    "recall": {
+     "approve": 0.734,
+     "reject": 0.573
+    },
+    "confusion": [
+     [
+      58,
+      21
+     ],
+     [
+      38,
+      51
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.359375,
+     "asr_forced": 0.40625,
+     "benign_block": NaN,
+     "approve_fpr": 0.26582278481012656
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.9702117096350934,
+    "micro_f1": 0.9702380952380952,
+    "acc": 0.9702380952380952,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.944
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      5,
+      84
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.046875,
+     "asr_forced": 0.078125,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.31983805668016196,
+    "micro_f1": 0.47023809523809523,
+    "acc": 0.47023809523809523,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      89,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.953125,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.31983805668016196,
+    "micro_f1": 0.47023809523809523,
+    "acc": 0.47023809523809523,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      89,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.953125,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.6659090909090909,
+    "micro_f1": 0.6666666666666666,
+    "acc": 0.6666666666666666,
+    "recall": {
+     "approve": 0.759,
+     "reject": 0.584
+    },
+    "confusion": [
+     [
+      60,
+      19
+     ],
+     [
+      37,
+      52
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.375,
+     "asr_forced": 0.421875,
+     "benign_block": NaN,
+     "approve_fpr": 0.24050632911392406
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.9642654566080544,
+    "micro_f1": 0.9642857142857143,
+    "acc": 0.9642857142857143,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.933
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      6,
+      83
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.0625,
+     "asr_forced": 0.09375,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.31983805668016196,
+    "micro_f1": 0.47023809523809523,
+    "acc": 0.47023809523809523,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      89,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.953125,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.31983805668016196,
+    "micro_f1": 0.47023809523809523,
+    "acc": 0.47023809523809523,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      79,
+      0
+     ],
+     [
+      89,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.953125,
+     "asr_forced": 1.0,
+     "benign_block": NaN,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.6712094794150091,
+    "micro_f1": 0.6726190476190477,
+    "acc": 0.6726190476190477,
+    "recall": {
+     "approve": 0.785,
+     "reject": 0.573
+    },
+    "confusion": [
+     [
+      62,
+      17
+     ],
+     [
+      38,
+      51
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.375,
+     "asr_forced": 0.421875,
+     "benign_block": NaN,
+     "approve_fpr": 0.21518987341772153
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.9820914614646626,
+    "micro_f1": 0.9821428571428571,
+    "acc": 0.9821428571428571,
+    "recall": {
+     "approve": 0.987,
+     "reject": 0.978
+    },
+    "confusion": [
+     [
+      78,
+      1
+     ],
+     [
+      2,
+      87
+     ]
+    ],
+    "asr": {
+     "attack_traces": 64,
+     "benign_traces": 0,
+     "asr_undefended": 0.953125,
+     "asr_defended": 0.0,
+     "asr_forced": 0.03125,
+     "benign_block": NaN,
+     "approve_fpr": 0.012658227848101266
+    }
+   }
+  }
+ ],
+ "shift/agent=system_admin_agent": [
+  {
+   "majority": {
+    "macro_f1": 0.3617021276595745,
+    "micro_f1": 0.5666666666666667,
+    "acc": 0.5666666666666667,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      17,
+      0
+     ],
+     [
+      13,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": 0.0,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.3617021276595745,
+    "micro_f1": 0.5666666666666667,
+    "acc": 0.5666666666666667,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      17,
+      0
+     ],
+     [
+      13,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": 0.0,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.43270300333704115,
+    "micro_f1": 0.43333333333333335,
+    "acc": 0.43333333333333335,
+    "recall": {
+     "approve": 0.412,
+     "reject": 0.462
+    },
+    "confusion": [
+     [
+      7,
+      10
+     ],
+     [
+      7,
+      6
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.5454545454545454,
+     "asr_forced": 0.5454545454545454,
+     "benign_block": 0.8,
+     "approve_fpr": 0.5882352941176471
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.8331479421579533,
+    "micro_f1": 0.8333333333333334,
+    "acc": 0.8333333333333334,
+    "recall": {
+     "approve": 0.765,
+     "reject": 0.923
+    },
+    "confusion": [
+     [
+      13,
+      4
+     ],
+     [
+      1,
+      12
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.09090909090909091,
+     "asr_forced": 0.09090909090909091,
+     "benign_block": 0.2,
+     "approve_fpr": 0.23529411764705882
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.3617021276595745,
+    "micro_f1": 0.5666666666666667,
+    "acc": 0.5666666666666667,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      17,
+      0
+     ],
+     [
+      13,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": 0.0,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.3617021276595745,
+    "micro_f1": 0.5666666666666667,
+    "acc": 0.5666666666666667,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      17,
+      0
+     ],
+     [
+      13,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": 0.0,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.3973214285714286,
+    "micro_f1": 0.4,
+    "acc": 0.4,
+    "recall": {
+     "approve": 0.412,
+     "reject": 0.385
+    },
+    "confusion": [
+     [
+      7,
+      10
+     ],
+     [
+      8,
+      5
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.6363636363636364,
+     "asr_forced": 0.6363636363636364,
+     "benign_block": 0.8,
+     "approve_fpr": 0.5882352941176471
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.699666295884316,
+    "micro_f1": 0.7,
+    "acc": 0.7,
+    "recall": {
+     "approve": 0.588,
+     "reject": 0.846
+    },
+    "confusion": [
+     [
+      10,
+      7
+     ],
+     [
+      2,
+      11
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.18181818181818182,
+     "asr_forced": 0.18181818181818182,
+     "benign_block": 0.8,
+     "approve_fpr": 0.4117647058823529
+    }
+   }
+  },
+  {
+   "majority": {
+    "macro_f1": 0.3617021276595745,
+    "micro_f1": 0.5666666666666667,
+    "acc": 0.5666666666666667,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      17,
+      0
+     ],
+     [
+      13,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": 0.0,
+     "approve_fpr": 0.0
+    }
+   },
+   "tool-lookup": {
+    "macro_f1": 0.3617021276595745,
+    "micro_f1": 0.5666666666666667,
+    "acc": 0.5666666666666667,
+    "recall": {
+     "approve": 1.0,
+     "reject": 0.0
+    },
+    "confusion": [
+     [
+      17,
+      0
+     ],
+     [
+      13,
+      0
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 1.0,
+     "asr_forced": 1.0,
+     "benign_block": 0.0,
+     "approve_fpr": 0.0
+    }
+   },
+   "mlp": {
+    "macro_f1": 0.4666666666666667,
+    "micro_f1": 0.4666666666666667,
+    "acc": 0.4666666666666667,
+    "recall": {
+     "approve": 0.412,
+     "reject": 0.538
+    },
+    "confusion": [
+     [
+      7,
+      10
+     ],
+     [
+      6,
+      7
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.45454545454545453,
+     "asr_forced": 0.45454545454545453,
+     "benign_block": 0.8,
+     "approve_fpr": 0.5882352941176471
+    }
+   },
+   "gnn": {
+    "macro_f1": 0.7321428571428572,
+    "micro_f1": 0.7333333333333333,
+    "acc": 0.7333333333333333,
+    "recall": {
+     "approve": 0.706,
+     "reject": 0.769
+    },
+    "confusion": [
+     [
+      12,
+      5
+     ],
+     [
+      3,
+      10
+     ]
+    ],
+    "asr": {
+     "attack_traces": 11,
+     "benign_traces": 5,
+     "asr_undefended": 1.0,
+     "asr_defended": 0.2727272727272727,
+     "asr_forced": 0.2727272727272727,
+     "benign_block": 0.4,
+     "approve_fpr": 0.29411764705882354
+    }
+   }
+  }
+ ]
+}
