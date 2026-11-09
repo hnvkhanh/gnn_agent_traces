@@ -16,7 +16,7 @@ DATA = ASBData("data/asb")
 def test_sandbox_has_no_side_effect_apis():
     banned = re.compile(r"subprocess|socket|requests|urllib|os\.system|shutil|eval\(|exec\(|__import__")
     for p in list(Path("src/sandbox").glob("*.py")) + list(Path("src/benchmarks").glob("*.py")):
-        assert not banned.search(p.read_text()), p
+        assert not banned.search(p.read_text(encoding="utf-8")), p
 
 
 def test_labels():
@@ -165,7 +165,7 @@ def test_load_models_filter(tmp_path):
     a, b = make_trace("opi"), make_trace("opi")
     a["model"], b["model"] = "m-a", "m-b"
     f = tmp_path / "x.jsonl"
-    f.write_text(json.dumps(a) + "\n" + json.dumps(b) + "\n")
+    f.write_text(json.dumps(a) + "\n" + json.dumps(b) + "\n", encoding="utf-8")
     assert len(load(str(f))[0]) == 2
     assert [x["model"] for x in load(str(f), models=["m-b"])[1]] == ["m-b"]
     assert make_trace("opi")["n_invalid"] == 0
@@ -200,7 +200,7 @@ def test_every_scripted_action_is_labeled_for_every_benchmark():
 def test_stored_traces_are_fully_labeled():
     files = glob.glob("traces/*.jsonl")
     for f in files:
-        for line in open(f):
+        for line in open(f, encoding="utf-8"):
             tr = json.loads(line)
             names = {t["name"] for t in tr["tools"]}
             assert tr["events"], (f, tr["trace_id"])
@@ -250,3 +250,11 @@ def test_micro_f1_equals_accuracy_and_differs_from_macro():
     r = report(y, p)
     assert abs(r["micro_f1"] - r["acc"]) < 1e-9 and abs(r["micro_f1"] - 0.9) < 1e-9
     assert r["macro_f1"] < r["micro_f1"]   # macro punishes the rare-class error more
+
+
+def test_data_read_as_utf8_on_every_os():
+    # data/asb contains a non-ASCII char (U+2019). A default-encoding read gives cp1252 mojibake on Windows.
+    from src.sandbox.tools import _jsonl
+    rows = _jsonl(Path("data/asb/all_attack_tools.jsonl"))
+    text = json.dumps(rows, ensure_ascii=False)
+    assert "’" in text and "â€" not in text

@@ -20,9 +20,15 @@ benchmark data ──► scenario ──► LLM in mock sandbox ──► trace 
 ## Setup
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate          # macOS / Linux
+.venv\Scripts\activate             # Windows (cmd / PowerShell)
 pip install -r requirements.txt
 ```
+
+Works on Windows and macOS. Files are read and written as UTF-8 with LF line endings (`.gitattributes` enforces LF), so the same traces give the same results on both. Tested with Python 3.13, torch 2.15, torch_geometric 2.8.
+
+**Device.** Training uses CUDA if available, otherwise CPU. Override with `GNN_DEVICE=cpu` (or `cuda:1`, `mps`). Apple `mps` is never chosen automatically because some PyG ops are not reliable there. Do not mix devices in one comparison table: dropout uses a different random generator per device, so numbers differ slightly.
 
 Trace collection needs [Ollama](https://ollama.com) running on `localhost:11434` with at least one model pulled (e.g. `ollama pull qwen2.5:7b`). Training and evaluation on the committed traces do not need it.
 

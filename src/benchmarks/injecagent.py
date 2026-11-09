@@ -15,7 +15,7 @@ FILES = [("dh", "base"), ("dh", "enhanced"), ("ds", "base"), ("ds", "enhanced")]
 
 def _tool_descs(data_dir: Path) -> dict:
     out = {}
-    for tk in json.load(open(data_dir / "tools.json")):
+    for tk in json.load(open(data_dir / "tools.json", encoding="utf-8")):
         for t in tk["tools"]:
             out[tk["toolkit"] + t["name"]] = t["summary"]
     return out
@@ -24,7 +24,7 @@ def _tool_descs(data_dir: Path) -> dict:
 def _load(data_dir: Path):
     cases = []
     for cat, setting in FILES:
-        for c in json.load(open(data_dir / ("test_cases_%s_%s.json" % (cat, setting)))):
+        for c in json.load(open(data_dir / ("test_cases_%s_%s.json" % (cat, setting)), encoding="utf-8")):
             cases.append((cat, setting, c))
     return cases
 

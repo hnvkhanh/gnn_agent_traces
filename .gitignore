@@ -2,3 +2,5 @@
 __pycache__/
 traces/*.log
 traces/log_*.txt
+.venv/
+.venv-cuda/

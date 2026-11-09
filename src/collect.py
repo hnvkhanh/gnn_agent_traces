@@ -27,11 +27,11 @@ def main():
     os.makedirs(os.path.dirname(out), exist_ok=True)
     done = set()
     if os.path.exists(out):
-        done = {json.loads(l)["trace_id"] for l in open(out) if l.strip()}
+        done = {json.loads(l)["trace_id"] for l in open(out, encoding="utf-8") if l.strip()}
     gen, data_dir = BENCH[a.bench]
     llm = OllamaChat(model)
     scs = gen(data_dir, a.n, a.seed, a.benign_frac)
-    with open(out, "a") as f:
+    with open(out, "a", encoding="utf-8", newline="\n") as f:
         for i, sc in enumerate(scs):
             tid = "%s|%s|%d|%d" % (a.bench, model, a.seed, i)
             if tid in done:

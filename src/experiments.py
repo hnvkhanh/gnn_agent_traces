@@ -127,8 +127,10 @@ def main():
         md.append("## GNN ablations (held-out tasks), macro-F1 / micro-F1 / reject recall\n" + table(rows, ["removed"] + BENCHES))
 
     os.makedirs("results", exist_ok=True)
-    json.dump(R, open("results/experiments_%s.json" % a.only, "w"), indent=1)
-    open("results/report_%s.md" % a.only, "w").write("\n\n".join(md) + "\n")
+    with open("results/experiments_%s.json" % a.only, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(R, f, indent=1)
+    with open("results/report_%s.md" % a.only, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n\n".join(md) + "\n")
     print("\n\n".join(md))
 
 
@@ -139,7 +141,7 @@ def behaviour_table(llms):
         for b in BENCHES:
             n = att = followed = steps = invalid = ev = rej = syn = appr = 0
             for f in glob.glob("traces/%s__*.jsonl" % b):
-                for line in open(f):
+                for line in open(f, encoding="utf-8"):
                     tr = json.loads(line)
                     if tr.get("model") != llm:
                         continue
@@ -240,8 +242,10 @@ def run_llm(a, seeds):
     md.append("## Training-data mix (test = held-out tasks of the target LLM)\n" + table(rows, ["train mix", "test LLM", "gnn", "gnn real-only"]))
 
     os.makedirs("results", exist_ok=True)
-    json.dump(R, open("results/llm_experiments.json", "w"), indent=1)
-    open("results/llm_report.md", "w").write("\n\n".join(md) + "\n")
+    with open("results/llm_experiments.json", "w", encoding="utf-8", newline="\n") as f:
+        json.dump(R, f, indent=1)
+    with open("results/llm_report.md", "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n\n".join(md) + "\n")
     print("\n\n".join(md))
 
 

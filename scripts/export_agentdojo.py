@@ -29,5 +29,5 @@ for name, suite in get_suites("v1.2.2").items():
         user_tasks=[dict(id=k, prompt=t.PROMPT, calls=calls(t, env)) for k, t in suite.user_tasks.items()],
         injection_tasks=[dict(id=k, goal=t.GOAL, calls=calls(t, env)) for k, t in suite.injection_tasks.items()],
     )
-    (out / ("%s.json" % name)).write_text(json.dumps(doc, indent=1))
+    (out / ("%s.json" % name)).write_text(json.dumps(doc, indent=1), encoding="utf-8")
     print(name, len(doc["tools"]), len(doc["user_tasks"]), len(doc["injection_tasks"]))

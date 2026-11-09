@@ -28,7 +28,7 @@ def wrap(style: str, goal: str) -> str:
 
 
 def scenarios(data_dir: str, n: int, seed: int, benign_frac: float = 0.25) -> List[Scenario]:
-    suites = [json.load(open(p)) for p in sorted(Path(data_dir).glob("*.json"))]
+    suites = [json.load(open(p, encoding="utf-8")) for p in sorted(Path(data_dir).glob("*.json"))]
     usable = []
     for s in suites:
         uts = [u for u in s["user_tasks"] if u["calls"]]

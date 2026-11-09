@@ -13,7 +13,7 @@ import sys
 tot = dict(files=0, traces=0, dropped_traces=0, removed_events=0, relabeled=0)
 for path in sorted(glob.glob(sys.argv[1] if len(sys.argv) > 1 else "traces/*.jsonl")):
     rows = []
-    for line in open(path):
+    for line in open(path, encoding="utf-8"):
         if not line.strip():
             continue
         tr = json.loads(line)
@@ -32,7 +32,8 @@ for path in sorted(glob.glob(sys.argv[1] if len(sys.argv) > 1 else "traces/*.jso
             continue
         rows.append(json.dumps(tr))
         tot["traces"] += 1
-    open(path, "w").write("\n".join(rows) + "\n")
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(rows) + "\n")
     tot["files"] += 1
     print(path, len(rows))
 print(tot)
