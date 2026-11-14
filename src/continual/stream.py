@@ -13,7 +13,7 @@ import re
 from ..graph.build import meta_of, trace_to_graph
 from ..train import split
 
-BENCHES = ["asb", "injecagent", "agentdojo"]  # AgentPoison is excluded on purpose
+BENCHES = ["injecagent", "agentdojo"]
 MODEL = "qwen2.5:1.5b"
 ORDERS = [list(p) for p in itertools.permutations(BENCHES)]
 CANONICAL = list(BENCHES)
@@ -93,9 +93,9 @@ def overlaps(exps, a, b):
     att = lambda pairs: set(get(pairs, lambda e, i: e.metas[i]["attack_id"])) - {None}
     out["attacks"] = len(att(a) & att(b))
     out["task_text"] = len(set(get(a, lambda e, i: _norm(e.tasks[i]))) & set(get(b, lambda e, i: _norm(e.tasks[i]))))
-    # ASB / InjecAgent: the attack id is the attacker tool, whose name is a hashed token in the action features
+    # InjecAgent: the attack id is the attacker tool, whose name is a hashed token in the action features
     tok = lambda pairs: set().union(*[_tokens(exps[x].metas[i]["attack_id"]) for x, i in pairs
-                                      if exps[x].name in ("asb", "injecagent")] or [set()])
+                                      if exps[x].name == "injecagent"] or [set()])
     out["attacker_tokens"] = len(tok(a) & tok(b))
     return out
 

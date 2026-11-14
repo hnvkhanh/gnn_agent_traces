@@ -3,9 +3,8 @@
     python scripts/report_page.py                    # reads results/, traces/; writes results/report.html
     python scripts/report_page.py --model qwen2.5:1.5b --out results/report.html
 
-Sections: run provenance (which result cells were reused or trained), AgentPoison behaviour, in-benchmark scores,
-attack success rate, cross-benchmark transfer, ablations, the headline across trace LLMs, and the leakage audit run on
-the stored traces. Every chart has a table next to it.
+Sections: in-benchmark scores, attack success rate, cross-benchmark transfer, ablations, the headline across trace
+LLMs, the leakage audit run on the stored traces, and run provenance (which result cells were reused or trained). Every chart has a table next to it.
 """
 import argparse
 import datetime
@@ -19,13 +18,13 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-BENCHES = ["asb", "injecagent", "agentdojo", "agentpoison"]
-BENCH_NAME = {"asb": "ASB", "injecagent": "InjecAgent", "agentdojo": "AgentDojo", "agentpoison": "AgentPoison"}
+BENCHES = ["injecagent", "agentdojo"]
+BENCH_NAME = {"injecagent": "InjecAgent", "agentdojo": "AgentDojo"}
 GUARDS = [("gnn", "GNN"), ("mlp", "MLP (no graph)"), ("tool-lookup", "Tool lookup"), ("majority", "Majority")]
 ABLATIONS = ["tool_feat", "observation", "memory", "injected", "copies", "mentions"]
 ABL_NAME = {"tool_feat": "tool features", "observation": "observations", "memory": "memory", "injected": "injected text",
             "copies": "copies edges", "mentions": "mentions edges"}
-SECTIONS = ["inbench", "transfer", "shifts", "ablate"]
+SECTIONS = ["inbench", "transfer", "ablate"]
 
 
 def esc(x):
@@ -79,29 +78,19 @@ def pm(v):
 
 
 # ---------------------------------------------------------------- traces
-def agentpoison_behaviour(model):
-    path = os.path.join(ROOT, "traces", "agentpoison__%s.jsonl" % slug(model))
-    if not os.path.exists(path):
-        return None, []
-    trs = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
-    rows = []
-    for agent, label in (("ehr", "EHRAgent (memory backdoor, target DeleteDB)"),
-                         ("qa", "StrategyQA (knowledge-base backdoor, target Finish(\"I don't know\"))")):
-        ts = [t for t in trs if t["group"].startswith("agentpoison|%s|" % agent)]
-        att = [t for t in ts if t["attack"]]
-        ev = [e for t in ts for e in t["events"]]
-        rows.append(dict(
-            agent=label, traces=len(ts), attack=len(att), benign=len(ts) - len(att),
-            followed=sum(any(e["label"] == "reject" and not e["synthetic"] for e in t["events"]) for t in att),
-            approve=sum(e["label"] == "approve" for e in ev), reject=sum(e["label"] == "reject" for e in ev),
-            synthetic=sum(e["synthetic"] for e in ev), steps=len(ev) / max(1, len(ts)),
-            invalid=sum(t.get("n_invalid", 0) for t in ts) / max(1, sum(t.get("n_invalid", 0) for t in ts) + len(ev))))
-    return trs, rows
+def load_traces(model):
+    """{bench: traces of `model`} for every benchmark with a trace file."""
+    out = {}
+    for b in BENCHES:
+        path = os.path.join(ROOT, "traces", "%s__%s.jsonl" % (b, slug(model)))
+        if os.path.exists(path):
+            out[b] = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    return out
 
 
-def leakage_rows(trs):
+def leakage_rows(by_bench):
     from src.leakage import audit
-    return [audit(trs, s) for s in range(3)] if trs else []
+    return {b: [audit(trs, s) for s in range(3)] for b, trs in by_bench.items() if trs}
 
 
 # ---------------------------------------------------------------- SVG charts
@@ -351,52 +340,19 @@ def build(model, outdir):
     mdir = os.path.join(outdir, slug(model))
     R, P = load_results(mdir)
     benches = [b for b in BENCHES if "inbench/" + b in R]
-    trs, beh = agentpoison_behaviour(model)
-    leak = leakage_rows(trs)
+    leak = leakage_rows(load_traces(model))
     models = sorted(d for d in os.listdir(outdir) if os.path.isdir(os.path.join(outdir, d)) and d not in ("llm", "legacy"))
     seeds = len(next(iter(R.values()), [])) if R else 0
     parts = []
 
-    # header + tiles
-    ap = R.get("inbench/agentpoison", [])
-    tiles = []
-    if ap:
-        tiles.append(("AgentPoison · GNN macro-F1", fmt(mean(f1(ap, "gnn"))), "tool lookup %s, MLP %s" % (fmt(mean(f1(ap, "tool-lookup"))), fmt(mean(f1(ap, "mlp"))))))
-        tiles.append(("AgentPoison · reject recall", fmt(mean(rej(ap, "gnn"))), "share of attacker actions the GNN blocks"))
-        tiles.append(("AgentPoison · attack success", "%.0f%% → %.0f%%" % (asr(ap, "gnn", "asr_undefended") * 100, asr(ap, "gnn", "asr_defended") * 100),
-                      "no guard → GNN guard, held-out tasks and triggers"))
-        tiles.append(("AgentPoison · cost", "%.0f%%" % (asr(ap, "gnn", "approve_fpr") * 100), "of legitimate actions rejected by the GNN"))
-        held = [R[k] for k in ("transfer/agentpoison:ehr->agentpoison:qa", "transfer/agentpoison:qa->agentpoison:ehr") if k in R]
-        if held:
-            tiles.append(("Unseen target action · reject recall", fmt(mean([x for r in held for x in rej(r, "gnn")])),
-                          "train on one AgentPoison agent, test on the other"))
     n_status = {}
     for v in P.values():
         n_status[v["status"]] = n_status.get(v["status"], 0) + 1
     parts.append("""<header><div class="eyebrow">gnn_trace · trace LLM %s · %d seeds · commit %s</div>
-<h1>Per-action guard results with AgentPoison</h1>
+<h1>Per-action guard results</h1>
 <p class="lede">A graph neural network reads each agent trace as a causal graph and labels every tool call as the user's
-(<em>approve</em>) or the attacker's (<em>reject</em>). AgentPoison adds backdoored retrieval: a trigger in the question
-pulls poisoned examples from EHRAgent's memory or a poisoned passage from StrategyQA's knowledge base. Scores are on
-held-out task families and held-out triggers, with no overlap between training and test (audit below). The guards are
-near perfect on AgentPoison because its target action never changes, and they fail completely once that action is
-held out too.</p></header>""" % (esc(model), seeds, esc(git_info())))
-    if tiles:
-        parts.append('<div class="tiles">%s</div>' % "".join(
-            '<div class="tile"><span class="k">%s</span><span class="v">%s</span><span class="s">%s</span></div>' % (esc(k), esc(v), esc(s))
-            for k, v, s in tiles))
-
-    # behaviour
-    if beh:
-        rows = [[esc(r["agent"]), r["traces"], "%d / %d" % (r["attack"], r["benign"]),
-                 "%.0f%% (%d of %d)" % (100 * r["followed"] / max(1, r["attack"]), r["followed"], r["attack"]),
-                 "%d / %d" % (r["approve"], r["reject"]), "%d of %d" % (r["synthetic"], r["reject"]), "%.1f" % r["steps"],
-                 "%.1f%%" % (100 * r["invalid"])] for r in beh]
-        parts.append("<section><h2>How %s behaves under AgentPoison</h2><p>Traces collected in the mock sandbox. "
-                     "<em>Backdoor followed</em> counts attack traces where the LLM itself took the target action. When it "
-                     "did not, a synthetic attacker step is appended so every attack trace has a reject example.</p>%s</section>"
-                     % (esc(model), table(["agent", "traces", "attack / benign", "backdoor followed", "approve / reject actions",
-                                           "synthetic rejects", "steps per trace", "invalid replies"], rows)))
+(<em>approve</em>) or the attacker's (<em>reject</em>), on InjecAgent and AgentDojo traces. Scores are on held-out task
+families with no task or attack shared between training and test (audit below).</p></header>""" % (esc(model), seeds, esc(git_info())))
 
     # in-benchmark
     if benches:
@@ -452,22 +408,6 @@ benchmark is never seen in training. Darker is better; empty cells are pairs tha
                                 "Cross-benchmark transfer"),
                         table(["train", "test", "GNN", "tool lookup", "MLP", "GNN ASR"], rows)))
 
-    # held-out target action
-    hk = [("transfer/agentpoison:ehr->agentpoison:qa", "EHRAgent → StrategyQA"), ("transfer/agentpoison:qa->agentpoison:ehr", "StrategyQA → EHRAgent")]
-    if ap and all(k in R for k, _ in hk):
-        settings = [("Held-out triggers (same agent)", ap)] + [(n, R[k]) for k, n in hk]
-        parts.append("""<section><h2>Does the guard catch an unseen backdoor target?</h2><p>AgentPoison has a single target
-action per agent (<code>DeleteDB</code>, <code>Finish("I don't know")</code>), shared by every trigger. With held-out
-triggers the target action is still one the guard saw in training, and every guard recognises it from the action alone:
-removing memory, observations or the injected text changes nothing (see the ablations). Training on one agent and
-testing on the other also holds out the target action. Then no guard rejects anything.</p>
-<div class="panel">%s%s</div>%s</section>"""
-                     % (legend([("s%d" % (k + 1), n) for k, (_, n) in enumerate(GUARDS[:3])]), hbars(settings),
-                        table(["setting"] + ["%s macro-F1 / reject recall" % n for _, n in GUARDS[:3]] + ["GNN ASR"],
-                              [[esc(n)] + ["%s / %s" % (fmt(mean(f1(r, g))), fmt(mean(rej(r, g)))) for g, _ in GUARDS[:3]]
-                               + ["%.0f%% → %.0f%%" % (100 * asr(r, "gnn", "asr_undefended"), 100 * asr(r, "gnn", "asr_defended"))]
-                               for n, r in settings])))
-
     # ablations
     if any(k.startswith("ablate/") for k in R):
         ab_b = [b for b in benches if "ablate/none/" + b in R]
@@ -504,25 +444,24 @@ removed (held-out tasks). Red means the model got worse without it; blue means i
             if "inbench/" + b in Rm else "<span style='color:var(--muted)'>no traces</span>" for b in BENCHES])
     if hrows:
         parts.append("<section><h2>GNN across trace LLMs</h2><p>Held-out-task macro-F1 of the GNN, tool-lookup baseline in "
-                     "brackets. Each row trains and tests on traces from one LLM. AgentPoison traces exist only for %s.</p>%s</section>"
-                     % (esc(model), table(["trace LLM"] + [BENCH_NAME[b] for b in BENCHES], hrows)))
+                     "brackets. Each row trains and tests on traces from one LLM.</p>%s</section>"
+                     % (table(["trace LLM"] + [BENCH_NAME[b] for b in BENCHES], hrows)))
 
     # leakage
     if leak:
-        keys = list(leak[0]["overlaps"])
-        nice = {"task_groups": "task families", "attack_ids": "attack ids (agent|trigger)", "trigger_tokens": "trigger words",
-                "poison_texts": "poisoned passages / rationale", "questions": "user questions",
-                "test_question_in_train_memory": "test questions in training memory"}
-        rows = [[nice.get(k, k)] + [('<span class="pill ok">0</span>' if r["overlaps"][k] == 0 else
-                                     '<span class="pill bad">%d</span>' % r["overlaps"][k]) for r in leak] for k in keys]
-        rows.append(["train / test traces (attack traces)"] + ["%d / %d (%d / %d)" % (r["train"], r["test"], r["train_attacks"], r["test_attacks"]) for r in leak])
-        ok = all(not any(r["overlaps"].values()) for r in leak)
-        parts.append("""<section><h2>Leakage audit on the collected AgentPoison traces</h2><p>%s Each row counts items shared by
-the training and test side of the held-out-task split used above, for each seed. The same checks run in
-<code>pytest</code>, along with: triggers share no words with each other or with the data, benign and attacked tasks have
-the same structure, and the graph ignores label-bearing trace fields.</p>%s</section>"""
-                     % ("Nothing is shared between training and test." if ok else "Overlaps found, see the table.",
-                        table(["shared between train and test"] + ["seed %d" % r["seed"] for r in leak], rows)))
+        nice = {"task_groups": "task families", "attack_ids": "attack ids", "injected_texts": "injected texts",
+                "questions": "user tasks"}
+        ok = all(not any(r["overlaps"].values()) for rs in leak.values() for r in rs)
+        tables = []
+        for b, rs in leak.items():
+            rows = [[nice.get(k, k)] + [('<span class="pill ok">0</span>' if r["overlaps"][k] == 0 else
+                                         '<span class="pill bad">%d</span>' % r["overlaps"][k]) for r in rs] for k in rs[0]["overlaps"]]
+            rows.append(["train / test traces (attack traces)"] + ["%d / %d (%d / %d)" % (r["train"], r["test"], r["train_attacks"], r["test_attacks"]) for r in rs])
+            tables.append("<h3>%s</h3>%s" % (BENCH_NAME[b], table(["shared between train and test"] + ["seed %d" % r["seed"] for r in rs], rows)))
+        parts.append("""<section><h2>Leakage audit on the collected traces</h2><p>%s Each row counts items shared by the
+training and test side of the held-out-task split used above, for each seed. The same checks run in
+<code>pytest</code>.</p>%s</section>"""
+                     % ("Nothing is shared between training and test." if ok else "Overlaps found, see the tables.", "".join(tables)))
 
     # provenance
     if P:
@@ -536,20 +475,12 @@ the same structure, and the graph ignores label-bearing trace fields.</p>%s</sec
                          "<code>%s</code>" % esc(v["fp"][:12])])
         n_tr = sum(origin(v) == "trained" for v in P.values())
         parts.append("""<section><h2>Which results were trained for this report</h2><p>%d of %d result cells for %s were
-trained for AgentPoison. The other %d come from the earlier runs. Their inputs are unchanged: the fingerprint over the
-training code, seeds, epochs and every train and test graph matches, and graph building was checked to give identical
-tensors for the old traces before and after the AgentPoison changes. So they were not retrained. The other trace LLMs
-retrained nothing.</p><details><summary>All %d cells</summary>%s</details></section>"""
+trained in the latest run. The other %d were reused: their fingerprint over the training code, seeds, epochs and every
+train and test graph matches a stored result.</p><details><summary>All %d cells</summary>%s</details></section>"""
                      % (n_tr, len(P), esc(model), len(P) - n_tr, len(P),
                         table(["cell", "origin", "train time", "fingerprint"], rows)))
 
     parts.append("""<section><h2>Reading these numbers</h2><ul class="notes">
-<li>EHRAgent's target action, <code>DeleteDB</code>, is an attacker-only tool, so the tool-lookup baseline does well on
-that half. StrategyQA's target is <code>Finish("I don't know")</code>, the same tool the benign task ends with.</li>
-<li>The AgentPoison in-benchmark scores measure recognising a known target action. The held-out-target rows are the
-ones to quote for an unseen backdoor.</li>
-<li>The 80 triggers are fixed stand-ins (<em>Verb the adjective noun.</em>). AgentPoison optimises its triggers against a
-specific retriever and publishes none. Retrieval uses token overlap in place of DPR.</li>
 <li>When the LLM does not attack by itself, a synthetic attacker step is appended at the end of the trace, so attack
 traces always end with a reject. The real-only scores in <code>results/REPORT.md</code> leave those steps out.</li>
 <li>Numbers are means over %d seeds. With a few hundred traces per benchmark, differences under about 0.05 are within noise.</li>
@@ -557,7 +488,7 @@ traces always end with a reject. The real-only scores in <code>results/REPORT.md
     parts.append('<footer>Generated %s by <code>scripts/report_page.py</code> from <code>%s</code> and <code>traces/</code>.</footer>'
                  % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), esc(os.path.relpath(mdir, ROOT))))
 
-    return """<title>gnn_trace AgentPoison Results</title>
+    return """<title>gnn_trace Guard Results</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">

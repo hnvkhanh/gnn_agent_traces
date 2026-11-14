@@ -1,11 +1,4 @@
 {
- "transfer/agentdojo->asb": {
-  "fp": "8178bcd25dc94fec801fb7e655ac0ca7b8ae6e4680775c47073558221bb929f9",
-  "origin": "legacy",
-  "source": "results/mistral_7b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:03:09"
- },
  "transfer/agentdojo->injecagent": {
   "fp": "35d35d3fb2640bd5bcd6023fabe2aac07a7973f6a6b2d21a0fe6b108e1b6475b",
   "origin": "legacy",
@@ -13,50 +6,8 @@
   "status": "reused",
   "time": "2026-11-09T14:03:09"
  },
- "transfer/asb+agentdojo->injecagent": {
-  "fp": "32ce96e8fb915d34d68285fb5b174d325d7ae88e24cb4809498fd778f798a432",
-  "origin": "legacy",
-  "source": "results/mistral_7b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:03:09"
- },
- "transfer/asb+injecagent->agentdojo": {
-  "fp": "bb4eb56cab9e117b2fb16c0ef582a5f2db4896dae42eb1be1ec790305b585323",
-  "origin": "legacy",
-  "source": "results/mistral_7b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:03:09"
- },
- "transfer/asb->agentdojo": {
-  "fp": "8112fe009d13b6a477d1f5af241818234e335ea104343422e2f07bd7205b1254",
-  "origin": "legacy",
-  "source": "results/mistral_7b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:03:09"
- },
- "transfer/asb->injecagent": {
-  "fp": "3e17c0eaa21942c0e345764b8d7876027e9b55b1484aeb5f1209e39d5e7e7b98",
-  "origin": "legacy",
-  "source": "results/mistral_7b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:03:09"
- },
- "transfer/injecagent+agentdojo->asb": {
-  "fp": "4b8a0ea6dc840ba819b46f0f1977320550c9ab29f0be8365d620ca0c5ca8cd79",
-  "origin": "legacy",
-  "source": "results/mistral_7b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:03:09"
- },
  "transfer/injecagent->agentdojo": {
   "fp": "9517a6e2c948e87463ae742b6073294b627d147863af6bdca61dcac87a301a66",
-  "origin": "legacy",
-  "source": "results/mistral_7b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:03:09"
- },
- "transfer/injecagent->asb": {
-  "fp": "194f0650ec0d0435a42473b866925ea8c6845f36dbaf13450727d979c297ab83",
   "origin": "legacy",
   "source": "results/mistral_7b/experiments_transfer.json",
   "status": "reused",

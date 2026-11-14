@@ -1,11 +1,4 @@
 {
- "transfer/agentdojo->asb": {
-  "fp": "89fea14d5c21a6a5aca10c629a54e40454c04223c63288a476b822d6e375674c",
-  "origin": "legacy",
-  "source": "results/gemma2_9b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:40:48"
- },
  "transfer/agentdojo->injecagent": {
   "fp": "020ad622b2352033b4f48900329d022fbd001ee04324e4a985be8c42d0caed30",
   "origin": "legacy",
@@ -13,50 +6,8 @@
   "status": "reused",
   "time": "2026-11-09T13:40:48"
  },
- "transfer/asb+agentdojo->injecagent": {
-  "fp": "ba4d1a33252011c71d9adf320455cd1afcc95fde5eef13e498aaa61985e573a8",
-  "origin": "legacy",
-  "source": "results/gemma2_9b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:40:48"
- },
- "transfer/asb+injecagent->agentdojo": {
-  "fp": "77202435ed3666897538fd08a6554b2454eb81c879bf374b68042608b742de8f",
-  "origin": "legacy",
-  "source": "results/gemma2_9b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:40:48"
- },
- "transfer/asb->agentdojo": {
-  "fp": "cc3f3f12f045372304bf9d59acb4d517fd90047a126a7370ca8dc68d00559aa5",
-  "origin": "legacy",
-  "source": "results/gemma2_9b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:40:48"
- },
- "transfer/asb->injecagent": {
-  "fp": "27b9736b5786b74adaaa92b9c2823add4e9ca08c593eca3ca21ac1e6b6f2becd",
-  "origin": "legacy",
-  "source": "results/gemma2_9b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:40:48"
- },
- "transfer/injecagent+agentdojo->asb": {
-  "fp": "3af0142f619ca1a26e7fba8baf13d65e34a470c9fa839e7e2838e9481dc44d63",
-  "origin": "legacy",
-  "source": "results/gemma2_9b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:40:48"
- },
  "transfer/injecagent->agentdojo": {
   "fp": "6c102872d9443609ec8523afe53148872afa65fd158dcb41d95d87a057de1e83",
-  "origin": "legacy",
-  "source": "results/gemma2_9b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:40:48"
- },
- "transfer/injecagent->asb": {
-  "fp": "e16fa8d22286ead0d6145302cc36590267f5639841ebb049a9814f773741af65",
   "origin": "legacy",
   "source": "results/gemma2_9b/experiments_transfer.json",
   "status": "reused",

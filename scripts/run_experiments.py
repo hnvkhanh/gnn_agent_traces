@@ -7,7 +7,7 @@
 Result cells are reused when their inputs are unchanged (src/cache.py: a fingerprint over the training code, seeds,
 epochs and every train/test graph), so only new or stale cells are trained; --no-reuse recomputes everything.
 --adopt-legacy accepts cells written before fingerprints existed if their results file is newer than their inputs.
-Each model runs one job per section (inbench, transfer, shifts, ablate) so sections spread over the devices.
+Each model runs one job per section (inbench, transfer, ablate) so sections spread over the devices.
 
 Steps run in parallel, one per device. `--devices auto` (default) uses every CUDA GPU, else the CPU
 (also on macOS, where MPS is opt-in):
@@ -42,7 +42,7 @@ sys.path.insert(0, ROOT)
 
 from src.experiments import BENCHES, stat, table  # noqa: E402
 
-BENCH_SECTIONS = ["inbench", "transfer", "shifts", "ablate"]
+BENCH_SECTIONS = ["inbench", "transfer", "ablate"]
 ALL_SECTIONS = BENCH_SECTIONS + ["llm"]
 README_START, README_END = "<!-- results:start -->", "<!-- results:end -->"
 
@@ -371,7 +371,7 @@ def main():
 
     take_lock(a.force)
     # heaviest sections first, so with several devices they start at once on different GPUs
-    bench = [s for s in ["ablate", "transfer", "inbench", "shifts"] if s in a.sections]
+    bench = [s for s in ["ablate", "transfer", "inbench"] if s in a.sections]
     onlys = bench
     common = ["--seeds", str(a.seeds), "--epochs", str(a.epochs)]
     common += ["--no-reuse"] if a.no_reuse else []

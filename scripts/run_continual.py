@@ -5,7 +5,7 @@
     python scripts/run_continual.py --report-only          # rebuild the report from stored cells, no training
     python scripts/run_continual.py --devices cpu --jobs 4 # CPU only
 
-Stream: asb, injecagent, agentdojo, qwen2.5:1.5b traces only (AgentPoison excluded), all 6 orders. Strategies: finetune,
+Stream: injecagent, agentdojo, qwen2.5:1.5b traces only, both orders. Strategies: finetune,
 joint, ewc, mas, lwf, agem, twp, ergnn, replay (src/continual/strategies.py).
 
 Phases:

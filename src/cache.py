@@ -1,6 +1,6 @@
 """Reuse experiment results whose inputs have not changed.
 
-A result cell (e.g. 'inbench/asb', 'transfer/asb->injecagent', 'ablate/memory/asb') is a list of runs, one per seed.
+A result cell (e.g. 'inbench/agentdojo', 'transfer/agentdojo->injecagent', 'ablate/memory/agentdojo') is a list of runs, one per seed.
 Its fingerprint is a sha256 over
   * the training code that decides the numbers (src/train.py, src/eval.py, src/model/gnn.py, src/sandbox/policy.py,
     line endings normalised),
@@ -71,8 +71,6 @@ def benches_of(key):
     if kind == "transfer":
         src, _, tgt = rest.partition("->")
         return [b.split(":")[0] for b in src.split("+") + [tgt]]
-    if kind == "shift":
-        return ["asb"]
     return []
 
 

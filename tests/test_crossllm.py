@@ -62,7 +62,7 @@ def test_llm_name_is_not_a_graph_feature():
     import json
     from src.graph.build import trace_to_graph
     from src.cache import graph_digest
-    tr = {"benchmark": "asb", "trace_id": "x|m1|0", "model": "m1", "agent": "ag", "group": "g", "task": "t", "user_task": "t",
+    tr = {"benchmark": "injecagent", "trace_id": "x|m1|0", "model": "m1", "agent": "ag", "group": "g", "task": "t", "user_task": "t",
           "memory": ["m"], "injected": "", "attack": None, "tools": [{"name": "T", "description": "d"}],
           "events": [{"tool": "T", "args": {"q": "1"}, "observation": "o", "step": 0, "label": "approve", "synthetic": False}]}
     other = json.loads(json.dumps(tr))
@@ -74,7 +74,7 @@ def test_predict_many_slices_targets_and_trains_once():
     from src.graph.build import meta_of, trace_to_graph
 
     def trace(i, label, attack):
-        return {"benchmark": "asb", "trace_id": str(i), "model": "m", "agent": "ag", "group": "g%d" % i, "task": "t", "user_task": "t%d" % i,
+        return {"benchmark": "injecagent", "trace_id": str(i), "model": "m", "agent": "ag", "group": "g%d" % i, "task": "t", "user_task": "t%d" % i,
                 "memory": [], "injected": "do X" if attack else "", "attack": {"mode": "opi", "style": "s", "tool": "X"} if attack else None,
                 "tools": [{"name": "T", "description": "d"}, {"name": "X", "description": "x"}],
                 "events": [{"tool": "X" if attack else "T", "args": {}, "observation": "o", "step": 0, "label": label, "synthetic": False}]}

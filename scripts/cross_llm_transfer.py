@@ -9,9 +9,9 @@ Leakage and confound controls are described in src/crossllm.py and listed in the
   python scripts/cross_llm_transfer.py                          # 3 seeds, 60 epochs, every GPU in parallel (one worker per GPU)
   python scripts/cross_llm_transfer.py --seeds 5 --epochs 80
   python scripts/cross_llm_transfer.py --devices cuda:0,cuda:1  # explicit devices; --devices cpu for CPU
-  python scripts/cross_llm_transfer.py --llms qwen2.5:7b,llama3.1:8b,gemma2:9b --benches asb,injecagent
+  python scripts/cross_llm_transfer.py --llms qwen2.5:7b,llama3.1:8b,gemma2:9b --benches injecagent,agentdojo
   python scripts/cross_llm_transfer.py --report-only            # rebuild the report from stored cells (no training)
-  python scripts/cross_llm_transfer.py --seeds 1 --epochs 2 --benches asb --outdir /tmp/xllm_smoke   # quick smoke run
+  python scripts/cross_llm_transfer.py --seeds 1 --epochs 2 --benches agentdojo --outdir /tmp/xllm_smoke   # quick smoke run
 
 Result cells are fingerprinted (src/cache.py): cells whose training code, seeds, epochs and train/test graphs are unchanged are
 reused, so re-running only trains what is new or stale (--no-reuse recomputes everything). The script never calls an LLM.
@@ -33,7 +33,7 @@ sys.path.insert(0, ROOT)
 
 import numpy as np  # noqa: E402
 
-DEFAULT_BENCHES = ["asb", "injecagent", "agentdojo"]
+DEFAULT_BENCHES = ["injecagent", "agentdojo"]
 SHOW = ("gnn", "mlp", "tool-lookup", "majority")
 
 

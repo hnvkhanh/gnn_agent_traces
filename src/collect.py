@@ -8,11 +8,10 @@ import json
 import os
 
 from .llm.ollama_client import HOST, OllamaChat, list_models
-from .benchmarks import agentdojo, agentpoison, asb, injecagent
+from .benchmarks import agentdojo, injecagent
 from .sandbox.env import run_scenario
 
-BENCH = {"asb": (asb.scenarios, "data/asb"), "injecagent": (injecagent.scenarios, "data/injecagent"),
-         "agentdojo": (agentdojo.scenarios, "data/agentdojo"), "agentpoison": (agentpoison.scenarios, "data/agentpoison")}
+BENCH = {"injecagent": (injecagent.scenarios, "data/injecagent"), "agentdojo": (agentdojo.scenarios, "data/agentdojo")}
 
 
 def trace_ids(path):
@@ -23,7 +22,7 @@ def trace_ids(path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--bench", choices=list(BENCH), default="asb")
+    ap.add_argument("--bench", choices=list(BENCH), default="injecagent")
     ap.add_argument("--n", type=int, default=100)
     ap.add_argument("--model", default=None, help="default: first locally installed ollama model")
     ap.add_argument("--out", default=None)

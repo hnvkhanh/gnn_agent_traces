@@ -6,13 +6,6 @@
   "status": "reused",
   "time": "2026-11-09T14:45:41"
  },
- "inbench/asb": {
-  "fp": "052fef0394df7122f6afcd863f68d1957ce1294009dce5a81da72f45093ce8b1",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_inbench.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
  "inbench/injecagent": {
   "fp": "ab7403b51b511fb6097524ed5cacb804b27c755b348e9626fe464d7f9183329c",
   "origin": "legacy",

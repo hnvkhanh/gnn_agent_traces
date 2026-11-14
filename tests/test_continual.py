@@ -46,8 +46,8 @@ def tiny(exps, n_tr=16, n_te=8, seed=0):
 
 
 # ---------------------------------------------------------------- C6: the right traces, and only those
-def test_stream_is_qwen_1_5b_without_agentpoison(exps):
-    assert list(exps) == ["asb", "injecagent", "agentdojo"] and "agentpoison" not in S.BENCHES
+def test_stream_is_qwen_1_5b_injecagent_agentdojo(exps):
+    assert list(exps) == ["injecagent", "agentdojo"] == S.BENCHES
     for b, e in exps.items():
         assert len(e) > 100
         assert {m["model"] for m in e.metas} == {"qwen2.5:1.5b"}
@@ -87,8 +87,8 @@ def test_benchmarks_share_no_groups_or_attacks(exps):
 
 def test_check_raises_on_a_leaky_split(exps):
     sp = S.splits(exps, 0)
-    tr, te = sp["asb"]
-    leaky = dict(sp, asb=(tr + te[:1], te))
+    tr, te = sp["injecagent"]
+    leaky = dict(sp, injecagent=(tr + te[:1], te))
     with pytest.raises(AssertionError):
         S.check(exps, leaky)
 
@@ -113,7 +113,7 @@ def test_every_strategy_runs_and_scores_every_benchmark(exps):
     ex, sp = tiny(exps)
     for s in STRATEGIES:
         rec = RUN.run_cell(ex, sp, S.CANONICAL, s, HP.get(s, {}), 6, 0, 1)
-        assert set(rec["R"]) == {"init", "0", "1", "2"}
+        assert set(rec["R"]) == {"init"} | {str(k) for k in range(len(S.CANONICAL))}
         for row in rec["R"].values():
             assert set(row) == set(S.BENCHES)
             for cell in row.values():
@@ -141,11 +141,11 @@ def test_joint_trains_on_exactly_the_union_so_far(exps):
     ex, sp = tiny(exps)
     rec = RUN.run_cell(ex, sp, S.CANONICAL, "joint", {}, 0, 0, 1)
     sizes = [len(sp[b][0]) for b in S.CANONICAL]
-    assert [st["trained_graphs"] for st in rec["steps"]] == [sum(sizes[: k + 1]) for k in range(3)]
+    assert [st["trained_graphs"] for st in rec["steps"]] == [sum(sizes[: k + 1]) for k in range(len(sizes))]
     strat = make("joint", {}, 0, 0, lambda: HeteroGNN(8))
     cur = [ex["agentdojo"].graphs[i] for i in sp["agentdojo"][0]]
-    past = [[ex[b].graphs[i] for i in sp[b][0]] for b in ("asb", "injecagent")]
-    _, graphs = strat.start(2, HeteroGNN(8), cur, past)
+    past = [[ex[b].graphs[i] for i in sp[b][0]] for b in ("injecagent",)]
+    _, graphs = strat.start(1, HeteroGNN(8), cur, past)
     assert [id(g) for g in graphs] == [id(g) for p in past for g in p] + [id(g) for g in cur]
 
 
@@ -154,9 +154,9 @@ def test_penalty_is_zero_at_the_anchor_and_grows_away_from_it(exps, name):
     ex, sp = tiny(exps)
     torch.manual_seed(0)
     model = HeteroGNN(64)
-    graphs = [ex["asb"].graphs[i] for i in sp["asb"][0]]
+    graphs = [ex["injecagent"].graphs[i] for i in sp["injecagent"][0]]
     strat = make(name, HP[name], 0, 0, None)
-    strat.end(0, model, graphs, [("asb", ex["asb"].ids[i]) for i in sp["asb"][0]], torch.ones(2))
+    strat.end(0, model, graphs, [("injecagent", ex["injecagent"].ids[i]) for i in sp["injecagent"][0]], torch.ones(2))
     assert float(strat.penalty(model)) == 0.0
     assert any(float(i.sum()) > 0 for i in strat.terms[0][0])
     with torch.no_grad():
@@ -170,15 +170,15 @@ def test_agem_gradient_never_conflicts_with_memory(exps):
     torch.manual_seed(0)
     model = HeteroGNN(64).eval()  # no dropout, so the reference gradient can be recomputed exactly
     strat = make("agem", {}, 4, 0, None)
-    asb = [ex["asb"].graphs[i] for i in sp["asb"][0]]
-    strat.end(0, model, asb, [("asb", ex["asb"].ids[i]) for i in sp["asb"][0]], torch.ones(2))
+    first = [ex["injecagent"].graphs[i] for i in sp["injecagent"][0]]
+    strat.end(0, model, first, [("injecagent", ex["injecagent"].ids[i]) for i in sp["injecagent"][0]], torch.ones(2))
     w = torch.ones(2)
     mem = [x[2] for x in strat.mem]
     model.zero_grad()
     b = next(batches(mem))
     torch.nn.functional.cross_entropy(model(b), b["action"].y, weight=w).backward()
     ref = flat_grad(model)
-    for bench in ("injecagent", "agentdojo"):
+    for bench in ("agentdojo",):
         cur = next(batches([ex[bench].graphs[i] for i in sp[bench][0]], 8))
         model.zero_grad()
         torch.nn.functional.cross_entropy(model(cur), cur["action"].y, weight=w).backward()
@@ -192,7 +192,7 @@ def test_lwf_distillation_is_zero_against_itself(exps):
     model = HeteroGNN(64).eval()
     strat = make("lwf", {"alpha": 1.0}, 0, 0, None)
     strat.start(1, model, [], [])
-    b = next(batches([ex["asb"].graphs[i] for i in sp["asb"][0]], 8))
+    b = next(batches([ex["injecagent"].graphs[i] for i in sp["injecagent"][0]], 8))
     assert abs(float(strat.distill(model, b, model(b)))) < 1e-6
 
 
@@ -261,10 +261,10 @@ def test_fingerprint_tracks_seed_hparams_and_data(exps, tmp_path):
     assert pl.cell(out, "main", "replay", S.CANONICAL, 0, {}, 50)["fp"] != pl.cell(out, "main", "replay", S.CANONICAL, 0, {}, 20)["fp"]
     # one changed tensor in one training graph changes the data digest
     changed = {b: S.Experience(b, list(e.graphs), e.metas, e.ids, e.tasks) for b, e in exps.items()}
-    i = S.splits(exps, 0)["asb"][0][0]
-    g = copy.deepcopy(changed["asb"].graphs[i])
+    i = S.splits(exps, 0)["injecagent"][0][0]
+    g = copy.deepcopy(changed["injecagent"].graphs[i])
     g["action"].x[0, 0] += 1.0
-    changed["asb"].graphs[i] = g
+    changed["injecagent"].graphs[i] = g
     assert RUN.Planner(changed, epochs=1, device_type="cpu").cell(out, "main", "ewc", S.CANONICAL, 0, {"lam": 10.0}, 50)["fp"] != a["fp"]
 
 
@@ -289,7 +289,7 @@ def test_run_continual_end_to_end_then_reused(tmp_path):
     env = dict(os.environ, OMP_NUM_THREADS="2", MKL_NUM_THREADS="2", PYTHONIOENCODING="utf-8")
     first = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True, encoding="utf-8", timeout=900)
     assert first.returncode == 0, first.stdout[-3000:] + first.stderr[-3000:]
-    assert "16 planned: 0 reused, 16 computed, 0 missing" in first.stdout  # 4 lwf tuning + 6 finetune + 6 lwf
+    assert "8 planned: 0 reused, 8 computed, 0 missing" in first.stdout  # 4 lwf tuning + 2 finetune + 2 lwf
     for name in ("REPORT.md", "report.html", "continual.json", "hparams.json"):
         assert os.path.exists(os.path.join(out, name)), name
     md = open(os.path.join(out, "REPORT.md"), encoding="utf-8").read()
@@ -299,5 +299,5 @@ def test_run_continual_end_to_end_then_reused(tmp_path):
     assert data["audit"]["buffer_in_test"] == 0 and data["audit"]["joint_bad"] == 0
     second = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True, encoding="utf-8", timeout=900)
     assert second.returncode == 0, second.stdout[-3000:]
-    assert "16 planned: 16 reused, 0 computed, 0 missing" in second.stdout
+    assert "8 planned: 8 reused, 0 computed, 0 missing" in second.stdout
     assert not os.path.exists(os.path.join(out, ".lock"))

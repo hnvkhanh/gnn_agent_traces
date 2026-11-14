@@ -1,11 +1,4 @@
 {
- "transfer/agentdojo->asb": {
-  "fp": "fc92fac7f9998effa83fdcaf38843d7d6276ebae7912a656bd203ef11ee19caa",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
  "transfer/agentdojo->injecagent": {
   "fp": "1ba2874bdb5b0f1f3962c32fdc76332c8cbcd665b88162272f49aaa758ccf598",
   "origin": "legacy",
@@ -13,50 +6,8 @@
   "status": "reused",
   "time": "2026-11-09T14:45:41"
  },
- "transfer/asb+agentdojo->injecagent": {
-  "fp": "9bdd58c82d3f0f443ece27caf5609b4c8ab123fd384c1e3e3ea644aa7b6cb23f",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
- "transfer/asb+injecagent->agentdojo": {
-  "fp": "6da14c6de0d7b7db90abba18649e942aa68213fa3942e3c3cb239abd4877ee15",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
- "transfer/asb->agentdojo": {
-  "fp": "853546c13c82352edf3fd5f8a36888bc55811a1be86e40bb86a0e31c15f88945",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
- "transfer/asb->injecagent": {
-  "fp": "9c8d6f9bec43a22f4d9d27cad5dc5ceb843d455ee85c97da3171bfa5d59f8f97",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
- "transfer/injecagent+agentdojo->asb": {
-  "fp": "cc672057befac102eb21e0f4b1ec855b0c5254e2109208c1cb8ae5f11c88cdc3",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
  "transfer/injecagent->agentdojo": {
   "fp": "3be775a1a663862496b5c942fa41cbc67e268cf1fdce5d7e07bd3730d56d4e3c",
-  "origin": "legacy",
-  "source": "results/qwen2.5_14b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T14:45:41"
- },
- "transfer/injecagent->asb": {
-  "fp": "2a66c648904a53331bb0e4fdce936868e243f1c775ca6f1b2d84dbb94a1391f0",
   "origin": "legacy",
   "source": "results/qwen2.5_14b/experiments_transfer.json",
   "status": "reused",

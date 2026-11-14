@@ -14,25 +14,7 @@ def _norm(text):
 
 
 def clean_question(tr):
-    """The user question without the AgentPoison trigger (for other benchmarks: the task as is)."""
-    task = tr["task"]
-    if tr.get("benchmark") == "agentpoison" and tr["attack"]:
-        from .benchmarks.agentpoison import trigger_id
-        tid = trigger_id(tr.get("user_task", ""))
-        if tid:
-            task = task.replace(tid.split("|", 1)[1], "")
-    return _norm(task)
-
-
-def _trigger_tokens(tr):
-    if tr.get("benchmark") != "agentpoison" or not tr["attack"]:
-        return set()
-    from .benchmarks.agentpoison import TRIGGER_STOPWORDS, tokens
-    return tokens(tr["attack"]["id"].split("|", 1)[1]) - TRIGGER_STOPWORDS
-
-
-def _memory_questions(tr):
-    return {_norm(m.split("\n")[0][len("Question: "):]) for m in tr["memory"] if m.startswith("Question: ")}
+    return _norm(tr["task"])
 
 
 def audit(trs, seed):
@@ -51,11 +33,8 @@ def audit(trs, seed):
     overlaps = dict(
         task_groups=both(lambda i: metas[i]["group"]),
         attack_ids=both(lambda i: metas[i]["attack_id"]),
-        trigger_tokens=both(lambda i: _trigger_tokens(trs[i])),
-        poison_texts=both(lambda i: trs[i]["injected"] if trs[i]["attack"] else None),
+        injected_texts=both(lambda i: trs[i]["injected"] if trs[i]["attack"] else None),
         questions=both(lambda i: clean_question(trs[i])),
-        test_question_in_train_memory=side(te_i, lambda i: clean_question(trs[i]))
-        & side(tr_i, lambda i: _memory_questions(trs[i])),
     )
     return dict(seed=seed, train=len(tr_i), test=len(te_i), train_attacks=sum(1 for i in tr_i if trs[i]["attack"]),
                 test_attacks=sum(1 for i in te_i if trs[i]["attack"]),

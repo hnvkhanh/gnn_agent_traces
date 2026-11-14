@@ -1,7 +1,7 @@
 """Generate traces with Ollama for every LLM x benchmark (the only step that calls an LLM).
 
     python scripts/collect_traces.py                                  # default models, 200 scenarios per benchmark
-    python scripts/collect_traces.py --models qwen2.5:7b --benches asb --n 50
+    python scripts/collect_traces.py --models qwen2.5:7b --benches injecagent --n 50
     python scripts/collect_traces.py --dry-run                        # print the commands only
 
 Each pair runs `python -m src.collect` and writes traces/<bench>__<model_slug>.jsonl, logging to
@@ -9,7 +9,7 @@ traces/<bench>__<model_slug>.log. Collection is resumable: trace IDs already in 
 so re-running after an interruption continues where it stopped. Progress goes to traces/collect.status.
 
 Several GPUs in parallel (--gpus):
-    python scripts/collect_traces.py --models qwen2.5:1.5b --benches agentpoison --n 400 --gpus 0,1 --workers-per-gpu 4
+    python scripts/collect_traces.py --models qwen2.5:1.5b --benches agentdojo --n 400 --gpus 0,1 --workers-per-gpu 4
 starts one private `ollama serve` per GPU (CUDA_VISIBLE_DEVICES=<gpu>, port --port-base + k, OLLAMA_NUM_PARALLEL =
 workers, model store --ollama-models, default ~/.ollama/models, pulled once if missing) and runs gpus x workers shards of
 `src.collect` at once (scenario i goes to shard i % K, shard j to GPU j % gpus). Shards write traces/.shards/ and are
@@ -27,7 +27,7 @@ import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS = ["qwen2.5:1.5b", "qwen2.5:7b", "qwen2.5:14b", "llama3.1:8b", "gemma2:9b"]
-BENCHES = ["asb", "injecagent", "agentdojo", "agentpoison"]
+BENCHES = ["injecagent", "agentdojo"]
 SHARD_DIR = os.path.join(ROOT, "traces", ".shards")
 
 

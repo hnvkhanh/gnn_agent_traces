@@ -6,7 +6,7 @@ R[step][bench] = scores on every benchmark's test set (validation set in tune mo
 the exact train/test graphs and the config. A stored cell whose fingerprint matches is reused, never retrained.
 
     python -m src.continual.run --strategy ewc --mode tune               # grid on the validation stream (seed 0)
-    python -m src.continual.run --strategy ewc --seeds 0,1,2             # all 6 orders x seeds, hparams.json lambda
+    python -m src.continual.run --strategy ewc --seeds 0,1,2             # all orders x seeds, hparams.json lambda
 Normally scripts/run_continual.py runs these jobs (both GPUs) and writes the report.
 """
 import argparse

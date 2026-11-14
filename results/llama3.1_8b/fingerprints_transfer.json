@@ -1,11 +1,4 @@
 {
- "transfer/agentdojo->asb": {
-  "fp": "b02049d776deb112f12941f07084e054c288f13e2f13b0400dc8de5b4a7181ba",
-  "origin": "legacy",
-  "source": "results/llama3.1_8b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:51:57"
- },
  "transfer/agentdojo->injecagent": {
   "fp": "7c2f7597c07ce10a88c16780c941c7e0edc37c59d6f5c36486c5d5c12bcc1658",
   "origin": "legacy",
@@ -13,50 +6,8 @@
   "status": "reused",
   "time": "2026-11-09T13:51:57"
  },
- "transfer/asb+agentdojo->injecagent": {
-  "fp": "62e12067b8f07f099bd69c03c9e24606b2ed10226e63ca87f6e08685c2d363da",
-  "origin": "legacy",
-  "source": "results/llama3.1_8b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:51:57"
- },
- "transfer/asb+injecagent->agentdojo": {
-  "fp": "0e62e2100715d80d843c967be66c176394297f6c7a39a515547428443956f867",
-  "origin": "legacy",
-  "source": "results/llama3.1_8b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:51:57"
- },
- "transfer/asb->agentdojo": {
-  "fp": "68e71c4ac1a1ec18dd8bf7d9faa6895df73737378092ecc9a949be3621bce506",
-  "origin": "legacy",
-  "source": "results/llama3.1_8b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:51:57"
- },
- "transfer/asb->injecagent": {
-  "fp": "7ec3ff2f62fc31aecbd14680a63b21cdca95fe2e0c0aa5cc99c912c316214642",
-  "origin": "legacy",
-  "source": "results/llama3.1_8b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:51:57"
- },
- "transfer/injecagent+agentdojo->asb": {
-  "fp": "682791859d6b32a2f8de4b425814eadf8a8c6c7f11f025b36ba14ed0e0fe2cab",
-  "origin": "legacy",
-  "source": "results/llama3.1_8b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:51:57"
- },
  "transfer/injecagent->agentdojo": {
   "fp": "af3f826053f822f6e38d3353b6210c1250127bb08dd22e2ab9321898efc80685",
-  "origin": "legacy",
-  "source": "results/llama3.1_8b/experiments_transfer.json",
-  "status": "reused",
-  "time": "2026-11-09T13:51:57"
- },
- "transfer/injecagent->asb": {
-  "fp": "abd9e8e81cdc0c040b123c720d5ec5e203e4aaf140626e5503ebe2fb7d0b16e9",
   "origin": "legacy",
   "source": "results/llama3.1_8b/experiments_transfer.json",
   "status": "reused",

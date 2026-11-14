@@ -26,9 +26,9 @@ per round), confident (the most confident traces, same number), oracle (every po
 confident / oracle controls run with --control-strategy only.
 
 Usage:
-  python scripts/unsure_continual.py --bench asb --models gnn mlp --seeds 0 1 2
-  python scripts/unsure_continual.py --bench asb --devices cuda:0,cuda:1      # seeds run in parallel on both GPUs
-  python scripts/unsure_continual.py --bench asb --report-only                # rebuild report from stored cells
+  python scripts/unsure_continual.py --bench agentdojo --models gnn mlp --seeds 0 1 2
+  python scripts/unsure_continual.py --bench agentdojo --devices cuda:0,cuda:1      # seeds run in parallel on both GPUs
+  python scripts/unsure_continual.py --bench agentdojo --report-only                # rebuild report from stored cells
 
 Cells are stored in <outdir>/cells and reused when their fingerprint (code, trace file, arguments) still matches.
 Writes REPORT.md, report.html and unsure_cl.json to <outdir> (default results/confidence/unsure_cl_<bench>_<split>).
@@ -572,7 +572,7 @@ def devices_from(spec):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--bench", help="asb|injecagent|agentdojo (sets --traces to traces/<bench>__<model>.jsonl)")
+    ap.add_argument("--bench", help="injecagent|agentdojo (sets --traces to traces/<bench>__<model>.jsonl)")
     ap.add_argument("--llm", default="qwen2.5:1.5b", help="trace LLM, used with --bench")
     ap.add_argument("--traces", help="trace glob, overrides --bench")
     ap.add_argument("--split", default="task", choices=["task", "style", "agent", "mode", "category", "benchmark"])

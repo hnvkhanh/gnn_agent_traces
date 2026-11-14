@@ -135,7 +135,7 @@ HEAD = ["strategy", "AP macro-F1 ↑", "AF ↓", "BWT", "FWT", "AP real-only ↑
 def markdown(d):
     p, a = d["provenance"], d["audit"]
     md = ["# Continual graph learning report", "",
-          "The HeteroGNN guard is trained on one benchmark after another (%s traces only, AgentPoison excluded) and "
+          "The HeteroGNN guard is trained on one benchmark after another (%s traces only) and "
           "re-tested on every benchmark after each stage. Domain-incremental: one head, labels approve/reject." % p["model"],
           "", "| | |", "|---|---|"]
     for k in ("date", "git commit", "python / torch", "devices / parallel jobs", "seeds / epochs per experience",
@@ -359,8 +359,8 @@ def page(d):
     H = d["headline"]
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
              "<title>Continual Graph Learning</title><style>%s</style></head><body><div class=\"viz-root\"><div class=\"wrap\">" % CSS,
-             "<h1>Continual graph learning</h1><p>HeteroGNN guard trained on %s one after another (%s traces, AgentPoison "
-             "excluded), re-tested on every benchmark after each stage. Mean±std over seeds × orders "
+             "<h1>Continual graph learning</h1><p>HeteroGNN guard trained on %s one after another (%s traces), "
+             "re-tested on every benchmark after each stage. Mean±std over seeds × orders "
              "(seeds / epochs per experience: %s). Cells: %s.</p>"
              % (", ".join(bn), _e(p["model"]), _e(p["seeds / epochs per experience"]), _e(p["cells"]))]
     if p.get("missing"):

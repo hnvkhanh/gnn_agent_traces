@@ -1,4 +1,4 @@
-"""Multi-benchmark experiments: in-benchmark, cross-benchmark transfer, ASB shifts, ablations.
+"""Multi-benchmark experiments: in-benchmark, cross-benchmark transfer, ablations.
 
     python -m src.experiments --seeds 3 --epochs 60
 Writes <outdir>/experiments_<only>.json and <outdir>/report_<only>.md (outdir defaults to results/).
@@ -15,10 +15,7 @@ from .cache import ResultCache, common_benches
 from .graph.build import ABLATIONS
 from .train import disjoint, evaluate, load, split
 
-BENCHES = ["asb", "injecagent", "agentdojo", "agentpoison"]
-LEGACY_BENCHES = ["asb", "injecagent", "agentdojo"]  # benchmarks of the first results (pooled transfer rows kept)
-SHIFTS = [("style", "combined_attack"), ("mode", "memory"), ("category", "aggressive"), ("category", "Stealthy"),
-          ("agent", "system_admin_agent")]
+BENCHES = ["injecagent", "agentdojo"]
 
 
 def stat(runs, key):
@@ -57,7 +54,7 @@ def main():
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--traces", default="traces/%s__*.jsonl")
-    ap.add_argument("--only", default="all", help="all|inbench|transfer|shifts|ablate|llm")
+    ap.add_argument("--only", default="all", help="all|inbench|transfer|ablate|llm")
     ap.add_argument("--model", default="qwen2.5:1.5b", help="trace-generating LLM for the benchmark sections")
     ap.add_argument("--llms", default="qwen2.5:1.5b,qwen2.5:7b,llama3.1:8b", help="LLMs for --only llm")
     ap.add_argument("--outdir", default="results", help="directory for the JSON and markdown outputs")
@@ -110,10 +107,7 @@ def main():
         rows = []
         for tgt in benches:
             others = [b for b in benches if b != tgt]
-            srcs = [[b] for b in others] + [others]
-            old = [b for b in others if b in LEGACY_BENCHES]
-            if len(old) > 1 and old != others:  # also keep the pooled row over the original benchmarks only
-                srcs.append(old)
+            srcs = [[b] for b in others] + ([others] if len(others) > 1 else [])
             for src in srcs:
                 tg = sum([data[b][0] for b in src], [])
                 tm = sum([data[b][1] for b in src], [])
@@ -121,30 +115,6 @@ def main():
                 runs = cell_runs("transfer/%s->%s" % ("+".join(src), tgt), parts)
                 rows.append(["+".join(src), tgt] + [cell(runs, k) for k in ("tool-lookup", "mlp", "gnn")] + [asr_cell(runs, "gnn")])
         md.append("## Cross-benchmark transfer (train -> test), macro-F1 / micro-F1 / reject recall\n" + table(rows, ["train", "test", "tool-lookup", "mlp", "gnn", "gnn ASR"]))
-        if "agentpoison" in benches:
-            # AgentPoison has ONE target action per agent (DeleteDB / Finish("I don't know")), shared by every trigger, so
-            # held-out triggers still share the target action with training. Training on one agent and testing on the
-            # other also holds out the target action (and every task and trigger).
-            g, m = data["agentpoison"]
-            idx = lambda a_: [i for i, x in enumerate(m) if x["group"].startswith("agentpoison|%s|" % a_)]
-            rows = []
-            for s_, t_ in (("ehr", "qa"), ("qa", "ehr")):
-                runs = cell_runs("transfer/agentpoison:%s->agentpoison:%s" % (s_, t_),
-                                 [sub(g, m, idx(s_)) + sub(g, m, idx(t_))] * len(seeds))
-                rows.append([s_, t_] + [cell(runs, k) for k in ("tool-lookup", "mlp", "gnn")] + [asr_cell(runs, "gnn")])
-            md.append("## AgentPoison, held-out target action (train on one agent, test on the other)\n"
-                      + table(rows, ["train", "test", "tool-lookup", "mlp", "gnn", "gnn ASR"]))
-
-    if a.only in ("all", "shifts") and "asb" in benches:
-        g, m = data["asb"]
-        rows = []
-        for key, val in SHIFTS:
-            tr, te = split(m, key, val, 0)
-            if not te or not tr:
-                continue
-            runs = cell_runs("shift/%s=%s" % (key, val), [sub(g, m, tr) + sub(g, m, te)] * len(seeds))
-            rows.append(["%s~%s" % (key, val), len(te)] + [cell(runs, k) for k in ("tool-lookup", "mlp", "gnn")])
-        md.append("## ASB held-out shifts, macro-F1 / micro-F1 / reject recall\n" + table(rows, ["held out", "test traces", "tool-lookup", "mlp", "gnn"]))
 
     if a.only in ("all", "ablate"):
         rows = []
@@ -200,7 +170,7 @@ def run_llm(a, seeds):
     benches = common_benches(BENCHES, llms)
     print("cross-LLM benchmarks:", ", ".join(benches))
     per = {}
-    for m in llms:  # same load order as before agentpoison existed: sorted glob over all trace files
+    for m in llms:  # sorted glob over all trace files
         g, md_ = load("traces/*__*.jsonl", models=[m])
         keep = [i for i, x in enumerate(md_) if x["benchmark"] in benches]
         per[m] = ([g[i] for i in keep], [md_[i] for i in keep])

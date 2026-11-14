@@ -81,7 +81,7 @@ def test_report_builds_from_synthetic_cells():
              "T": 3., "T0": 2., "before": m, "after": m} for s, ws in U.VIEWS.items() for v in U.variant_names(["finetune", "replay"], "replay")
             for r in ((1,) if v.endswith("/oracle") else (1, 2)) for w in ws]
     cells = [{"model": "gnn", "seed": 0, "T0": 2., "n_fit": 1, "n_val": 1, "n_test": 1, "folds": [1, 1], "records": recs}]
-    args = argparse.Namespace(bench="asb", split="task", threshold=.9, update_epochs=1, update_lr=1e-3, buffer=50)
+    args = argparse.Namespace(bench="agentdojo", split="task", threshold=.9, update_epochs=1, update_lr=1e-3, buffer=50)
     js, md, page = U.build(cells, args)
     assert "heldout / all" in md and "<svg" in page and "gnn" in js["aggregate"].__str__()
 

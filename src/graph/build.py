@@ -99,7 +99,7 @@ def trace_to_graph(tr: dict, ablate=frozenset()):
 def attack_key(tr: dict):
     """Identity of the attack in a trace (None if benign): the thing that decides its reject labels. Train and test must
     not share it, or the model can memorise the attacker tool / attacker arguments instead of learning the signal.
-    ASB, InjecAgent: the attacker tool. AgentDojo: the injection task (attacker tool + attacker args)."""
+    InjecAgent: the attacker tool. AgentDojo: the injection task (attacker tool + attacker args)."""
     a = tr["attack"]
     if a is None:
         return None
@@ -108,15 +108,12 @@ def attack_key(tr: dict):
     if tr.get("benchmark") == "agentdojo":  # traces collected before ids were recorded
         from ..benchmarks.agentdojo import injection_id
         return injection_id(tr.get("injected", "")) or tr.get("injected", "")
-    if tr.get("benchmark") == "agentpoison":
-        from ..benchmarks.agentpoison import trigger_id
-        return trigger_id(tr.get("user_task", "")) or tr.get("injected", "")
     return a.get("tool") or tr.get("injected", "")
 
 
 def meta_of(tr: dict) -> dict:
     a = tr["attack"]
-    return dict(benchmark=tr.get("benchmark", "asb"), model=tr.get("model", ""), agent=tr["agent"],
+    return dict(benchmark=tr.get("benchmark", ""), model=tr.get("model", ""), agent=tr["agent"],
                 attack_id=attack_key(tr),
                 synthetic=[bool(e["synthetic"]) for e in tr["events"]], attack=tr["attack"] is not None,
                 group=tr.get("group") or tr["agent"] + "|" + tr["task"],

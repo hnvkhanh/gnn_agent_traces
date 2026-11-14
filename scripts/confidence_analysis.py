@@ -14,12 +14,12 @@ confident FP = benign call blocked with high confidence. Class 0 = approve, clas
 Writes predictions.csv, confidence.json, REPORT.md and report.html to --outdir.
 
 Usage:
-  python scripts/confidence_analysis.py --bench asb
+  python scripts/confidence_analysis.py --bench agentdojo
   python scripts/confidence_analysis.py --bench injecagent --seeds 0 1 2 --threshold 0.95 --models gnn mlp
   python scripts/confidence_analysis.py --traces "traces/*__qwen2.5:7b.jsonl" --split style --holdout paraphrase
-  python scripts/confidence_analysis.py --bench asb --eval train     # same, scored on the training traces
-  python scripts/confidence_analysis.py --bench all --eval both      # asb, injecagent, agentdojo; train+test, GPUs in parallel
-  python scripts/confidence_analysis.py --bench asb --report-only      # rebuild report from predictions.csv
+  python scripts/confidence_analysis.py --bench agentdojo --eval train     # same, scored on the training traces
+  python scripts/confidence_analysis.py --bench all --eval both      # injecagent, agentdojo; train+test, GPUs in parallel
+  python scripts/confidence_analysis.py --bench agentdojo --report-only      # rebuild report from predictions.csv
 """
 import argparse
 import csv
@@ -333,7 +333,7 @@ def write(path, text):
         f.write(text)
 
 
-BENCHES = ["asb", "injecagent", "agentdojo"]
+BENCHES = ["injecagent", "agentdojo"]
 
 
 def out_dir(a, bench, ev):
@@ -379,7 +379,7 @@ def dispatch(a, argv):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--bench", help="asb|injecagent|agentdojo|agentpoison (sets --traces to traces/<bench>__<model>.jsonl)")
+    ap.add_argument("--bench", help="injecagent|agentdojo (sets --traces to traces/<bench>__<model>.jsonl)")
     ap.add_argument("--model", default="qwen2.5:1.5b", help="trace LLM, used with --bench")
     ap.add_argument("--traces", help="trace glob, overrides --bench")
     ap.add_argument("--split", default="task", choices=["task", "style", "agent", "mode", "category", "benchmark"])

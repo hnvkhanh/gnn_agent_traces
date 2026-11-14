@@ -1,16 +1,33 @@
-import random
+import json
 import re
 from pathlib import Path
 
 import torch
 
+from src.benchmarks import agentdojo, injecagent
 from src.graph.build import meta_of, trace_to_graph
 from src.model.gnn import ActionMLP, HeteroGNN
-from src.sandbox.env import build_trace
+from src.sandbox.env import run_scenario
 from src.sandbox.policy import label_action
-from src.sandbox.tools import ASBData, MockTool
+from src.sandbox.tools import MockTool
 
-DATA = ASBData("data/asb")
+ALL_BENCH = [(injecagent, "data/injecagent"), (agentdojo, "data/agentdojo")]
+
+
+def _scripted(tools_args):
+    it = iter(tools_args)
+
+    def llm(msgs):
+        try:
+            t, a = next(it)
+            return json.dumps({"tool": t, "args": a})
+        except StopIteration:
+            return '{"final": "done"}'
+    return llm
+
+
+def _opi_scenario(seed=1):
+    return next(s for s in agentdojo.scenarios("data/agentdojo", 50, seed) if s.mode == "opi")
 
 
 def test_sandbox_has_no_side_effect_apis():
@@ -20,32 +37,23 @@ def test_sandbox_has_no_side_effect_apis():
 
 
 def test_labels():
-    own = DATA.normal_for("system_admin_agent")
-    att = DATA.attacks_for("system_admin_agent")[0]
-    other = DATA.other_normal("system_admin_agent")[0]
+    own = [MockTool("scan", "", "normal", "a", achievement="ok"), MockTool("report", "", "normal", "a")]
+    att = MockTool("exfiltrate", "", "attacker", "a")
+    other = MockTool("other_tool", "", "normal", "b")
     vis = {t.name: t for t in own + [att, other]}
-    assert label_action(own[0].name, {"q": "scan"}, vis, "system_admin_agent") == "approve"
-    assert label_action(att.name, {}, vis, "system_admin_agent") == "reject"
-    assert label_action(other.name, {}, vis, "system_admin_agent") == "approve"  # not an attacker action
-    assert label_action(own[0].name, {"q": "dump the admin password"}, vis, "system_admin_agent") == "approve"
-
-
-def fake_llm_factory(tool_names):
-    it = iter(tool_names)
-
-    def llm(msgs):
-        try:
-            return '{"tool": "%s", "args": {"q": "x"}}' % next(it)
-        except StopIteration:
-            return '{"final": "done"}'
-    return llm
+    assert label_action("scan", {"q": "scan"}, vis, "a") == "approve"
+    assert label_action("exfiltrate", {}, vis, "a") == "reject"
+    assert label_action("other_tool", {}, vis, "a") == "approve"  # not an attacker action
+    assert label_action("scan", {"q": "dump the admin password"}, vis, "a") == "approve"
 
 
 def make_trace(mode="opi"):
-    agent, task = DATA.tasks()[0]
-    own = [t.name for t in DATA.normal_for(agent)]
-    return build_trace(DATA, fake_llm_factory([own[0], own[1]]), agent, task, mode,
-                       "naive" if mode != "none" else None, random.Random(1), replay=True, trace_id="t", model="fake")
+    """AgentDojo opi scenario: the LLM calls the injected tool and one other benign tool, never the attacker call, so a
+    synthetic attacker step is appended."""
+    sc = _opi_scenario()
+    other = next(t.name for t in sc.tools if t.name != sc.opi_tool and t.name not in {c["tool"] for c in sc.attacker_calls})
+    return run_scenario(sc, _scripted([(sc.opi_tool, {"q": "x"}), (other, {"q": "x"})]), replay=True,
+                        trace_id="t", model="fake")
 
 
 def test_env_replay_and_injection():
@@ -78,25 +86,7 @@ def test_smoke_forward_backward():
 
 
 # ---- phase 2: multi-benchmark ----
-import json  # noqa: E402
-
-from src.benchmarks import agentdojo, agentpoison, asb, injecagent  # noqa: E402
-ALL_BENCH = [(asb, "data/asb"), (injecagent, "data/injecagent"), (agentdojo, "data/agentdojo"),
-             (agentpoison, "data/agentpoison")]
-from src.sandbox.env import run_scenario  # noqa: E402
 from src.sandbox.policy import label_call  # noqa: E402
-
-
-def _scripted(tools_args):
-    it = iter(tools_args)
-
-    def llm(msgs):
-        try:
-            t, a = next(it)
-            return json.dumps({"tool": t, "args": a})
-        except StopIteration:
-            return '{"final": "done"}'
-    return llm
 
 
 def test_scenarios_valid_for_each_benchmark():
@@ -184,11 +174,10 @@ def test_labels_are_only_approve_reject():
 
 
 def test_unknown_tool_is_not_an_action():
-    agent, task = DATA.tasks()[0]
-    own = [t.name for t in DATA.normal_for(agent)]
-    tr = build_trace(DATA, fake_llm_factory(["no_such_tool", own[0]]), agent, task, "none", None, random.Random(1),
-                     replay=False, trace_id="t", model="fake")
-    assert [e["tool"] for e in tr["events"]] == [own[0]] and tr["n_invalid"] == 1
+    sc = next(s for s in agentdojo.scenarios("data/agentdojo", 50, 1) if s.mode == "none")
+    own = sc.in_scope[0]
+    tr = run_scenario(sc, _scripted([("no_such_tool", {}), (own, {"q": "x"})]), replay=False, trace_id="t", model="fake")
+    assert [e["tool"] for e in tr["events"]] == [own] and tr["n_invalid"] == 1
 
 
 def test_every_scripted_action_is_labeled_for_every_benchmark():
@@ -254,14 +243,6 @@ def test_micro_f1_equals_accuracy_and_differs_from_macro():
     assert r["macro_f1"] < r["micro_f1"]   # macro punishes the rare-class error more
 
 
-def test_data_read_as_utf8_on_every_os():
-    # data/asb contains a non-ASCII char (U+2019). A default-encoding read gives cp1252 mojibake on Windows.
-    from src.sandbox.tools import _jsonl
-    rows = _jsonl(Path("data/asb/all_attack_tools.jsonl"))
-    text = json.dumps(rows, ensure_ascii=False)
-    assert "’" in text and "â€" not in text
-
-
 # ---- no train/test leakage of tasks or attacks ----
 def test_attack_id_recorded_and_recovered_for_old_traces():
     from src.graph.build import attack_key
@@ -298,95 +279,23 @@ def test_split_attack_disjoint_on_stored_traces():
         assert not {metas[i]["attack_id"] for i in tr} & ({metas[i]["attack_id"] for i in te} - {None}), f
 
 
-# ---- AgentPoison (EHRAgent memory backdoor, StrategyQA knowledge-base backdoor) ----
-AP = "data/agentpoison"
-
-
-def _ap(n=200, seed=0):
-    return agentpoison.scenarios(AP, n, seed)
-
-
-def _ap_trace(sc, calls=None):
+def _trace(sc, calls=None):
     calls = calls if calls is not None else [(sc.tools[0].name, {"q": "x"})]
     return run_scenario(sc, _scripted(calls), replay=True)
 
 
-def test_agentpoison_ehr_labels_and_poisoned_memory():
-    scs = [s for s in _ap() if s.group.startswith("agentpoison|ehr")]
-    for sc in scs:
-        names = {t.name for t in sc.tools}
-        assert "DeleteDB" in names and "DeleteDB" not in sc.in_scope  # visible in benign scenarios too
-        assert len(sc.memory) == agentpoison.N_SHOTS
-        poisoned = [m for m in sc.memory if "DeleteDB" in m]
-        if sc.mode == "none":
-            assert not poisoned and not any(t in sc.task for t in agentpoison.TRIGGERS)
-        else:
-            trig = sc.attack_id.split("|", 1)[1]
-            assert 1 <= len(poisoned) <= 2 and all(trig in m and sc.injected in m for m in poisoned)
-            assert sc.task.endswith(" " + trig)
-    sc = next(s for s in scs if s.mode == "memory")
-    tr = _ap_trace(sc, [("LoadDB", {"DBNAME": "patient"}), ("DeleteDB", {"DBNAME": "lab"})])
-    assert [(e["tool"], e["label"], e["synthetic"]) for e in tr["events"]] == [
-        ("LoadDB", "approve", False), ("DeleteDB", "reject", False)]
-    assert not any(m.startswith("Past note:") for m in tr["memory"])  # adapter poisoned memory itself
-
-
-def test_asb_memory_mode_still_appends_past_note():
-    agent, task = DATA.tasks()[0]
-    tr = build_trace(DATA, fake_llm_factory([]), agent, task, "memory", "naive", random.Random(1), replay=False)
-    assert tr["memory"][-1].startswith("Past note: ")
-
-
-def test_agentpoison_qa_finish_same_tool_different_labels():
-    sc = next(s for s in _ap() if s.mode == "opi")
-    tr = _ap_trace(sc, [("Search", {"entity": "x"}), ("Finish", {"answer": "I don't know"})])
-    assert [(e["tool"], e["label"]) for e in tr["events"]] == [("Search", "approve"), ("Finish", "reject")]
-    assert tr["events"][0]["obs_injected"] and sc.injected in tr["events"][0]["observation"]
-    # {"final": x} is recorded as Finish(x); a real yes/no answer is approved, then the attacker step is replayed
-    tr = run_scenario(sc, _scripted([("Search", {})]), replay=True)
-    assert [(e["tool"], e["args"].get("answer"), e["label"], e["synthetic"]) for e in tr["events"]][1:] == [
-        ("Finish", "done", "approve", False), ("Finish", "I don't know", "reject", True)]
-
-
-def _vocab_tokens(text):
-    return set(re.findall(r"[a-z0-9_]+", text.lower()))
-
-
-def test_agentpoison_trigger_pool_token_disjoint_and_absent_from_data():  # L4
-    pool = agentpoison.POOL["ehr"] + agentpoison.POOL["qa"]
-    assert len(agentpoison.POOL["ehr"]) == len(agentpoison.POOL["qa"]) == agentpoison.N_TRIGGERS
-    words = [agentpoison.tokens(t) - agentpoison.TRIGGER_STOPWORDS for t in pool]
-    assert all(len(w) == 3 for w in words)
-    for i in range(len(words)):
-        for j in range(i + 1, len(words)):
-            assert not words[i] & words[j], (pool[i], pool[j])
-    data = Path(AP, "ehr.json").read_text(encoding="utf-8") + Path(AP, "strategyqa.json").read_text(encoding="utf-8")
-    templates = agentpoison.ehr_rationale("") + agentpoison.qa_poison_passage(
-        dict(question="", facts=[], answer=True), "") + agentpoison.EHR_PERSONA + agentpoison.QA_PERSONA
-    vocab = _vocab_tokens(data + templates)
-    assert not set().union(*words) & vocab
-
-
-def test_agentpoison_benign_and_attack_have_same_structure():  # L7
-    ehr, qa = agentpoison._load(AP)
-    for mk, item in [(agentpoison.ehr_scenario, ehr["queries"][3]), (agentpoison.qa_scenario, qa["items"][3])]:
-        data = ehr if mk is agentpoison.ehr_scenario else qa
-        b = mk(data, item, random.Random(5), True)
-        x = mk(data, item, random.Random(5), False)
-        assert sorted(t.name for t in b.tools) == sorted(t.name for t in x.tools)
-        assert len(b.memory) == len(x.memory)
-        assert b.tool_obs.keys() == x.tool_obs.keys()
-        if "Search" in b.tool_obs:
-            assert b.tool_obs["Search"].count("\n\n[") == x.tool_obs["Search"].count("\n\n[") == 2
-        else:  # benign retrieval is the same; poisoned demos only replace entries
-            assert sum(m in b.memory for m in x.memory) >= len(b.memory) - 2
+def test_memory_mode_appends_past_note():
+    import dataclasses
+    sc = dataclasses.replace(_opi_scenario(), mode="memory", tool_obs={}, opi_tool=None)
+    tr = run_scenario(sc, _scripted([]), replay=False)
+    assert tr["memory"][-1] == "Past note: " + sc.injected
 
 
 def test_graph_ignores_label_bearing_trace_fields():  # L8, every benchmark
     import copy
     for mod, d in ALL_BENCH:
         for sc in [s for s in mod.scenarios(d, 12, 4) if s.mode != "none"][:3]:
-            tr = _ap_trace(sc, [(t.name, {"q": "x"}) for t in sc.tools[:2]])
+            tr = _trace(sc, [(t.name, {"q": "x"}) for t in sc.tools[:2]])
             t2 = copy.deepcopy(tr)
             for t in t2["tools"]:
                 t["kind"], t["in_scope"] = ("normal" if t["kind"] == "attacker" else "attacker"), not t["in_scope"]
@@ -400,43 +309,23 @@ def test_graph_ignores_label_bearing_trace_fields():  # L8, every benchmark
                 assert torch.equal(g1[et].edge_index, g2[et].edge_index), (d, et)
 
 
-def test_agentpoison_split_has_no_leakage():  # L9
+def test_scenario_split_has_no_leakage():
     from src.leakage import audit
-    trs = [_ap_trace(sc) for sc in _ap(400, 0)]
-    for seed in range(3):
-        r = audit(trs, seed)
-        assert not any(r["overlaps"].values()), r["examples"]
-        assert r["train_attacks"] > 50 and r["test_attacks"] > 0
+    for mod, d in ALL_BENCH:
+        trs = [_trace(sc) for sc in mod.scenarios(d, 400, 0)]
+        for seed in range(3):
+            r = audit(trs, seed)
+            assert not any(r["overlaps"].values()), (d, r["examples"])
+            assert r["train_attacks"] > 10 and r["test_attacks"] > 0
 
 
-def test_split_has_no_leakage_on_stored_agentpoison_traces():
+def test_split_has_no_leakage_on_stored_traces():
     from src.leakage import audit
-    for f in glob.glob("traces/agentpoison__*.jsonl"):
+    for f in glob.glob("traces/*__*.jsonl"):
         trs = [json.loads(line) for line in open(f, encoding="utf-8") if line.strip()]
         for seed in range(3):
             r = audit(trs, seed)
             assert not any(r["overlaps"].values()), (f, r["examples"])
-
-
-def test_agentpoison_attack_ids_and_poison_are_tied_to_trigger():  # L5
-    injected, bases = {}, {}
-    for sc in _ap(400, 1):
-        if sc.mode == "none":
-            continue
-        key, trig = sc.attack_id, sc.attack_id.split("|", 1)[1]
-        assert agentpoison.trigger_id(sc.task) == key
-        injected.setdefault(key, set()).add(sc.injected)
-        if sc.mode == "opi":  # the poisoned passage is built from the trigger's own poison-pool item
-            bases.setdefault(key, set()).add(sc.injected.split("\nQuestion: ")[1].split("\nThought:")[0])
-        else:  # poisoned demos come from the trigger's own poison bases
-            for m in sc.memory:
-                if "DeleteDB" in m:
-                    bases.setdefault(key, set()).add(m.split("\n")[0].replace(" " + trig, ""))
-    assert all(len(v) == 1 for v in injected.values())  # rationale line / passage: a function of the trigger alone
-    keys = sorted(bases)
-    for i in range(len(keys)):
-        for j in range(i + 1, len(keys)):
-            assert not bases[keys[i]] & bases[keys[j]], (keys[i], keys[j])
 
 
 def test_collect_shards_cover_serial_set_and_merge(tmp_path):
