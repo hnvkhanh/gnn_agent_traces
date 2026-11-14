@@ -190,36 +190,6 @@ One JSON object per line, with these fields:
 - **Events:** `events`, a list of steps with `step`, `tool`, `args`, `observation`, `obs_injected`, `synthetic` and `label`.
 - **Quality:** `n_invalid`, the count of malformed LLM replies.
 
-## Continual graph learning
-
-These experiments are separate from the main suite (`src/continual/`, `scripts/run_continual.py`, `results/continual/`). The GNN guard is trained on the benchmarks **one after another** (injecagent, agentdojo; **qwen2.5:1.5b traces only**) and re-tested on every benchmark after each stage. They measure how much it forgets, and whether attacks on earlier benchmarks start getting through again. The labels stay approve/reject, so this is domain-incremental learning with one head.
-
-```bash
-python scripts/run_continual.py                        # full run on both GPUs (2 jobs each), then the report
-python scripts/run_continual.py --seeds 1 --epochs 5   # quick pass
-python scripts/run_continual.py --report-only          # rebuild the report from the stored cells, no training
-# --strategies finetune,joint,...   --buffer 50   --sweep 20,100,200|none   --devices cpu --jobs 8   --outdir results/continual
-```
-
-- **Protocol.** Both orders of the 2 benchmarks, 3 seeds, 60 epochs per stage. The split is the main suite's own (`train.split(..., "task", ...)` per benchmark), so the test sets are those of `inbench/<bench>`. After every stage the model is scored on all test sets. The untrained model is scored too, for forward transfer.
-- **Strategies** (the CGLB baseline set): `finetune` (lower bound), `joint` (retrain on all training data so far; upper bound), `ewc`, `mas`, `lwf`, `agem` (GEM needs a QP solver), `twp` (topology term from the action-embedding norm, since SAGEConv has no attention), `ergnn` (mean-of-feature replay of whole trace graphs) and `replay` (reservoir).
-  - Memory is M = 50 graphs, fixed in advance. The 20/100/200 sweep is reported as sensitivity only.
-  - The `ewc` / `mas` / `lwf` / `twp` hyperparameters are tuned on a validation stream carved from the seed-0 training traces with the same split rule. Test data is never used for tuning.
-- **Metrics.**
-  - AP: macro-F1 on all benchmarks after the last stage.
-  - AF: average forgetting.
-  - BWT: backward transfer.
-  - FWT: forward transfer.
-  - The share of `|real` (non-synthetic) actions.
-  - Final ASR, and **ASR forgetting**: how much ASR on earlier benchmarks rises by the end.
-- **Leakage controls** (`tests/test_continual.py`, also audited in the report):
-  - no task group, attack id, normalised task text or attacker-tool token is shared between any training set and any test set;
-  - replay, A-GEM and ER-GNN memories hold only training graphs;
-  - `joint` trains on exactly the union of the training sets so far;
-  - validation is disjoint from both test and tune-train.
-- **Output.** `results/continual/REPORT.md` (tables), `report.html` (charts, works offline, light/dark), `continual.json`, `hparams.json` and `cells/`. A cell is reused when its fingerprint (code, exact train/test graphs, config, device type) matches, so re-running resumes and recomputes only stale cells.
-- **GPU etiquette.** A GPU run refuses to start while `run_experiments.py` or trace collection is using the GPUs (`--force` overrides). It takes about 15–25 min on 2 GPUs (≈12–25 s per cell).
-
 ## Cross-LLM transfer experiment
 
 Does a guard trained on one LLM's traces work on another LLM's? `python scripts/cross_llm_transfer.py` trains on each LLM
