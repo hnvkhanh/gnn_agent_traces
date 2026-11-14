@@ -1,0 +1,997 @@
+{
+ "comparison": [
+  [
+   "gnn",
+   "1.00",
+   "0.000",
+   "100.0%",
+   "100.0%",
+   "0.0%",
+   "0.0%"
+  ],
+  [
+   "gnn+TS",
+   "4.86",
+   "0.026",
+   "100.0%",
+   "84.4%",
+   "0.0%",
+   "0.0%"
+  ]
+ ],
+ "models": {
+  "gnn": {
+   "accuracy": 1.0,
+   "bins": [
+    [
+     0.5,
+     0.55,
+     0,
+     null,
+     null
+    ],
+    [
+     0.55,
+     0.6,
+     0,
+     null,
+     null
+    ],
+    [
+     0.6,
+     0.65,
+     0,
+     null,
+     null
+    ],
+    [
+     0.65,
+     0.7,
+     0,
+     null,
+     null
+    ],
+    [
+     0.7,
+     0.75,
+     0,
+     null,
+     null
+    ],
+    [
+     0.75,
+     0.8,
+     0,
+     null,
+     null
+    ],
+    [
+     0.8,
+     0.8500000000000001,
+     0,
+     null,
+     null
+    ],
+    [
+     0.8500000000000001,
+     0.9,
+     0,
+     null,
+     null
+    ],
+    [
+     0.9,
+     0.95,
+     0,
+     null,
+     null
+    ],
+    [
+     0.95,
+     1.0,
+     1331,
+     0.9999964499210313,
+     1.0
+    ]
+   ],
+   "breakdown": {
+    "category": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 779,
+      "rate": 0.0,
+      "value": "None"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 108,
+      "rate": 0.0,
+      "value": "dh|Data Security Harm"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 81,
+      "rate": 0.0,
+      "value": "dh|Financial Harm"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 51,
+      "rate": 0.0,
+      "value": "dh|Physical Harm"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 74,
+      "rate": 0.0,
+      "value": "ds|Financial Data"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 161,
+      "rate": 0.0,
+      "value": "ds|Others"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 77,
+      "rate": 0.0,
+      "value": "ds|Physical Data"
+     }
+    ],
+    "mode": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 779,
+      "rate": 0.0,
+      "value": "none"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 552,
+      "rate": 0.0,
+      "value": "opi"
+     }
+    ],
+    "style": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 779,
+      "rate": 0.0,
+      "value": "None"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 243,
+      "rate": 0.0,
+      "value": "base"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 309,
+      "rate": 0.0,
+      "value": "enhanced"
+     }
+    ],
+    "synthetic": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 1249,
+      "rate": 0.0,
+      "value": "0"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 82,
+      "rate": 0.0,
+      "value": "1"
+     }
+    ],
+    "tool": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 58,
+      "rate": 0.0,
+      "value": "AmazonGetProductDetails"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 4,
+      "rate": 0.0,
+      "value": "AmazonViewSavedPaymentMethods"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 5,
+      "rate": 0.0,
+      "value": "AugustSmartLockUnlockDoor"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 3,
+      "rate": 0.0,
+      "value": "BankManagerGetAccountInformation"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 2,
+      "rate": 0.0,
+      "value": "BinanceDeposit"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 6,
+      "rate": 0.0,
+      "value": "BinanceGetOrderHistory"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 4,
+      "rate": 0.0,
+      "value": "BinanceWithdraw"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 6,
+      "rate": 0.0,
+      "value": "CiscoUmbrellaCreatePolicy"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 2,
+      "rate": 0.0,
+      "value": "CiscoUmbrellaGetLogDetails"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 5,
+      "rate": 0.0,
+      "value": "CiscoUmbrellaUpdatePolicy"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 3,
+      "rate": 0.0,
+      "value": "DeepfakeGeneratorGenerateAudioDeepfake"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 2,
+      "rate": 0.0,
+      "value": "DropboxGetItemMetadata"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 10,
+      "rate": 0.0,
+      "value": "DropboxListFilesAndFolders"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 4,
+      "rate": 0.0,
+      "value": "DropboxMoveItem"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 6,
+      "rate": 0.0,
+      "value": "EmergencyDispatchSystemCreateDispatchRequest"
+     }
+    ]
+   },
+   "classification": {
+    "macro_f1": 1.0,
+    "micro_f1": 1.0,
+    "per_class": {
+     "approve": {
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "support": 1158
+     },
+     "reject": {
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "support": 173
+     }
+    }
+   },
+   "confident_fraction": 1.0,
+   "confident_precision": 1.0,
+   "counts": {
+    "cc": 1331,
+    "cw_fn": 0,
+    "cw_fp": 0,
+    "n": 1331,
+    "uc": 0,
+    "uw": 0
+   },
+   "ece": 3.5500789686837564e-06,
+   "per_seed": {
+    "0": {
+     "accuracy": 1.0,
+     "classification": {
+      "macro_f1": 1.0,
+      "micro_f1": 1.0,
+      "per_class": {
+       "approve": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 436
+       },
+       "reject": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 71
+       }
+      }
+     },
+     "ece": 3.3875296835406132e-06,
+     "rates": {
+      "cc": 1.0,
+      "cw_fn": 0.0,
+      "cw_fp": 0.0,
+      "uc": 0.0,
+      "uw": 0.0
+     }
+    },
+    "1": {
+     "accuracy": 1.0,
+     "classification": {
+      "macro_f1": 1.0,
+      "micro_f1": 1.0,
+      "per_class": {
+       "approve": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 336
+       },
+       "reject": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 56
+       }
+      }
+     },
+     "ece": 6.252193963551811e-06,
+     "rates": {
+      "cc": 1.0,
+      "cw_fn": 0.0,
+      "cw_fp": 0.0,
+      "uc": 0.0,
+      "uw": 0.0
+     }
+    },
+    "2": {
+     "accuracy": 1.0,
+     "classification": {
+      "macro_f1": 1.0,
+      "micro_f1": 1.0,
+      "per_class": {
+       "approve": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 386
+       },
+       "reject": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 46
+       }
+      }
+     },
+     "ece": 1.2889294539464302e-06,
+     "rates": {
+      "cc": 1.0,
+      "cw_fn": 0.0,
+      "cw_fp": 0.0,
+      "uc": 0.0,
+      "uw": 0.0
+     }
+    }
+   },
+   "rates": {
+    "cc": 1.0,
+    "cw_fn": 0.0,
+    "cw_fp": 0.0,
+    "uc": 0.0,
+    "uw": 0.0
+   },
+   "selective": [
+    [
+     0.1,
+     1.0
+    ],
+    [
+     0.2,
+     1.0
+    ],
+    [
+     0.3,
+     1.0
+    ],
+    [
+     0.4,
+     1.0
+    ],
+    [
+     0.5,
+     1.0
+    ],
+    [
+     0.6,
+     1.0
+    ],
+    [
+     0.7,
+     1.0
+    ],
+    [
+     0.8,
+     1.0
+    ],
+    [
+     0.9,
+     1.0
+    ],
+    [
+     1.0,
+     1.0
+    ]
+   ]
+  },
+  "gnn+TS": {
+   "accuracy": 1.0,
+   "bins": [
+    [
+     0.5,
+     0.55,
+     0,
+     null,
+     null
+    ],
+    [
+     0.55,
+     0.6,
+     0,
+     null,
+     null
+    ],
+    [
+     0.6,
+     0.65,
+     0,
+     null,
+     null
+    ],
+    [
+     0.65,
+     0.7,
+     0,
+     null,
+     null
+    ],
+    [
+     0.7,
+     0.75,
+     0,
+     null,
+     null
+    ],
+    [
+     0.75,
+     0.8,
+     3,
+     0.7926560309870806,
+     1.0
+    ],
+    [
+     0.8,
+     0.8500000000000001,
+     5,
+     0.8371446124873101,
+     1.0
+    ],
+    [
+     0.8500000000000001,
+     0.9,
+     27,
+     0.881266567592746,
+     1.0
+    ],
+    [
+     0.9,
+     0.95,
+     173,
+     0.934651958138829,
+     1.0
+    ],
+    [
+     0.95,
+     1.0,
+     1123,
+     0.9831445855538108,
+     1.0
+    ]
+   ],
+   "breakdown": {
+    "category": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 779,
+      "rate": 0.0,
+      "value": "None"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 108,
+      "rate": 0.0,
+      "value": "dh|Data Security Harm"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 81,
+      "rate": 0.0,
+      "value": "dh|Financial Harm"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 51,
+      "rate": 0.0,
+      "value": "dh|Physical Harm"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 74,
+      "rate": 0.0,
+      "value": "ds|Financial Data"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 161,
+      "rate": 0.0,
+      "value": "ds|Others"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 77,
+      "rate": 0.0,
+      "value": "ds|Physical Data"
+     }
+    ],
+    "mode": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 779,
+      "rate": 0.0,
+      "value": "none"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 552,
+      "rate": 0.0,
+      "value": "opi"
+     }
+    ],
+    "style": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 779,
+      "rate": 0.0,
+      "value": "None"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 243,
+      "rate": 0.0,
+      "value": "base"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 309,
+      "rate": 0.0,
+      "value": "enhanced"
+     }
+    ],
+    "synthetic": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 1249,
+      "rate": 0.0,
+      "value": "0"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 82,
+      "rate": 0.0,
+      "value": "1"
+     }
+    ],
+    "tool": [
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 58,
+      "rate": 0.0,
+      "value": "AmazonGetProductDetails"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 4,
+      "rate": 0.0,
+      "value": "AmazonViewSavedPaymentMethods"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 5,
+      "rate": 0.0,
+      "value": "AugustSmartLockUnlockDoor"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 3,
+      "rate": 0.0,
+      "value": "BankManagerGetAccountInformation"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 2,
+      "rate": 0.0,
+      "value": "BinanceDeposit"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 6,
+      "rate": 0.0,
+      "value": "BinanceGetOrderHistory"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 4,
+      "rate": 0.0,
+      "value": "BinanceWithdraw"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 6,
+      "rate": 0.0,
+      "value": "CiscoUmbrellaCreatePolicy"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 2,
+      "rate": 0.0,
+      "value": "CiscoUmbrellaGetLogDetails"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 5,
+      "rate": 0.0,
+      "value": "CiscoUmbrellaUpdatePolicy"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 3,
+      "rate": 0.0,
+      "value": "DeepfakeGeneratorGenerateAudioDeepfake"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 2,
+      "rate": 0.0,
+      "value": "DropboxGetItemMetadata"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 10,
+      "rate": 0.0,
+      "value": "DropboxListFilesAndFolders"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 4,
+      "rate": 0.0,
+      "value": "DropboxMoveItem"
+     },
+     {
+      "confident_wrong": 0,
+      "cw_fn": 0,
+      "cw_fp": 0,
+      "n": 6,
+      "rate": 0.0,
+      "value": "EmergencyDispatchSystemCreateDispatchRequest"
+     }
+    ]
+   },
+   "classification": {
+    "macro_f1": 1.0,
+    "micro_f1": 1.0,
+    "per_class": {
+     "approve": {
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "support": 1158
+     },
+     "reject": {
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "support": 173
+     }
+    }
+   },
+   "confident_fraction": 0.8437265214124718,
+   "confident_precision": 1.0,
+   "counts": {
+    "cc": 1123,
+    "cw_fn": 0,
+    "cw_fp": 0,
+    "n": 1331,
+    "uc": 208,
+    "uw": 0
+   },
+   "ece": 0.026202819823178916,
+   "per_seed": {
+    "0": {
+     "accuracy": 1.0,
+     "classification": {
+      "macro_f1": 1.0,
+      "micro_f1": 1.0,
+      "per_class": {
+       "approve": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 436
+       },
+       "reject": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 71
+       }
+      }
+     },
+     "ece": 0.026058212964175716,
+     "rates": {
+      "cc": 0.8264299802761341,
+      "cw_fn": 0.0,
+      "cw_fp": 0.0,
+      "uc": 0.17357001972386588,
+      "uw": 0.0
+     }
+    },
+    "1": {
+     "accuracy": 1.0,
+     "classification": {
+      "macro_f1": 1.0,
+      "micro_f1": 1.0,
+      "per_class": {
+       "approve": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 336
+       },
+       "reject": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 56
+       }
+      }
+     },
+     "ece": 0.010471279020062766,
+     "rates": {
+      "cc": 0.9617346938775511,
+      "cw_fn": 0.0,
+      "cw_fp": 0.0,
+      "uc": 0.03826530612244898,
+      "uw": 0.0
+     }
+    },
+    "2": {
+     "accuracy": 1.0,
+     "classification": {
+      "macro_f1": 1.0,
+      "micro_f1": 1.0,
+      "per_class": {
+       "approve": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 386
+       },
+       "reject": {
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "support": 46
+       }
+      }
+     },
+     "ece": 0.040647448694326946,
+     "rates": {
+      "cc": 0.7569444444444444,
+      "cw_fn": 0.0,
+      "cw_fp": 0.0,
+      "uc": 0.24305555555555555,
+      "uw": 0.0
+     }
+    }
+   },
+   "rates": {
+    "cc": 0.8437265214124718,
+    "cw_fn": 0.0,
+    "cw_fp": 0.0,
+    "uc": 0.1562734785875282,
+    "uw": 0.0
+   },
+   "selective": [
+    [
+     0.1,
+     1.0
+    ],
+    [
+     0.2,
+     1.0
+    ],
+    [
+     0.3,
+     1.0
+    ],
+    [
+     0.4,
+     1.0
+    ],
+    [
+     0.5,
+     1.0
+    ],
+    [
+     0.6,
+     1.0
+    ],
+    [
+     0.7,
+     1.0
+    ],
+    [
+     0.8,
+     1.0
+    ],
+    [
+     0.9,
+     1.0
+    ],
+    [
+     1.0,
+     1.0
+    ]
+   ]
+  }
+ },
+ "threshold": 0.95
+}

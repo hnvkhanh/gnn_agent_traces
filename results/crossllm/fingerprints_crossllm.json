@@ -1,0 +1,386 @@
+{
+ "xllm/agentdojo/lolo:gemma2:9b": {
+  "fp": "7153c5f35e8634ad56186b40e751e5668d7fab83164cef6ce209ffbcb1b75e62",
+  "origin": "trained",
+  "seconds": 11.6,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:54:22"
+ },
+ "xllm/agentdojo/lolo:llama3.1:8b": {
+  "fp": "59a26aa4ae1b8d0d9c706a65e5fec93efd399bc4b90e5faba01bddb34315dc63",
+  "origin": "trained",
+  "seconds": 11.7,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:54:10"
+ },
+ "xllm/agentdojo/lolo:mistral:7b": {
+  "fp": "a687180ee1624510d7020f494ad588f37b27f49f8dd99e50673b58ba5880a4a1",
+  "origin": "trained",
+  "seconds": 11.2,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:54:33"
+ },
+ "xllm/agentdojo/lolo:qwen2.5:1.5b": {
+  "fp": "c1883be69c7db4bb16d2e8e4ef5e69d27a3a117e843154223615487c2a1ffa7c",
+  "origin": "trained",
+  "seconds": 11.1,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:54:22"
+ },
+ "xllm/agentdojo/lolo:qwen2.5:14b": {
+  "fp": "cd76ea03598e13a3da76b797b4b47abc73418bf2757d2182e4a2ebe193b6d652",
+  "origin": "trained",
+  "seconds": 8.7,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:54:42"
+ },
+ "xllm/agentdojo/lolo:qwen2.5:7b": {
+  "fp": "a3265c2892a2212d380071d2d773b05c27c79ddd77c2024397b4cff7dccf91b0",
+  "origin": "trained",
+  "seconds": 11.4,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:54:33"
+ },
+ "xllm/agentdojo/single:gemma2:9b": {
+  "fp": "111079af3259c272c1c9f3f26e4def4bbcc220d16cd91334877fdf0d58de9c44",
+  "origin": "trained",
+  "seconds": 12.8,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:44"
+ },
+ "xllm/agentdojo/single:llama3.1:8b": {
+  "fp": "a95bb293adba9b9ef113c7de56cc611b7e558ddf37ca4fe530b31606a282538d",
+  "origin": "trained",
+  "seconds": 12.6,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:34"
+ },
+ "xllm/agentdojo/single:mistral:7b": {
+  "fp": "415143fd2e5111982c9774e3080d3b9dfba9b0a566faed647dc06a00f5514821",
+  "origin": "trained",
+  "seconds": 13.0,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:57"
+ },
+ "xllm/agentdojo/single:qwen2.5:1.5b": {
+  "fp": "437ffaa93aa7782d807fca61d5e108d15d498abfd46f790061d7ca97456d2e15",
+  "origin": "trained",
+  "seconds": 12.4,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:46"
+ },
+ "xllm/agentdojo/single:qwen2.5:14b": {
+  "fp": "2fc8bbeafcef0eceb068f3021357beb4cef32f612b73c8e88cb3fe6d78c1837a",
+  "origin": "trained",
+  "seconds": 12.8,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:54:10"
+ },
+ "xllm/agentdojo/single:qwen2.5:7b": {
+  "fp": "0c07a640b7fd06a8c9b198d761d4e368507380c531dc6e20a2e4df82a072a27f",
+  "origin": "trained",
+  "seconds": 12.4,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:59"
+ },
+ "xllm/asb/lolo:gemma2:9b": {
+  "fp": "700cd56bbfbe500c53bfda9f19c7ac9a04862a4683521b6974df81c2b40fd133",
+  "origin": "trained",
+  "seconds": 20.5,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:51:16"
+ },
+ "xllm/asb/lolo:llama3.1:8b": {
+  "fp": "bd14af8676701e6a59853e81b3a34930240a369cfef7fbb6c41f75d0dbbc3ebc",
+  "origin": "trained",
+  "seconds": 18.9,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:51:08"
+ },
+ "xllm/asb/lolo:mistral:7b": {
+  "fp": "6edbe2182fd5ff58e5f80286afcdeb0f6cdec8d5fcc76958802c5257be10bd93",
+  "origin": "trained",
+  "seconds": 21.9,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:51:38"
+ },
+ "xllm/asb/lolo:qwen2.5:1.5b": {
+  "fp": "9fcc9e968a2934cc35f6a541bed794b528dd5ba64c95953d9c8c1ecc409f3d64",
+  "origin": "trained",
+  "seconds": 21.2,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:51:29"
+ },
+ "xllm/asb/lolo:qwen2.5:14b": {
+  "fp": "0fa51b9bffd0f95de4acfb69bd73d100d62c7ba22ee76572877fd45d42338c4d",
+  "origin": "trained",
+  "seconds": 19.6,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:51:57"
+ },
+ "xllm/asb/lolo:qwen2.5:7b": {
+  "fp": "13ffe8859022cc15b525c0215fe9a2d3707d2c7d42db18d2ce105f520595c46f",
+  "origin": "trained",
+  "seconds": 19.5,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:51:49"
+ },
+ "xllm/asb/single:gemma2:9b": {
+  "fp": "887476abcffaf43f10c74e501216d39ec0e0351705865b56ef0ed96fd6744d54",
+  "origin": "trained",
+  "seconds": 19.8,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:50:15"
+ },
+ "xllm/asb/single:llama3.1:8b": {
+  "fp": "82ad423254470a94490e59a3d86cd853e056140490e266d101f46ddd523d5d73",
+  "origin": "trained",
+  "seconds": 20.3,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:50:09"
+ },
+ "xllm/asb/single:mistral:7b": {
+  "fp": "3ebf5eb509a24deba24244e4d76cf044eb7cad3523e44292ab27c11b63fa69e4",
+  "origin": "trained",
+  "seconds": 20.5,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:50:35"
+ },
+ "xllm/asb/single:qwen2.5:1.5b": {
+  "fp": "6008db3cb0df240b74235421ff331cc4ad71e74387e738a6c68dc4b8826c9db7",
+  "origin": "trained",
+  "seconds": 20.2,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:50:29"
+ },
+ "xllm/asb/single:qwen2.5:14b": {
+  "fp": "d8404ca3ca1f05ed69e2e23cc503fff775ccdf07a6814c9d199f90c09fa3ca90",
+  "origin": "trained",
+  "seconds": 20.1,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:50:55"
+ },
+ "xllm/asb/single:qwen2.5:7b": {
+  "fp": "4ea16e5bebd098d51c57e361f20636e6b55c539c9d742f2a198fb7d03d341a07",
+  "origin": "trained",
+  "seconds": 20.1,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:50:49"
+ },
+ "xllm/injecagent/lolo:gemma2:9b": {
+  "fp": "cc605c906d3cd3a663881ae18a8950ee9e2289f631408a767930decf34058e7a",
+  "origin": "trained",
+  "seconds": 13.6,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:01"
+ },
+ "xllm/injecagent/lolo:llama3.1:8b": {
+  "fp": "414392d0ff7334c67f5ee4a7fd283f3d748b9308ee4c475e617d4115eeb334e7",
+  "origin": "trained",
+  "seconds": 14.1,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:52:51"
+ },
+ "xllm/injecagent/lolo:mistral:7b": {
+  "fp": "5134f9899b24d6c9986881f12b23ef7f11c4ac442f843f5ce5c4bb066b32e4b5",
+  "origin": "trained",
+  "seconds": 14.9,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:16"
+ },
+ "xllm/injecagent/lolo:qwen2.5:1.5b": {
+  "fp": "a119a91663f5d671d9287cc53ae663632c4e416bb9eb4448d909461a9c3d3839",
+  "origin": "trained",
+  "seconds": 13.9,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:05"
+ },
+ "xllm/injecagent/lolo:qwen2.5:14b": {
+  "fp": "3e5db37c29eef12bd483434eef94a326c521f553eec5e69a179d9ac47431051a",
+  "origin": "trained",
+  "seconds": 15.8,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:31"
+ },
+ "xllm/injecagent/lolo:qwen2.5:7b": {
+  "fp": "f384196afe77e26d36059937060ca5dc1cb3c7b8f645b58dafeb727fef1a3126",
+  "origin": "trained",
+  "seconds": 16.2,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:53:21"
+ },
+ "xllm/injecagent/single:gemma2:9b": {
+  "fp": "c82efe2fbf02d84ab3965385c540408ea1b87a5572c8482e9e59efb6f751a931",
+  "origin": "trained",
+  "seconds": 17.6,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:52:15"
+ },
+ "xllm/injecagent/single:llama3.1:8b": {
+  "fp": "d2d8045d77901706c22ba101a1d5987a7b64f40f1a1ef738b8c9152ab88c209f",
+  "origin": "trained",
+  "seconds": 15.9,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:52:05"
+ },
+ "xllm/injecagent/single:mistral:7b": {
+  "fp": "d6dfd5c6006920265d938f079e0cebf07222c6329a9f34928c4b87a42def537c",
+  "origin": "trained",
+  "seconds": 17.4,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:52:32"
+ },
+ "xllm/injecagent/single:qwen2.5:1.5b": {
+  "fp": "3abed38926749fa4369f9a7867df52c8f25ea3f728159eefad1412eefc103156",
+  "origin": "trained",
+  "seconds": 16.6,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:52:21"
+ },
+ "xllm/injecagent/single:qwen2.5:14b": {
+  "fp": "e6fa88ce99a24c5a93cb07f1b1f93b95034c547b3e5b4ab4e778ab3a5e32707a",
+  "origin": "trained",
+  "seconds": 14.7,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:52:47"
+ },
+ "xllm/injecagent/single:qwen2.5:7b": {
+  "fp": "e74c368a633a63f6bb30dd7c554cec69b0d6098e36d2f81d0d830e151cce09bb",
+  "origin": "trained",
+  "seconds": 15.8,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:52:37"
+ },
+ "xllm/pooled/lolo:gemma2:9b": {
+  "fp": "8ca2daa9c54ac476274604eb9ef987d8679c0d34f2b9a4f8ea8e7b07d3d8fdd7",
+  "origin": "trained",
+  "seconds": 48.5,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:48:25"
+ },
+ "xllm/pooled/lolo:llama3.1:8b": {
+  "fp": "a5c0f9d95a0d564ac96b502cb9ee3183e931e999f3533fa3fcda5c4043d23995",
+  "origin": "trained",
+  "seconds": 46.8,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:48:20"
+ },
+ "xllm/pooled/lolo:mistral:7b": {
+  "fp": "d6f94cfa687663fcc01fe1fd97fe7ea94bb42598194032e6b46cf7da18405eb2",
+  "origin": "trained",
+  "seconds": 44.1,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:49:09"
+ },
+ "xllm/pooled/lolo:qwen2.5:1.5b": {
+  "fp": "6db16aa24b54c0aa94b3dde259db4b2c9274e22e46d9b0cf8198f5e94f302a09",
+  "origin": "trained",
+  "seconds": 43.4,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:49:04"
+ },
+ "xllm/pooled/lolo:qwen2.5:14b": {
+  "fp": "48bedc7fdd6f148dcbfd2dbb34f187f7b487b371a20fdfcc96f047892e6de8b0",
+  "origin": "trained",
+  "seconds": 45.5,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:49:55"
+ },
+ "xllm/pooled/lolo:qwen2.5:7b": {
+  "fp": "0c67bdb099d250ee0a282c4ce79585ac54df5059be02898edf9cc967bf609258",
+  "origin": "trained",
+  "seconds": 44.9,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:49:49"
+ },
+ "xllm/pooled/single:gemma2:9b": {
+  "fp": "b9a9599d9cfa1ee055e3da75e5eeda77edb33986f3d8e65e22110ae18ae7a49d",
+  "origin": "trained",
+  "seconds": 45.4,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:46:03"
+ },
+ "xllm/pooled/single:llama3.1:8b": {
+  "fp": "ccf39c5414d4b6a216c5c22b60bdae6a36efe29d0821f9615407ef6a3c445db8",
+  "origin": "trained",
+  "seconds": 43.8,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:46:02"
+ },
+ "xllm/pooled/single:mistral:7b": {
+  "fp": "1c070589545d315d00b6dc2180e391a2fbcd4a061e85e06befdcd5356f413e92",
+  "origin": "trained",
+  "seconds": 47.7,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:46:51"
+ },
+ "xllm/pooled/single:qwen2.5:1.5b": {
+  "fp": "21d935d19e27ac03734dd171eb772e5489bc6d4ca2dd116c820cbe73edb615f2",
+  "origin": "trained",
+  "seconds": 45.3,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:46:47"
+ },
+ "xllm/pooled/single:qwen2.5:14b": {
+  "fp": "c17f8b1865be40b30ac632ca16ee14f6f6fcdb167e1acb2ac9076831dde0e764",
+  "origin": "trained",
+  "seconds": 45.9,
+  "source": "results/crossllm/experiments_crossllm_w0.json",
+  "status": "reused",
+  "time": "2026-11-09T19:47:37"
+ },
+ "xllm/pooled/single:qwen2.5:7b": {
+  "fp": "dd0dba991521e4b7d3f66255ef9aab04c226e20c8173bf63ea7ebdc4a7a71cf0",
+  "origin": "trained",
+  "seconds": 46.6,
+  "source": "results/crossllm/experiments_crossllm_w1.json",
+  "status": "reused",
+  "time": "2026-11-09T19:47:33"
+ }
+}

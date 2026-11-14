@@ -243,3 +243,9 @@ python scripts/run_continual.py --report-only          # rebuild the report from
   - validation is disjoint from both test and tune-train.
 - **Output.** `results/continual/REPORT.md` (tables), `report.html` (charts, works offline, light/dark), `continual.json`, `hparams.json` and `cells/`. A cell is reused when its fingerprint (code, exact train/test graphs, config, device type) matches, so re-running resumes and recomputes only stale cells.
 - **GPU etiquette.** A GPU run refuses to start while `run_experiments.py` or trace collection is using the GPUs (`--force` overrides). It takes about 15–25 min on 2 GPUs (≈12–25 s per cell).
+
+## Cross-LLM transfer experiment
+
+Does a guard trained on one LLM's traces work on another LLM's? `python scripts/cross_llm_transfer.py` trains on each LLM
+(and leave-one-LLM-out), scores every LLM's held-out scenarios, and writes `results/crossllm/{REPORT.md,report.html,summary.json}`.
+Uses both GPUs by default, reuses unchanged cells, and lists its leakage controls in the report. Controls are in `src/crossllm.py`; tests in `tests/test_crossllm.py`.
