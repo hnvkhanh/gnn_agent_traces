@@ -1,11 +1,12 @@
 """Stage 6 (benign) and 6b (attacked) trace generation in AgentDojo, original prompts and verified variants."""
+import collections
 import logging
 import queue
 import threading
 import time
 
 from tracegen import config as C
-from tracegen import gpu, io, ollama
+from tracegen import gpu, io, ollama, progress
 from tracegen.dojo import load_suite, run_one
 
 log = logging.getLogger("tracegen")
@@ -81,13 +82,15 @@ class TraceRunner:
     """Worker threads per endpoint. An endpoint drains its agents one at a time (per-agent queues), so a GPU
     keeps one model loaded instead of thrashing between models. Several endpoints may serve the same agent."""
 
-    def __init__(self, cfg, routes):
-        """routes: {endpoint_url_or_'api': [agent_name, ...]} in priority order."""
+    def __init__(self, cfg, routes, desc="trace"):
+        """routes: {endpoint_url_or_'api': [agent_name, ...]} in priority order. desc labels the progress bar."""
         self.cfg, self.routes = cfg, routes
         self.out = C.out_path(cfg, "traces.jsonl")
         self.queues = {a: queue.Queue() for agents in routes.values() for a in agents}
         self.closed, self.threads, self.tags, self.n_done = False, [], {}, 0
         self.lock = threading.Lock()
+        self.stats = collections.Counter()
+        self.bar = progress.bar(desc)
         self.suites = {}
         for url, agents in routes.items():
             for _ in range(cfg["trace"]["concurrency"]):
@@ -98,12 +101,16 @@ class TraceRunner:
     def submit(self, job):
         if job["agent_model"] not in self.queues:
             raise KeyError("agent %s has no route" % job["agent_model"])
+        with self.lock:
+            self.bar.total += 1
+            self.bar.refresh()
         self.queues[job["agent_model"]].put(job)
 
     def close(self):
         self.closed = True
         for th in self.threads:
             th.join()
+        self.bar.close()
         return self.n_done
 
     def _suite(self, name):
@@ -136,6 +143,9 @@ class TraceRunner:
                 self._run(url, job)
             except Exception:  # noqa: BLE001  (run_one never raises; this guards bookkeeping bugs)
                 log.exception("trace job %s %s failed outside run_one", job["variant_id"], job["agent_model"])
+            finally:
+                with self.lock:
+                    self.bar.update(1)
 
     def _run(self, url, job):
         t = self.cfg["trace"]
@@ -160,10 +170,18 @@ class TraceRunner:
         with self.lock:
             self.n_done += 1
             n = self.n_done
+            s = self.stats
+            s["runs"] += 1
+            s["utility"] += bool(rec["utility"])
+            s["error"] += bool(rec["error"])
+            if job["mode"] == "attack":
+                s["attack"] += 1
+                s["security"] += bool(rec["security"])
+            self.bar.set_postfix_str(progress.run_stats(s), refresh=False)
         log.info("trace #%d %s %s %s seed=%d utility=%s%s steps=%d %.1fs%s", n, job["mode"], job["variant_id"],
                  agent["name"], job["seed"], rec["utility"],
                  " security=%s" % rec["security"] if job["mode"] == "attack" else "", rec["n_steps"],
-                 rec["latency_s"], " ERROR " + rec["error"][:160] if rec["error"] else "")
+                 rec["latency_s"], " ERROR " + rec["error"][:160] if rec["error"] else "", extra={"per_run": True})
 
 
 def routes_for(cfg, urls):

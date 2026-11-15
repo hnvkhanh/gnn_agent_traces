@@ -220,7 +220,8 @@ in `NOTES.md`.
   need exactly the same actions. (llama3.1:8b said NO to nearly every plain rewording with this prompt.)
 - **Stage 6** records every run, success or failure, with its full message list, tool calls and results, `utility`,
   ground-truth calls, steps, tokens, latency and `error`. Crashes and timeouts are recorded and the run continues.
-  `--attacks` adds Stage 6b, which pairs each prompt with AgentDojo injection tasks (`important_instructions`) and
+  A tqdm bar shows runs done / queued, the ETA, and running utility, ASR and error counts. The line for each finished
+  run goes to `tracegen.log`, and also to the console with `-v` or when stderr is not a terminal. `--attacks` adds Stage 6b, which pairs each prompt with AgentDojo injection tasks (`important_instructions`) and
   records `security` (whether the attacker's goal was achieved). Injection texts are never paraphrased.
 - **Stage 7** assigns train/val/test **by original task id**, so all variants, seeds, agents and attack runs of a task
   land in one split. The build fails if any task appears in two splits. `--dedup` keeps one trace per

@@ -90,7 +90,7 @@ def run_parallel(cfg, gpus, suites, rows, limit, judge):
     T.check_agent_fit(cfg, {ag_url: [a["name"] for a in first]}, gpus, extra={ag_url: extra})
 
     done = io.keys(C.out_path(cfg, "traces.jsonl"), io.trace_key)
-    runner = T.TraceRunner(cfg, {ag_url: [a["name"] for a in first]}) if first else None
+    runner = T.TraceRunner(cfg, {ag_url: [a["name"] for a in first]}, desc="trace (streamed)") if first else None
 
     def submit(prows):
         if runner is None:

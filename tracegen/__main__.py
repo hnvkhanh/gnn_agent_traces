@@ -1,10 +1,9 @@
 """python -m tracegen {extract,generate,verify,trace,build,all} [options]"""
 import argparse
 import logging
-import sys
 
 from tracegen import config as C
-from tracegen import gpu
+from tracegen import gpu, progress
 
 STAGES = ["extract", "generate", "verify", "trace", "build", "all"]
 
@@ -21,7 +20,7 @@ def main(argv=None):
     ap.add_argument("--dedup", action=argparse.BooleanOptionalAction, default=None)
     ap.add_argument("--attacks", action=argparse.BooleanOptionalAction, default=None, help="Stage 6b attacked traces")
     ap.add_argument("--agents", help="comma-separated Ollama agent models (overrides trace.agents)")
-    ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("-v", "--verbose", action="store_true", help="debug logging; also print every finished run")
     a = ap.parse_args(argv)
 
     over = {}
@@ -39,7 +38,8 @@ def main(argv=None):
     fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s", "%H:%M:%S")
     root = logging.getLogger("tracegen")
     root.setLevel(logging.DEBUG if a.verbose else logging.INFO)
-    for h in (logging.StreamHandler(sys.stderr), logging.FileHandler(C.out_path(cfg, "tracegen.log"), encoding="utf-8")):
+    for h in (progress.ConsoleHandler(verbose=a.verbose),
+              logging.FileHandler(C.out_path(cfg, "tracegen.log"), encoding="utf-8")):
         h.setFormatter(fmt)
         root.addHandler(h)
     for noisy in ("httpx", "openai", "urllib3"):
