@@ -1,0 +1,75 @@
+# tracegen configuration. Every key is optional: missing keys fall back to tracegen/config.py DEFAULTS.
+# Output paths are relative to paths.out_dir (override with --out).
+
+suites: [banking, slack, travel, workspace]
+benchmark_version: v1.2.2
+
+paths:
+  out_dir: data/tracegen
+
+gpu:
+  mode: parallel              # parallel | split
+  generator_device: 0
+  nli_device: 1               # HF device for the NLI model (split mode uses the first split device)
+  agent_device: 1
+  # The system Ollama service already listens on :11434 with every GPU visible, so the per-GPU
+  # instances use other ports. With manage_servers: true, tracegen starts them itself
+  # (CUDA_VISIBLE_DEVICES pinned) and stops them at the end. It never touches an existing server.
+  generator_url: http://127.0.0.1:11436   # GPU 0
+  agent_url: http://127.0.0.1:11435       # GPU 1
+  split_url: http://127.0.0.1:11437       # split mode: one instance that sees split_devices
+  split_devices: [0, 1]
+  manage_servers: true
+  context_length: 16384       # OLLAMA_CONTEXT_LENGTH for the managed servers (q8 KV cache, flash attention)
+  ollama_models_dir: auto     # auto = system store (/usr/share/ollama/.ollama/models) if readable, else ~/.ollama/models
+  # After generation finishes in parallel mode, GPU 0 is idle, so the batch trace phase also sends agent
+  # runs to generator_url.
+  reuse_generator_gpu_for_agents: true
+
+generate:
+  model: qwen2.5:7b           # ~8B Qwen instruct. Q4_K_M is Ollama's default quant.
+  split_model: qwen2.5:14b    # split-mode generator. For Qwen3.6-35B-A3B Q4_K_M (~20 GB) pull it and set it here.
+  n: 5
+  temperature: 0.9
+  base_seed: 0
+  max_attempts: 3
+  num_predict: 1024
+
+verify:
+  entities: true
+  nli_model: microsoft/deberta-large-mnli
+  nli_tau: 0.8
+  nli_batch_size: 16
+  judge: false                # same as --judge
+  # different family from the qwen generator. In the smoke test, llama3.1:8b with this prompt said NO to nearly
+  # every plain rewording; gemma2:9b discriminated (tool calling is not needed for the judge).
+  judge_model: gemma2:9b
+  judge_system: null          # optional system message for the judge (null = the brief's question only)
+  judge_url: null             # null = agent_url (parallel) / split_url (split). Set an API base_url to use one.
+
+trace:
+  agents: [llama3.1:8b, qwen2.5:7b]   # Ollama tool-calling models. gemma2 does not support tools.
+  # API agents: {name: gpt-4o-mini-2024-07-18, base_url: https://api.openai.com/v1, api_key_env: OPENAI_API_KEY}
+  samples_per_prompt: 1
+  temperature: 0.0            # used when samples_per_prompt == 1
+  sample_temperature: 0.7     # used when samples_per_prompt > 1 (seeds 0..k-1)
+  base_seed: 0
+  run_timeout_s: 300
+  request_timeout_s: 180
+  concurrency: 2              # concurrent runs per Ollama instance
+  max_iters: 15
+  include_originals: true
+
+attacks:
+  enabled: false
+  names: [important_instructions]
+  injection_tasks: null       # null = every injection task in the suite, or a list of ids
+  # Pair a user task only with injection tasks assigned to the same split (injection tasks get their own seeded
+  # train/val/test split per suite), so the GNN guard is tested on attacks it never trained on. About halves the runs.
+  match_splits: true
+  rows: all                   # all = originals + verified variants | originals = original prompts only (~4x fewer runs)
+
+build:
+  dedup: false                # same as --dedup
+  split_ratios: [0.7, 0.15, 0.15]
+  split_seed: 0

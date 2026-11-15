@@ -1,8 +1,8 @@
 """Dump STATIC AgentDojo metadata (tools, user tasks, injection tasks, ground-truth calls) to JSON.
 
-Run once with an interpreter that has agentdojo installed (it needs a newer Python than the project's):
-    <venv>/bin/python scripts/export_agentdojo.py data/agentdojo
-The main project never imports agentdojo and never runs its environment.
+Run once (agentdojo is in requirements.txt):
+    .venv/bin/python scripts/export_agentdojo.py data/agentdojo
+The GNN code under src/ never imports agentdojo; only tracegen/ runs its environment.
 """
 import json
 import sys

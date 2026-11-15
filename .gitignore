@@ -11,3 +11,5 @@ results/**/run.log
 traces/.shards/
 results/.run_experiments.lock
 results/continual/.lock
+data/tracegen/logs/
+data/tracegen/tracegen.log
