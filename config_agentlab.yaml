@@ -1,0 +1,77 @@
+# tracegen.agentlab configuration (python -m tracegen.agentlab). Every key is optional: missing keys fall back to
+# tracegen/agentlab/config.py DEFAULTS. The gpu / generate / verify / trace / build sections mean the same as in
+# config.yaml (tracegen for AgentDojo). Output paths are relative to paths.out_dir (override with --out).
+
+suites: [travel, banking, workspace, spam]   # SHADE-Arena environments
+
+paths:
+  out_dir: data/agentlab
+
+repo:
+  dir: external/AgentLAB       # sparse checkout made by the setup stage (SHADE_Arena/ and data/ only)
+  url: https://github.com/TanqiuJiang/AgentLAB
+  commit: 36f58e60c36bbd6d5b8e61d50d7db7d9ea7258d7
+  dataset: data/filtered_top_200_attacks.json
+
+gpu:
+  mode: parallel               # parallel | split
+  generator_device: 0
+  nli_device: 1
+  agent_device: 1
+  generator_url: http://127.0.0.1:11436   # GPU 0
+  agent_url: http://127.0.0.1:11435       # GPU 1
+  split_url: http://127.0.0.1:11437
+  split_devices: [0, 1]
+  manage_servers: true         # start one private `ollama serve` per GPU; an already running one is left alone
+  context_length: 16384        # the travel environment's 73 tool schemas alone are about 7k tokens
+  ollama_models_dir: auto
+  reuse_generator_gpu_for_agents: true    # the trace stage also sends agent runs to GPU 0
+
+attacks:
+  enabled: true
+  rows: all                    # all = originals + verified variants | originals = the dataset's wording only
+  adaptive_turns: 0            # >0: a local planner writes up to this many extra turns while the chain is incomplete
+  planner_model: null          # null = generate.model
+  planner_temperature: 0.3
+
+benign:
+  enabled: true
+  shade_main_tasks: true       # the 5 benign main tasks of SHADE-Arena's task pairs
+  per_suite: 40                # benign tasks the generator writes per environment
+  batch: 8
+  max_turns: 3
+  temperature: 0.9
+  num_predict: 2048
+
+generate:
+  model: qwen2.5:7b
+  split_model: qwen2.5:14b
+  n: 3                         # paraphrases per task (each user turn is paraphrased n times)
+  temperature: 0.9
+  base_seed: 0
+  max_attempts: 3
+  num_predict: 1024
+
+verify:
+  entities: true
+  nli_model: microsoft/deberta-large-mnli
+  nli_tau: 0.8
+  nli_batch_size: 16
+
+trace:
+  agents: [llama3.1:8b, qwen2.5:7b]   # Ollama tool-calling models
+  # API agents: {name: gpt-4o-mini-2024-07-18, base_url: https://api.openai.com/v1, api_key_env: OPENAI_API_KEY}
+  samples_per_prompt: 1
+  temperature: 0.0
+  sample_temperature: 0.7
+  base_seed: 0
+  run_timeout_s: 600           # whole conversation
+  request_timeout_s: 180
+  concurrency: 2               # concurrent runs per Ollama instance
+  max_agent_rounds: 10         # tool calls per user turn (AgentLAB's max_agent_rounds)
+  max_result_chars: 6000       # a tool result is cut to this length before the agent sees it
+  include_originals: true
+
+build:
+  split_ratios: [0.7, 0.15, 0.15]
+  split_seed: 0

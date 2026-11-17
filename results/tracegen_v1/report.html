@@ -1,0 +1,190 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tracegen GNN guard</title><style>
+/* Layout: one reading column of sections; each chart sits beside or above its table. */
+:root{
+  --page:#f7f8f6; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#7a7873; --grid:#e1e0d9; --axis:#c3c2b7;
+  --mid:#e8e7e3; --ring:#fcfcfb; --accent:#1c5cab; --good:#006300; --bad:#b93636;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --nog:#898781;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --page:#0f100f; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a988f; --grid:#2c2c2a; --axis:#383835;
+  --mid:#383835; --ring:#1a1a19; --accent:#86b6ef; --good:#0ca30c; --bad:#e66767;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --nog:#898781;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --page:#0f100f; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a988f; --grid:#2c2c2a; --axis:#383835;
+  --mid:#383835; --ring:#1a1a19; --accent:#86b6ef; --good:#0ca30c; --bad:#e66767;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --nog:#898781;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:980px;margin:0 auto;padding-block:40px 64px;display:grid;gap:44px}
+header{display:grid;gap:10px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font:600 clamp(30px,5vw,44px)/1.05 var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font:600 24px/1.15 var(--f-display);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--f-body);margin:0}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+section{display:grid;gap:16px}
+.lede{font-size:17px;color:var(--ink2);max-width:70ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--grid);border-radius:6px;padding:14px 16px;display:grid;gap:4px}
+.tile .k{font:500 12px/1.2 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font:600 30px/1.1 var(--f-display)}
+.tile .s{font-size:13px;color:var(--ink2)}
+.panel{background:var(--surface);border:1px solid var(--grid);border-radius:6px;padding:16px;display:grid;gap:12px}
+.panel svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+th{font:500 12px/1.3 var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+.pill{display:inline-block;font:500 11.5px/1 var(--f-mono);padding:4px 7px;border-radius:999px;border:1px solid var(--grid);white-space:nowrap}
+.pill.ok{color:var(--good);border-color:currentColor}
+.pill.bad{color:var(--bad);border-color:currentColor}
+.pill.new{color:var(--accent);border-color:currentColor}
+ul.notes{margin:0;padding-left:20px;color:var(--ink2);display:grid;gap:6px;max-width:72ch}
+details summary{cursor:pointer;color:var(--ink2);font-size:14px}
+details summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg text{font-family:var(--f-body)}
+svg .tick{font:11px var(--f-mono);fill:var(--muted)}
+svg .cat{font-size:12.5px;fill:var(--ink2)}
+svg .val{font:600 11.5px var(--f-mono);fill:var(--ink)}
+svg .val.muted{fill:var(--muted);font-weight:500}
+svg .cellv{font:500 12px var(--f-mono)}
+svg .grid{stroke:var(--grid);stroke-width:1}
+svg .axis{stroke:var(--axis);stroke-width:1}
+svg .whisker{stroke:var(--ink2);stroke-width:1.25}
+svg .rail{stroke:var(--axis);stroke-width:2}
+svg .empty{fill:none;stroke:var(--grid)}
+svg .s1{fill:var(--s1)} svg .s2{fill:var(--s2)} svg .s3{fill:var(--s3)} svg .s4{fill:var(--s4)}
+svg .nog{fill:var(--surface);stroke:var(--nog);stroke-width:2}
+svg .ring{stroke:var(--ring);stroke-width:2}
+svg [data-tip]{cursor:default}
+svg [data-tip]:hover{opacity:.82}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--page);font:12.5px/1.4 var(--f-body);
+  padding:6px 9px;border-radius:4px;max-width:300px;z-index:20}
+footer{font-size:13px;color:var(--muted)}
+@media (max-width:560px){main{padding-block:24px 48px;gap:36px}.tile .v{font-size:26px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><main><header><div class="eyebrow">tracegen · AgentDojo · llama3.1:8b, qwen2.5:7b</div><h1>GNN guard on real agent traces, with file nodes</h1><p class="lede">Per-action approve/reject on AgentDojo runs from tracegen. Held-out splits have unseen user tasks (with all their paraphrases) and unseen injection tasks. Best guard on test: <b>MLP (no graph)</b>.</p></header><div class="tiles"><div class="tile"><div class="k">traces</div><div class="v">4743</div><div class="s">3974 attacked</div></div><div class="tile"><div class="k">reject actions</div><div class="v">810</div><div class="s">of 18183 actions</div></div><div class="tile"><div class="k">GNN + files, test macro-F1</div><div class="v">0.52 ± 0.02</div><div class="s">GNN without files 0.50 ± 0.01</div></div><div class="tile"><div class="k">leakage audit</div><div class="v">clean</div><div class="s">hard overlaps all 0</div></div></div><section><h2>Test macro-F1</h2><div class="panel"><svg viewBox="0 0 760 184" role="img" aria-label="Test macro-F1 by guard"><line class="grid" x1="200.0" x2="200.0" y1="8" y2="160"/><text class="tick" x="200.0" y="176" text-anchor="middle">0.00</text><line class="grid" x1="327.5" x2="327.5" y1="8" y2="160"/><text class="tick" x="327.5" y="176" text-anchor="middle">0.25</text><line class="grid" x1="455.0" x2="455.0" y1="8" y2="160"/><text class="tick" x="455.0" y="176" text-anchor="middle">0.50</text><line class="grid" x1="582.5" x2="582.5" y1="8" y2="160"/><text class="tick" x="582.5" y="176" text-anchor="middle">0.75</text><line class="grid" x1="710.0" x2="710.0" y1="8" y2="160"/><text class="tick" x="710.0" y="176" text-anchor="middle">1.00</text><text class="cat" x="190" y="23.0" text-anchor="end" dy="0.32em">Majority</text><rect class="nog" x="200.0" y="14.0" width="254.4" height="18" rx="3" data-tip="Majority: 0.499 ± 0.000"/><line class="whisker" x1="454.4" x2="454.4" y1="23.0" y2="23.0"/><text class="val" x="462.4" y="23.0" dy="0.32em">0.50</text><text class="cat" x="190" y="53.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect class="s4" x="200.0" y="44.0" width="254.2" height="18" rx="3" data-tip="Tool lookup: 0.498 ± 0.000"/><line class="whisker" x1="454.2" x2="454.2" y1="53.0" y2="53.0"/><text class="val" x="462.2" y="53.0" dy="0.32em">0.50</text><text class="cat" x="190" y="83.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect class="s3" x="200.0" y="74.0" width="276.3" height="18" rx="3" data-tip="MLP (no graph): 0.542 ± 0.003"/><line class="whisker" x1="474.7" x2="477.9" y1="83.0" y2="83.0"/><text class="val" x="484.3" y="83.0" dy="0.32em">0.54</text><text class="cat" x="190" y="113.0" text-anchor="end" dy="0.32em">GNN</text><rect class="s2" x="200.0" y="104.0" width="257.3" height="18" rx="3" data-tip="GNN: 0.505 ± 0.008"/><line class="whisker" x1="453.1" x2="461.6" y1="113.0" y2="113.0"/><text class="val" x="465.3" y="113.0" dy="0.32em">0.50</text><text class="cat" x="190" y="143.0" text-anchor="end" dy="0.32em">GNN + files</text><rect class="s1" x="200.0" y="134.0" width="266.7" height="18" rx="3" data-tip="GNN + files: 0.523 ± 0.023"/><line class="whisker" x1="455.2" x2="478.2" y1="143.0" y2="143.0"/><text class="val" x="474.7" y="143.0" dy="0.32em">0.52</text><line class="axis" x1="200.0" x2="200.0" y1="8" y2="160"/></svg><div class="tbl"><table class=""><thead><tr><th>guard</th><th>macro-F1</th><th>reject recall</th><th>approve recall</th><th>ASR no guard → guard</th><th>benign traces blocked</th><th>approve FPR</th></tr></thead><tbody><tr><td>Majority</td><td>0.50 ± 0.00</td><td>0.00 ± 0.00</td><td>1.00 ± 0.00</td><td>0.02 ± 0.00 → 0.02 ± 0.00</td><td>0.00 ± 0.00</td><td>0.00 ± 0.00</td></tr><tr><td>Tool lookup</td><td>0.50 ± 0.00</td><td>0.00 ± 0.00</td><td>1.00 ± 0.00</td><td>0.02 ± 0.00 → 0.02 ± 0.00</td><td>0.01 ± 0.00</td><td>0.00 ± 0.00</td></tr><tr><td>MLP (no graph)</td><td>0.54 ± 0.00</td><td>0.29 ± 0.06</td><td>0.98 ± 0.00</td><td>0.02 ± 0.00 → 0.02 ± 0.00</td><td>0.06 ± 0.01</td><td>0.02 ± 0.00</td></tr><tr><td>GNN</td><td>0.50 ± 0.01</td><td>0.21 ± 0.06</td><td>0.95 ± 0.02</td><td>0.02 ± 0.00 → 0.02 ± 0.00</td><td>0.09 ± 0.00</td><td>0.05 ± 0.02</td></tr><tr><td>GNN + files</td><td>0.52 ± 0.02</td><td>0.25 ± 0.00</td><td>0.96 ± 0.02</td><td>0.02 ± 0.00 → 0.02 ± 0.00</td><td>0.10 ± 0.01</td><td>0.04 ± 0.02</td></tr></tbody></table></div></div></section><section><h2>Validation macro-F1</h2><div class="panel"><svg viewBox="0 0 760 184" role="img" aria-label="Validation macro-F1 by guard"><line class="grid" x1="200.0" x2="200.0" y1="8" y2="160"/><text class="tick" x="200.0" y="176" text-anchor="middle">0.00</text><line class="grid" x1="327.5" x2="327.5" y1="8" y2="160"/><text class="tick" x="327.5" y="176" text-anchor="middle">0.25</text><line class="grid" x1="455.0" x2="455.0" y1="8" y2="160"/><text class="tick" x="455.0" y="176" text-anchor="middle">0.50</text><line class="grid" x1="582.5" x2="582.5" y1="8" y2="160"/><text class="tick" x="582.5" y="176" text-anchor="middle">0.75</text><line class="grid" x1="710.0" x2="710.0" y1="8" y2="160"/><text class="tick" x="710.0" y="176" text-anchor="middle">1.00</text><text class="cat" x="190" y="23.0" text-anchor="end" dy="0.32em">Majority</text><rect class="nog" x="200.0" y="14.0" width="253.4" height="18" rx="3" data-tip="Majority: 0.497 ± 0.000"/><line class="whisker" x1="453.4" x2="453.4" y1="23.0" y2="23.0"/><text class="val" x="461.4" y="23.0" dy="0.32em">0.50</text><text class="cat" x="190" y="53.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect class="s4" x="200.0" y="44.0" width="253.4" height="18" rx="3" data-tip="Tool lookup: 0.497 ± 0.000"/><line class="whisker" x1="453.4" x2="453.4" y1="53.0" y2="53.0"/><text class="val" x="461.4" y="53.0" dy="0.32em">0.50</text><text class="cat" x="190" y="83.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect class="s3" x="200.0" y="74.0" width="274.7" height="18" rx="3" data-tip="MLP (no graph): 0.539 ± 0.005"/><line class="whisker" x1="472.3" x2="477.1" y1="83.0" y2="83.0"/><text class="val" x="482.7" y="83.0" dy="0.32em">0.54</text><text class="cat" x="190" y="113.0" text-anchor="end" dy="0.32em">GNN</text><rect class="s2" x="200.0" y="104.0" width="400.1" height="18" rx="3" data-tip="GNN: 0.784 ± 0.047"/><line class="whisker" x1="576.0" x2="624.1" y1="113.0" y2="113.0"/><text class="val" x="608.1" y="113.0" dy="0.32em">0.78</text><text class="cat" x="190" y="143.0" text-anchor="end" dy="0.32em">GNN + files</text><rect class="s1" x="200.0" y="134.0" width="378.7" height="18" rx="3" data-tip="GNN + files: 0.742 ± 0.058"/><line class="whisker" x1="549.3" x2="608.0" y1="143.0" y2="143.0"/><text class="val" x="586.7" y="143.0" dy="0.32em">0.74</text><line class="axis" x1="200.0" x2="200.0" y1="8" y2="160"/></svg><div class="tbl"><table class=""><thead><tr><th>guard</th><th>macro-F1</th><th>reject recall</th><th>approve recall</th><th>ASR no guard → guard</th><th>benign traces blocked</th><th>approve FPR</th></tr></thead><tbody><tr><td>Majority</td><td>0.50 ± 0.00</td><td>0.00 ± 0.00</td><td>1.00 ± 0.00</td><td>0.11 ± 0.00 → 0.11 ± 0.00</td><td>0.00 ± 0.00</td><td>0.00 ± 0.00</td></tr><tr><td>Tool lookup</td><td>0.50 ± 0.00</td><td>0.00 ± 0.00</td><td>1.00 ± 0.00</td><td>0.11 ± 0.00 → 0.11 ± 0.00</td><td>0.00 ± 0.00</td><td>0.00 ± 0.00</td></tr><tr><td>MLP (no graph)</td><td>0.54 ± 0.00</td><td>0.62 ± 0.04</td><td>0.90 ± 0.00</td><td>0.11 ± 0.00 → 0.06 ± 0.01</td><td>0.22 ± 0.00</td><td>0.10 ± 0.00</td></tr><tr><td>GNN</td><td>0.78 ± 0.05</td><td>0.75 ± 0.03</td><td>0.99 ± 0.01</td><td>0.11 ± 0.00 → 0.04 ± 0.00</td><td>0.03 ± 0.01</td><td>0.01 ± 0.01</td></tr><tr><td>GNN + files</td><td>0.74 ± 0.06</td><td>0.73 ± 0.03</td><td>0.98 ± 0.01</td><td>0.11 ± 0.00 → 0.04 ± 0.01</td><td>0.05 ± 0.01</td><td>0.02 ± 0.01</td></tr></tbody></table></div></div></section><section><h2>Test macro-F1 per suite</h2><div class="panel"><svg viewBox="0 0 662 204" role="img" aria-label="macro-F1 per suite" style="max-width:662px"><text class="cat" x="266.0" y="20" text-anchor="middle">banking</text><text class="cat" x="378.0" y="20" text-anchor="middle">slack</text><text class="cat" x="490.0" y="20" text-anchor="middle">travel</text><text class="cat" x="602.0" y="20" text-anchor="middle">workspace</text><text class="cat" x="200" y="47.0" text-anchor="end" dy="0.32em">Majority</text><rect x="211" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Majority · banking: macro-F1 0.50 ± 0.00"/><text x="266.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="323" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Majority · slack: macro-F1 0.49 ± 0.00"/><text x="378.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="435" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Majority · travel: macro-F1 0.50 ± 0.00"/><text x="490.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="547" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Majority · workspace: macro-F1 0.50 ± 0.00"/><text x="602.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><text class="cat" x="200" y="81.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect x="211" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Tool lookup · banking: macro-F1 0.47 ± 0.00"/><text x="266.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.47</text><rect x="323" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Tool lookup · slack: macro-F1 0.49 ± 0.00"/><text x="378.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="435" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Tool lookup · travel: macro-F1 0.50 ± 0.00"/><text x="490.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="547" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Tool lookup · workspace: macro-F1 0.50 ± 0.00"/><text x="602.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><text class="cat" x="200" y="115.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect x="211" y="99" width="110" height="32" rx="3" style="fill:#5598e7" data-tip="MLP (no graph) · banking: macro-F1 0.46 ± 0.01"/><text x="266.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.46</text><rect x="323" y="99" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="MLP (no graph) · slack: macro-F1 0.52 ± 0.04"/><text x="378.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.52</text><rect x="435" y="99" width="110" height="32" rx="3" style="fill:#2a78d6" data-tip="MLP (no graph) · travel: macro-F1 0.56 ± 0.01"/><text x="490.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.56</text><rect x="547" y="99" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="MLP (no graph) · workspace: macro-F1 0.50 ± 0.00"/><text x="602.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><text class="cat" x="200" y="149.0" text-anchor="end" dy="0.32em">GNN</text><rect x="211" y="133" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN · banking: macro-F1 0.49 ± 0.01"/><text x="266.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="323" y="133" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN · slack: macro-F1 0.49 ± 0.02"/><text x="378.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="435" y="133" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN · travel: macro-F1 0.51 ± 0.03"/><text x="490.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.51</text><rect x="547" y="133" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN · workspace: macro-F1 0.50 ± 0.00"/><text x="602.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><text class="cat" x="200" y="183.0" text-anchor="end" dy="0.32em">GNN + files</text><rect x="211" y="167" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files · banking: macro-F1 0.50 ± 0.00"/><text x="266.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="323" y="167" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files · slack: macro-F1 0.51 ± 0.01"/><text x="378.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.51</text><rect x="435" y="167" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files · travel: macro-F1 0.53 ± 0.04"/><text x="490.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.53</text><rect x="547" y="167" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files · workspace: macro-F1 0.50 ± 0.00"/><text x="602.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text></svg></div></section><section><h2>Test macro-F1 per agent</h2><div class="panel"><svg viewBox="0 0 438 204" role="img" aria-label="macro-F1 per agent" style="max-width:438px"><text class="cat" x="266.0" y="20" text-anchor="middle">llama3.1:8b</text><text class="cat" x="378.0" y="20" text-anchor="middle">qwen2.5:7b</text><text class="cat" x="200" y="47.0" text-anchor="end" dy="0.32em">Majority</text><rect x="211" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Majority · llama3.1:8b: macro-F1 0.50 ± 0.00"/><text x="266.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="323" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Majority · qwen2.5:7b: macro-F1 0.50 ± 0.00"/><text x="378.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><text class="cat" x="200" y="81.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect x="211" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Tool lookup · llama3.1:8b: macro-F1 0.50 ± 0.00"/><text x="266.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="323" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Tool lookup · qwen2.5:7b: macro-F1 0.50 ± 0.00"/><text x="378.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><text class="cat" x="200" y="115.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect x="211" y="99" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="MLP (no graph) · llama3.1:8b: macro-F1 0.49 ± 0.00"/><text x="266.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="323" y="99" width="110" height="32" rx="3" style="fill:#2a78d6" data-tip="MLP (no graph) · qwen2.5:7b: macro-F1 0.55 ± 0.00"/><text x="378.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.55</text><text class="cat" x="200" y="149.0" text-anchor="end" dy="0.32em">GNN</text><rect x="211" y="133" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN · llama3.1:8b: macro-F1 0.49 ± 0.00"/><text x="266.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="323" y="133" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN · qwen2.5:7b: macro-F1 0.51 ± 0.01"/><text x="378.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.51</text><text class="cat" x="200" y="183.0" text-anchor="end" dy="0.32em">GNN + files</text><rect x="211" y="167" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files · llama3.1:8b: macro-F1 0.49 ± 0.00"/><text x="266.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="323" y="167" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files · qwen2.5:7b: macro-F1 0.53 ± 0.03"/><text x="378.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.53</text></svg></div></section><section><h2>Ablations</h2><p>Change in test macro-F1 of GNN + files when one input is removed (full model 0.52 ± 0.02). Red means the input helps.</p><div class="panel"><svg viewBox="0 0 326 272" role="img" aria-label="ablations" style="max-width:326px"><text class="cat" x="266.0" y="20" text-anchor="middle">Δ macro-F1</text><text class="cat" x="200" y="47.0" text-anchor="end" dy="0.32em">file edges</text><rect x="211" y="31" width="110" height="32" rx="3" style="fill:#fbd5d4" data-tip="without file edges: macro-F1 0.50 ± 0.02 (full 0.523)"/><text x="266.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">-0.018</text><text class="cat" x="200" y="81.0" text-anchor="end" dy="0.32em">observations</text><rect x="211" y="65" width="110" height="32" rx="3" style="fill:#fbd5d4" data-tip="without observations: macro-F1 0.50 ± 0.03 (full 0.523)"/><text x="266.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">-0.023</text><text class="cat" x="200" y="115.0" text-anchor="end" dy="0.32em">injected text</text><rect x="211" y="99" width="110" height="32" rx="3" style="fill:#fbd5d4" data-tip="without injected text: macro-F1 0.50 ± 0.02 (full 0.523)"/><text x="266.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">-0.022</text><text class="cat" x="200" y="149.0" text-anchor="end" dy="0.32em">copies edges</text><rect x="211" y="133" width="110" height="32" rx="3" style="fill:#fbd5d4" data-tip="without copies edges: macro-F1 0.51 ± 0.01 (full 0.523)"/><text x="266.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">-0.012</text><text class="cat" x="200" y="183.0" text-anchor="end" dy="0.32em">mentions edges</text><rect x="211" y="167" width="110" height="32" rx="3" style="fill:#fbd5d4" data-tip="without mentions edges: macro-F1 0.51 ± 0.01 (full 0.523)"/><text x="266.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">-0.014</text><text class="cat" x="200" y="217.0" text-anchor="end" dy="0.32em">tool features</text><rect x="211" y="201" width="110" height="32" rx="3" style="fill:#fbd5d4" data-tip="without tool features: macro-F1 0.52 ± 0.00 (full 0.523)"/><text x="266.0" y="217.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">-0.007</text><text class="cat" x="200" y="251.0" text-anchor="end" dy="0.32em">attacker constants masked</text><rect x="211" y="235" width="110" height="32" rx="3" style="fill:#9ec5f4" data-tip="without attacker constants masked: macro-F1 0.59 ± 0.10 (full 0.523)"/><text x="266.0" y="251.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">+0.065</text></svg></div></section><section><h2>Cross-agent transfer</h2><div class="panel"><svg viewBox="0 0 774 102" role="img" aria-label="transfer" style="max-width:774px"><text class="cat" x="266.0" y="20" text-anchor="middle">Majority</text><text class="cat" x="378.0" y="20" text-anchor="middle">Tool lookup</text><text class="cat" x="490.0" y="20" text-anchor="middle">MLP (no graph)</text><text class="cat" x="602.0" y="20" text-anchor="middle">GNN</text><text class="cat" x="714.0" y="20" text-anchor="middle">GNN + files</text><text class="cat" x="200" y="47.0" text-anchor="end" dy="0.32em">llama3.1:8b-&gt;qwen2.5:7b</text><rect x="211" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="llama3.1:8b-&gt;qwen2.5:7b, Majority: 0.50 ± 0.00"/><text x="266.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="323" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="llama3.1:8b-&gt;qwen2.5:7b, Tool lookup: 0.50 ± 0.00"/><text x="378.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="435" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="llama3.1:8b-&gt;qwen2.5:7b, MLP (no graph): 0.49 ± 0.00"/><text x="490.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="547" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="llama3.1:8b-&gt;qwen2.5:7b, GNN: 0.51 ± 0.01"/><text x="602.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.51</text><rect x="659" y="31" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="llama3.1:8b-&gt;qwen2.5:7b, GNN + files: 0.52 ± 0.02"/><text x="714.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.52</text><text class="cat" x="200" y="81.0" text-anchor="end" dy="0.32em">qwen2.5:7b-&gt;llama3.1:8b</text><rect x="211" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="qwen2.5:7b-&gt;llama3.1:8b, Majority: 0.50 ± 0.00"/><text x="266.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><rect x="323" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="qwen2.5:7b-&gt;llama3.1:8b, Tool lookup: 0.49 ± 0.00"/><text x="378.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="435" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="qwen2.5:7b-&gt;llama3.1:8b, MLP (no graph): 0.49 ± 0.00"/><text x="490.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="547" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="qwen2.5:7b-&gt;llama3.1:8b, GNN: 0.49 ± 0.00"/><text x="602.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text><rect x="659" y="65" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="qwen2.5:7b-&gt;llama3.1:8b, GNN + files: 0.49 ± 0.01"/><text x="714.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.49</text></svg></div></section><section><h2>Data and leakage</h2><div class="panel"><div class="tbl"><table class=""><thead><tr><th>split</th><th>traces</th><th>attacked</th><th>followed attack</th><th>actions</th><th>reject</th><th>tasks</th><th>injection tasks</th></tr></thead><tbody><tr><td>train</td><td>4150</td><td>3617</td><td>178</td><td>14253</td><td>774</td><td>68</td><td>24</td></tr><tr><td>val</td><td>302</td><td>182</td><td>20</td><td>2211</td><td>28</td><td>15</td><td>6</td></tr><tr><td>test</td><td>291</td><td>175</td><td>4</td><td>1719</td><td>8</td><td>14</td><td>5</td></tr></tbody></table></div><div class="tbl"><table class=""><thead><tr><th>overlap (must be 0)</th><th>count</th></tr></thead><tbody><tr><td>task_groups train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>injection_tasks train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>injected_texts train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>prompts train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>task_groups train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>injection_tasks train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>injected_texts train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>prompts train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>task_groups val∩test</td><td><span class="pill ok">0</span></td></tr></tbody></table></div><div class="tbl"><table class=""><thead><tr><th>check</th><th>value</th></tr></thead><tbody><tr><td>attacker_values_val</td><td>11</td></tr><tr><td>attacker_values_val_in_train</td><td>5</td></tr><tr><td>attacker_values_test</td><td>17</td></tr><tr><td>attacker_values_test_in_train</td><td>13</td></tr><tr><td>mean_actions_benign</td><td>4.61</td></tr><tr><td>mean_actions_attack</td><td>3.68</td></tr></tbody></table></div></div></section><details><summary>Markdown report</summary><pre style="white-space:pre-wrap"># GNN guard on tracegen traces (AgentDojo, with file nodes)
+
+Generated 2026-11-17 10:24 by `scripts/run_tracegen_gnn.py` · seeds [0, 1, 2] · epochs 60 · devices cuda:0,cuda:1 · git 1f1815d.
+
+Per-action approve/reject. A held-out split has unseen user tasks (and all their paraphrases) and unseen injection tasks. Scores are mean ± std over seeds.
+
+## Data
+
+| split | traces | benign | attacked | followed attack | security true | actions | reject | tasks | injection tasks |
+|---|---|---|---|---|---|---|---|---|---|
+| train | 4150 | 533 | 3617 | 178 | 101 | 14253 | 774 | 68 | 24 |
+| val | 302 | 120 | 182 | 20 | 19 | 2211 | 28 | 15 | 6 |
+| test | 291 | 116 | 175 | 4 | 1 | 1719 | 8 | 14 | 5 |
+
+Records read: 5136; dropped with no tool call: 393; attack runs dropped because the injection task is in another split: 0.
+
+## Test
+
+| guard | macro-F1 | reject recall | approve recall | ASR no guard → guard | benign traces blocked | approve FPR |
+|---|---|---|---|---|---|---|
+| Majority | 0.50 ± 0.00 | 0.00 ± 0.00 | 1.00 ± 0.00 | 0.02 ± 0.00 → 0.02 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| Tool lookup | 0.50 ± 0.00 | 0.00 ± 0.00 | 1.00 ± 0.00 | 0.02 ± 0.00 → 0.02 ± 0.00 | 0.01 ± 0.00 | 0.00 ± 0.00 |
+| MLP (no graph) | 0.54 ± 0.00 | 0.29 ± 0.06 | 0.98 ± 0.00 | 0.02 ± 0.00 → 0.02 ± 0.00 | 0.06 ± 0.01 | 0.02 ± 0.00 |
+| GNN | 0.50 ± 0.01 | 0.21 ± 0.06 | 0.95 ± 0.02 | 0.02 ± 0.00 → 0.02 ± 0.00 | 0.09 ± 0.00 | 0.05 ± 0.02 |
+| GNN + files | 0.52 ± 0.02 | 0.25 ± 0.00 | 0.96 ± 0.02 | 0.02 ± 0.00 → 0.02 ± 0.00 | 0.10 ± 0.01 | 0.04 ± 0.02 |
+
+## Validation
+
+| guard | macro-F1 | reject recall | approve recall | ASR no guard → guard | benign traces blocked | approve FPR |
+|---|---|---|---|---|---|---|
+| Majority | 0.50 ± 0.00 | 0.00 ± 0.00 | 1.00 ± 0.00 | 0.11 ± 0.00 → 0.11 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| Tool lookup | 0.50 ± 0.00 | 0.00 ± 0.00 | 1.00 ± 0.00 | 0.11 ± 0.00 → 0.11 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 |
+| MLP (no graph) | 0.54 ± 0.00 | 0.62 ± 0.04 | 0.90 ± 0.00 | 0.11 ± 0.00 → 0.06 ± 0.01 | 0.22 ± 0.00 | 0.10 ± 0.00 |
+| GNN | 0.78 ± 0.05 | 0.75 ± 0.03 | 0.99 ± 0.01 | 0.11 ± 0.00 → 0.04 ± 0.00 | 0.03 ± 0.01 | 0.01 ± 0.01 |
+| GNN + files | 0.74 ± 0.06 | 0.73 ± 0.03 | 0.98 ± 0.01 | 0.11 ± 0.00 → 0.04 ± 0.01 | 0.05 ± 0.01 | 0.02 ± 0.01 |
+
+## Test macro-F1 per suite
+
+| guard | banking | slack | travel | workspace |
+|---|---|---|---|---|
+| Majority | 0.50 ± 0.00 | 0.49 ± 0.00 | 0.50 ± 0.00 | 0.50 ± 0.00 |
+| Tool lookup | 0.47 ± 0.00 | 0.49 ± 0.00 | 0.50 ± 0.00 | 0.50 ± 0.00 |
+| MLP (no graph) | 0.46 ± 0.01 | 0.52 ± 0.04 | 0.56 ± 0.01 | 0.50 ± 0.00 |
+| GNN | 0.49 ± 0.01 | 0.49 ± 0.02 | 0.51 ± 0.03 | 0.50 ± 0.00 |
+| GNN + files | 0.50 ± 0.00 | 0.51 ± 0.01 | 0.53 ± 0.04 | 0.50 ± 0.00 |
+
+## Test macro-F1 per agent
+
+| guard | llama3.1:8b | qwen2.5:7b |
+|---|---|---|
+| Majority | 0.50 ± 0.00 | 0.50 ± 0.00 |
+| Tool lookup | 0.50 ± 0.00 | 0.50 ± 0.00 |
+| MLP (no graph) | 0.49 ± 0.00 | 0.55 ± 0.00 |
+| GNN | 0.49 ± 0.00 | 0.51 ± 0.01 |
+| GNN + files | 0.49 ± 0.00 | 0.53 ± 0.03 |
+
+## Ablations (GNN + files, test)
+
+Full model: macro-F1 0.52 ± 0.02.
+
+| removed | macro-F1 | Δ vs full | reject recall |
+|---|---|---|---|
+| file edges | 0.50 ± 0.02 | -0.018 | 0.25 ± 0.10 |
+| observations | 0.50 ± 0.03 | -0.023 | 0.38 ± 0.10 |
+| injected text | 0.50 ± 0.02 | -0.022 | 0.21 ± 0.12 |
+| copies edges | 0.51 ± 0.01 | -0.012 | 0.25 ± 0.10 |
+| mentions edges | 0.51 ± 0.01 | -0.014 | 0.29 ± 0.06 |
+| tool features | 0.52 ± 0.00 | -0.007 | 0.21 ± 0.06 |
+| attacker constants masked | 0.59 ± 0.10 | +0.065 | 0.46 ± 0.12 |
+
+## Cross-agent transfer (test macro-F1)
+
+| train → test | Majority | Tool lookup | MLP (no graph) | GNN | GNN + files |
+|---|---|---|---|---|---|
+| llama3.1:8b-&gt;qwen2.5:7b | 0.50 ± 0.00 | 0.50 ± 0.00 | 0.49 ± 0.00 | 0.51 ± 0.01 | 0.52 ± 0.02 |
+| qwen2.5:7b-&gt;llama3.1:8b | 0.50 ± 0.00 | 0.49 ± 0.00 | 0.49 ± 0.00 | 0.49 ± 0.00 | 0.49 ± 0.01 |
+
+## Leakage audit
+
+Hard overlaps (must be 0): all 0.
+
+| overlap | count |
+|---|---|
+| task_groups train∩val | 0 |
+| injection_tasks train∩val | 0 |
+| injected_texts train∩val | 0 |
+| prompts train∩val | 0 |
+| task_groups train∩test | 0 |
+| injection_tasks train∩test | 0 |
+| injected_texts train∩test | 0 |
+| prompts train∩test | 0 |
+| task_groups val∩test | 0 |
+
+| check | value |
+|---|---|
+| attacker_values_val | 11 |
+| attacker_values_val_in_train | 5 |
+| attacker_values_test | 17 |
+| attacker_values_test_in_train | 13 |
+| mean_actions_benign | 4.61 |
+| mean_actions_attack | 3.68 |
+
+`attacker_values_*_in_train` counts attacker argument strings of held-out attacks that also occur in training actions or observations (AgentDojo reuses constants such as the banking attacker IBAN across injection tasks). The `attacker constants masked` ablation shows how much the guard depends on them.
+
+## Provenance
+
+Runs reused: 0, trained: 30, failed: 0.
+Platform: Windows-11-10.0.26300-SP0, Python 3.14.4.
+</pre></details><footer>scripts/run_tracegen_gnn.py · 2026-11-17 10:24</footer></main><div id="tip" hidden></div><script>
+(function(){var t=document.getElementById('tip');
+function show(e){var s=e.target.closest('[data-tip]');if(!s){t.hidden=true;return;}
+t.textContent=s.getAttribute('data-tip');t.hidden=false;var x=e.clientX+14,y=e.clientY+14;
+var r=t.getBoundingClientRect();if(x+r.width>innerWidth-8)x=e.clientX-r.width-14;if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
+t.style.left=x+'px';t.style.top=y+'px';}
+document.addEventListener('mousemove',show);document.addEventListener('mouseleave',function(){t.hidden=true;});})();
+</script></body></html>

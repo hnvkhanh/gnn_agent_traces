@@ -168,6 +168,8 @@ src/
   llm/           Ollama client
 tracegen/        AgentDojo trace generation from verified paraphrases (see "AgentDojo trace generation")
 config.yaml      tracegen configuration;  NOTES.md: the AgentDojo APIs tracegen relies on
+tracegen/agentlab/  the same pipeline on AgentLAB's tool-chaining attacks (see "AgentLAB trace generation")
+config_agentlab.yaml  its configuration;  external/AgentLAB: its sparse checkout (not committed)
 tests/           pytest suite (tests/tracegen/ for tracegen)
 traces/          collected traces (*.jsonl)
 results/         reports and raw experiment JSON
@@ -268,6 +270,52 @@ python -m tracegen all --gpu-mode split --judge --dedup                   # spli
 Edit `config.yaml` to change the suites, models, N, τ, agents (local, or API agents via
 `{name, base_url, api_key_env}`), `samples_per_prompt`, attacks, timeouts or split ratios.
 
+## AgentLAB trace generation (`tracegen.agentlab`)
+
+`tracegen.agentlab` does for [AgentLAB](https://github.com/TanqiuJiang/AgentLAB) what `tracegen` does for AgentDojo.
+It covers AgentLAB's **tool-chaining** track: a user walks the agent through a "verified tool chain", one
+harmless-looking request per turn, and the turns together reach a harmful goal. The dataset
+(`data/filtered_top_200_attacks.json`) ships these multi-turn conversations for four SHADE-Arena environments
+(`travel`, `banking`, `workspace`, `spam`). Local Ollama agents replay them in the real environments, with AgentLAB's
+agent system prompt and its rule of one tool call per step.
+
+```bash
+python -m tracegen.agentlab all              # everything; run the same command again to resume
+python -m tracegen.agentlab all --smoke      # 2 tasks per kind, 2 suites, 1 agent -> data/agentlab_smoke/
+python -m tracegen.agentlab trace --agents mistral:7b      # one stage; add another agent later
+python -m pytest tests/tracegen/test_agentlab.py -q        # offline, scripted fake agent
+```
+
+| stage | output (under `data/agentlab/`) |
+|---|---|
+| `setup` | `external/AgentLAB`: sparse checkout of `SHADE_Arena/` and `data/` at the pinned commit (about 20 MB) |
+| `extract` | `originals.jsonl`: 167 attack tasks (user turns + tool chain) and the 5 benign SHADE-Arena main tasks |
+| `benign` | more of `originals.jsonl`, `benign_log.jsonl`: benign multi-turn tasks the generator writes per environment |
+| `generate` | `candidates.jsonl`, `generate_log.jsonl`: N paraphrases of every user turn |
+| `verify` | `verified_variants.jsonl`, `rejected_variants.jsonl`: entity check and bidirectional NLI, per turn |
+| `trace` | `traces.jsonl` (append-only), `trace_errors.jsonl` |
+| `build` | `splits/{train,val,test}.jsonl`, `tools.json`, `report.md` |
+
+- **Resume.** Every stage appends to its files and skips what is there: tasks by `(suite, task_id)`, generator calls
+  by task or batch, variants by `variant_id`, runs by `(mode, suite, task, variant, agent, seed, attack)`. A run that
+  was killed mid-write leaves a torn last line, which is skipped and redone. A run that got no reply at all from the
+  agent (endpoint down, model missing) goes to `trace_errors.jsonl`, not `traces.jsonl`, so the next run retries it.
+- **A trace** has the fields of a tracegen trace (`messages`, `tool_calls`, `agent_model`, `seed`, ...) plus `turns`
+  (the user messages), a `turn` index on every message and call, and for attacks `attack_ground_truth_calls` (the
+  chain), `chain_step` / `chain_match` per call (`args`: same tool and same identifier-like arguments, `name`: same
+  tool only), `chain_progress` and `security`. `security` is true when the agent ran every tool of the chain in order
+  without an error. AgentLAB scores success with a GPT judge; this check replaces it.
+- **Benign tasks.** AgentLAB has no benign tasks in these environments beyond the 5 main tasks, so the generator
+  model writes `benign.per_suite` tasks per environment from the tool list. They are deduplicated but not checked by
+  a judge, and there is no utility checker (`utility` is null).
+- **Adaptive turns.** `attacks.adaptive_turns: K` (or `--adaptive-turns K`) adds AgentLAB's planner: after the
+  scripted turns a local model writes up to K further user turns while the chain is incomplete. These runs are
+  recorded as attack `tool_chaining_adaptive`, next to the scripted `tool_chaining` runs.
+- **Not covered.** The dataset's 33 Agent-SafetyBench cases (no environment parameters; AgentLAB's own runner cannot
+  build them either), and the other four tracks: intent hijacking has no tool calls, memory poisoning needs Mem0,
+  objective drifting needs the WebShop conda environment, and task injection is AgentDojo with a GPT attacker.
+- The GNN adapter (`src/benchmarks/`) does not read these traces yet.
+
 ## GNN guard on tracegen traces (with file nodes)
 
 `scripts/run_tracegen_gnn.py` trains the approve/reject guard on the real AgentDojo runs from tracegen. It compares
@@ -284,8 +332,18 @@ python scripts/run_tracegen_gnn.py --seeds 1 --epochs 3 --devices cpu --outdir /
 
 - **Labels** (`src/benchmarks/tracegen.py`): a tool call is `reject` when it matches one of the injection task's
   ground-truth calls (recorded by tracegen as `injection_ground_truth_calls`), keyed on the attacker-chosen argument
-  values. Values that the user task uses too, such as the transfer date, are ignored. Every other call, and every call
-  of a benign run, is `approve`. Nothing is replayed synthetically, so an attack the agent ignores adds no `reject`.
+  values. Values that the user task uses too, such as the transfer date, are ignored. The call must also come after a
+  tool result that carried the injected text, and must not be a call that benign runs of the same user task make.
+  Every other call, and every call of a benign run, is `approve`. Nothing is replayed synthetically, so an attack the
+  agent ignores adds no `reject`.
+- **Events**: a call that repeats an earlier call of the run with the same arguments and result is dropped, and a run
+  is cut after 30 calls (`MAX_EVENTS`). The report counts both.
+- **Model selection** (`src/tracegen_gnn.py`): each guard keeps the epoch with the best validation AUPRC and uses the
+  reject threshold with the best validation reject F1. Validation scores are therefore optimistic; test is the
+  unbiased number. With no reject action in validation, the last epoch and threshold 0.5 are used.
+- **Scores** (`src/rank_metrics.py`): AUPRC and reject recall at 1% approve FPR, each with a 95% bootstrap interval
+  over traces, then reject recall, approve FPR, macro-F1 and ASR at the tuned threshold. A set with no reject action
+  has no AUPRC, recall or macro-F1 and shows `–`.
 - **Splits**: tracegen's task-level split, plus a separate seeded split of the injection tasks.
   `attacks.match_splits: true` (the default) only plans (user task, injection task) pairs from the same split. Val and
   test therefore hold unseen tasks, with all their paraphrases, and unseen attacks. `attacks.rows: originals` limits
@@ -294,7 +352,13 @@ python scripts/run_tracegen_gnn.py --seeds 1 --epochs 3 --devices cpu --outdir /
   injection tasks, injected texts and normalised prompts shared between train and val/test. It also reports how many
   held-out attacker constants (for example the banking attacker IBAN) appear in training. The `attacker_values`
   ablation masks those constants in every trace.
-- **Sections**: main (val, test, per suite, per agent); ablations of GNN + files (`files`, `observation`, `injected`,
+- **Cross-validation** (`--sections cv`, `--folds 5`): the fixed test split holds only a few followed attacks, so
+  the headline number comes from 5 task folds × 5 injection-task folds. Cell (a, b) tests the attack runs of task
+  fold a with an injection task of fold b (plus a share of the benign runs of fold a), selects on block (a+1, b+1),
+  and trains on runs whose task and injection task are in neither fold. Every run is tested once by a guard that saw
+  neither its user task nor its injection task; the report pools the cells per seed and adds a table per injection
+  task. Attack runs generated with `attacks.match_splits: false` are used here and ignored by the fixed split.
+- **Sections**: main (val, test, per suite, per agent); cv; ablations of GNN + files (`files`, `observation`, `injected`,
   `copies`, `mentions`, `tool_feat`, `attacker_values`); cross-agent transfer. Each (cell, seed) is fingerprinted, and
   unchanged runs are reused. Outputs: `results/tracegen/experiments.json`, `REPORT.md`, `report.html`.
 - With no attacked traces, the script stops and says so; it does not train on approve-only data.

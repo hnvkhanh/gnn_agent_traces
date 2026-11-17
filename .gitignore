@@ -4,6 +4,7 @@ traces/*.log
 traces/log_*.txt
 .venv/
 .venv-cuda/
+.venv-win/
 traces/*.status
 results/**/run.log
 .vscode/
@@ -13,3 +14,10 @@ results/.run_experiments.lock
 results/continual/.lock
 data/tracegen/logs/
 data/tracegen/tracegen.log
+
+
+# tracegen.agentlab
+external/
+data/agentlab/logs/
+data/agentlab/tracegen.log
+data/agentlab_smoke/

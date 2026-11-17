@@ -3,15 +3,23 @@
     python scripts/run_tracegen_gnn.py                                # all sections, every CUDA GPU in parallel
     python scripts/run_tracegen_gnn.py --devices cuda:0,cuda:1 --seeds 3 --epochs 60
     python scripts/run_tracegen_gnn.py --seeds 1 --epochs 3 --devices cpu --outdir /tmp/x    # smoke
+    python scripts/run_tracegen_gnn.py --sections cv --folds 5        # only the cross-validation
     python scripts/run_tracegen_gnn.py --report-only                  # re-render the report from stored results
 
 Needs attacked traces: `python -m tracegen --attacks` (config.yaml `attacks`). Without them the script stops and says so.
 
 Guards: majority, tool-lookup, mlp (no graph), gnn (docs/GRAPH.md graph), gnn+files (plus file nodes,
-src/graph/files.py). Sections: main (val + test, per suite, per agent), ablate (gnn+files), transfer (agent -> agent).
+src/graph/files.py). Sections: main (val + test, per suite, per agent), cv, ablate (gnn+files), transfer (agent -> agent).
+cv: cross-validation over --folds task folds x --folds injection-task folds (src/tracegen_gnn.py). Every run is tested
+once, by a guard that saw neither its user task nor its injection task, and the cells are pooled per seed. This is the
+headline number: the fixed test split holds only a few followed attacks.
 Splits: tracegen's task-level split; injection tasks have their own split, so held-out sides have unseen tasks AND
 unseen attacks (src/benchmarks/tracegen.py). The leakage audit runs first and the script refuses to train if a hard
 overlap is not 0.
+
+Model selection: per guard, the epoch with the best validation AUPRC and the reject threshold with the best validation
+reject F1 (src/tracegen_gnn.py). Scores: AUPRC and reject recall at 1% approve FPR with bootstrap intervals over traces
+(src/rank_metrics.py), then the thresholded numbers. A set with no reject action shows "–", not a macro-F1 of 0.50.
 
 Each (cell, seed) is fingerprinted (training/graph code, options, every train/eval graph and meta). Stored runs with the
 same fingerprint are reused, so only new or stale runs train. --no-reuse recomputes everything.
@@ -128,9 +136,30 @@ def metric(runs, ev, guard, f):
     return [f(r[ev][guard]) for r in runs if ev in r and guard in r[ev]]
 
 
+def _ci(key, k):
+    return lambda r: r[key][k] if r.get(key) else None
+
+
 M = dict(f1=lambda r: r["macro_f1"], rej=lambda r: r["recall"]["reject"], appr=lambda r: r["recall"]["approve"],
          asr_u=lambda r: r["asr"]["asr_undefended"], asr_d=lambda r: r["asr"]["asr_defended"],
-         bblock=lambda r: r["asr"]["benign_block"], fpr=lambda r: r["asr"]["approve_fpr"])
+         bblock=lambda r: r["asr"]["benign_block"], fpr=lambda r: r["asr"]["approve_fpr"],
+         ap=lambda r: r["auprc"], ap_lo=_ci("auprc_ci", 0), ap_hi=_ci("auprc_ci", 1),
+         rf=lambda r: r["recall_at_fpr"], rf_lo=_ci("recall_at_fpr_ci", 0), rf_hi=_ci("recall_at_fpr_ci", 1),
+         thr=lambda r: r["threshold"], epoch=lambda r: r["best_epoch"], val_ap=lambda r: r["val_auprc"])
+
+
+def ci(runs, ev, guard, key):
+    """Mean over seeds of the per-seed bootstrap interval, as '[lo, hi]'."""
+    lo, hi = nanmean(metric(runs, ev, guard, M[key + "_lo"])), nanmean(metric(runs, ev, guard, M[key + "_hi"]))
+    return "–" if lo != lo else "[%.2f, %.2f]" % (lo, hi)
+
+
+def counts(runs, ev):
+    """(reject actions, actions, traces) of an eval set, from any stored report."""
+    for r in runs:
+        for g in r.get(ev, {}).values():
+            return g["n_reject"], g["n_actions"], g["n_traces"]
+    return 0, 0, 0
 
 
 def pm(v, d=2):
@@ -148,20 +177,73 @@ def md_table(header, rows):
 def guard_rows(runs, ev, guards):
     rows = []
     for g in guards:
-        if not metric(runs, ev, g, M["f1"]):
+        if not metric(runs, ev, g, M["fpr"]):
             continue
-        rows.append([GUARD_NAME[g], pm(metric(runs, ev, g, M["f1"])), pm(metric(runs, ev, g, M["rej"])),
-                     pm(metric(runs, ev, g, M["appr"])),
+        rows.append([GUARD_NAME[g], pm(metric(runs, ev, g, M["ap"])), ci(runs, ev, g, "ap"),
+                     pm(metric(runs, ev, g, M["rf"])), ci(runs, ev, g, "rf"),
+                     pm(metric(runs, ev, g, M["rej"])), pm(metric(runs, ev, g, M["fpr"])),
+                     pm(metric(runs, ev, g, M["f1"])),
                      "%s → %s" % (pm(metric(runs, ev, g, M["asr_u"])), pm(metric(runs, ev, g, M["asr_d"]))),
-                     pm(metric(runs, ev, g, M["bblock"])), pm(metric(runs, ev, g, M["fpr"]))])
+                     pm(metric(runs, ev, g, M["bblock"]))])
     return rows
 
 
-GHEAD = ["guard", "macro-F1", "reject recall", "approve recall", "ASR no guard → guard", "benign traces blocked",
-         "approve FPR"]
+GHEAD = ["guard", "AUPRC", "95% CI", "reject recall @ 1% FPR", "95% CI", "reject recall", "approve FPR", "macro-F1",
+         "ASR no guard → guard", "benign traces blocked"]
+GNOTE = ("AUPRC and reject recall at 1% approve FPR use the scores (no threshold); the interval is a bootstrap over "
+         "traces, averaged over seeds. The last five columns use the reject threshold tuned on validation.")
 
 
-def build_report(a, store, summary, leak, stats, seeds, devices, status):
+def set_line(runs, ev):
+    n, a, t = counts(runs, ev)
+    return "%d reject actions of %d (%d traces). Chance AUPRC is the reject share, %.3f." % (n, a, t, n / a if a else 0)
+
+
+def slice_cols(runs, kind, names, fmt="%s (%d reject)"):
+    return [fmt % (c, counts(runs, "test|%s=%s" % (kind, c))[0]) for c in names]
+
+
+def cv_section(cv, folds, n_cells, n_seeds):
+    """Markdown lines of the cross-validation section ([] without a complete seed)."""
+    from src.tracegen_gnn import GUARDS
+    if not cv:
+        return []
+    n, acts, traces = counts(cv, "test")
+    fol = next(iter(cv[0]["test"].values()))["n_followed"]
+    L = ["## Cross-validation (%d task folds × %d injection-task folds)" % (folds, folds), "",
+         "%d cells, pooled; %d of %d seeds complete. Every run is tested once, by a guard that saw neither its user task "
+         "nor its injection task. %d reject actions of %d, in %d runs that followed an attack (%d runs in total). "
+         "Chance AUPRC is the reject share, %.3f." % (n_cells, len(cv), n_seeds, n, acts, fol, traces,
+                                                      n / acts if acts else 0), "",
+         md_table(GHEAD, guard_rows(cv, "test", GUARDS)), "", GNOTE,
+         "Scores of different cells come from different models and are pooled as they are; each cell uses its own "
+         "validation threshold.", ""]
+    evs = sorted({k for r in cv for k in r})
+    for kind in ("suite", "agent", "attack"):
+        names = [e.split("=", 1)[1] for e in evs if e.startswith("test|%s=" % kind)]
+        if not names:
+            continue
+        if kind == "attack":   # one row per injection task: its runs plus the benign runs of its suite
+            g = "gnn+files"
+            rows = [[c.replace("|", " / "), next(iter(cv[0]["test|attack=%s" % c].values()))["n_followed"],
+                     counts(cv, "test|attack=%s" % c)[0], pm(metric(cv, "test|attack=%s" % c, g, M["ap"])),
+                     pm(metric(cv, "test|attack=%s" % c, g, M["rej"])),
+                     "%s → %s" % (pm(metric(cv, "test|attack=%s" % c, g, M["asr_u"])),
+                                  pm(metric(cv, "test|attack=%s" % c, g, M["asr_d"])))] for c in names]
+            L += ["### Per injection task (GNN + files)", "",
+                  "Each row scores the runs attacked with that injection task together with the benign runs of its "
+                  "suite.", "",
+                  md_table(["injection task", "runs that followed", "reject actions", "AUPRC", "reject recall",
+                            "ASR no guard → guard"], rows), ""]
+        else:
+            L += ["### AUPRC per %s" % kind, "",
+                  md_table(["guard"] + slice_cols(cv, kind, names),
+                           [[GUARD_NAME[g]] + [pm(metric(cv, "test|%s=%s" % (kind, c), g, M["ap"])) for c in names]
+                            for g in GUARDS]), ""]
+    return L
+
+
+def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), n_cv=0):
     from src.tracegen_gnn import ABLATE, GUARDS
     main = runs_of(store, "main", seeds)
     evs = sorted({k for r in main for k in r})
@@ -172,39 +254,52 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status):
          "Generated %s by `scripts/run_tracegen_gnn.py` · seeds %s · epochs %d · devices %s · git %s." % (
              datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), list(seeds), a.epochs, ",".join(devices), _git()), "",
          "Per-action approve/reject. A held-out split has unseen user tasks (and all their paraphrases) and unseen "
-         "injection tasks. Scores are mean ± std over seeds.", "",
+         "injection tasks. Scores are mean ± std over seeds. Each guard uses the epoch with the best validation AUPRC "
+         "and the reject threshold with the best validation reject F1, so validation scores are optimistic and test "
+         "is the unbiased number. A set with no reject action has no AUPRC, recall or macro-F1 (shown as –).", "",
          "## Data", "",
          md_table(["split", "traces", "benign", "attacked", "followed attack", "security true", "actions", "reject",
                    "tasks", "injection tasks"],
                   [[sp, s["traces"], s["benign_traces"], s["attack_traces"], s["attack_followed"], s["security"],
                     s["actions"], s["reject"], s["tasks"], s["injection_tasks"]] for sp, s in summary.items()]), "",
-         "Records read: %d; dropped with no tool call: %d; attack runs dropped because the injection task is in another "
-         "split: %d." % (stats.get("records", 0), stats.get("no_tool_calls", 0), stats.get("dropped_split_mismatch", 0)),
-         ""]
-    for ev, title in (("test", "Test"), ("val", "Validation")):
-        L += ["## %s" % title, "", md_table(GHEAD, guard_rows(main, ev, GUARDS)), ""]
-    if suites:
-        L += ["## Test macro-F1 per suite", "",
-              md_table(["guard"] + suites, [[GUARD_NAME[g]] + [pm(metric(main, "test|suite=%s" % s, g, M["f1"]))
-                                                               for s in suites] for g in GUARDS]), ""]
-    if agents:
-        L += ["## Test macro-F1 per agent", "",
-              md_table(["guard"] + agents, [[GUARD_NAME[g]] + [pm(metric(main, "test|agent=%s" % m, g, M["f1"]))
-                                                               for m in agents] for g in GUARDS]), ""]
-    base = metric(main, "test", "gnn+files", M["f1"])
+         "Records read: %d; dropped with no tool call: %d; attack runs outside the fixed split because the injection task "
+         "is in another split (used by the cross-validation only): %d." % (stats.get("records", 0), stats.get("no_tool_calls", 0), stats.get("dropped_split_mismatch", 0)),
+         "", "Calls dropped as repeats of an earlier call with the same arguments and result: %d. Runs cut at the "
+         "length cap: %d (%d calls, %d of them reject)." % (stats.get("repeats_dropped", 0), stats.get("traces_cut", 0),
+                                                           stats.get("calls_cut", 0), stats.get("rejects_cut", 0)),
+         "", "A call is `reject` only if it matches an attacker call, comes after a tool result that carried the "
+         "injected text, and is not a call that benign runs of the same user task make.", ""]
+    L += cv_section(cv, a.folds, n_cv, len(seeds))
+    for ev, title in (("test", "Fixed split: test"), ("val", "Fixed split: validation (used for model selection)")):
+        L += ["## %s" % title, "", set_line(main, ev), "", md_table(GHEAD, guard_rows(main, ev, GUARDS)), "", GNOTE, ""]
+    sel = [[GUARD_NAME[g], pm(metric(main, "test", g, M["epoch"]), 0), pm(metric(main, "test", g, M["thr"])),
+            pm(metric(main, "test", g, M["val_ap"]))] for g in GUARDS if metric(main, "test", g, M["thr"])]
+    if sel:
+        L += ["## Model selection (fixed split)", "", md_table(["guard", "best epoch", "reject threshold", "validation AUPRC"], sel), ""]
+    for kind, names in (("suite", suites), ("agent", agents)):
+        if names:
+            L += ["## Fixed split: test AUPRC per %s" % kind, "",
+                  md_table(["guard"] + slice_cols(main, kind, names),
+                           [[GUARD_NAME[g]] + [pm(metric(main, "test|%s=%s" % (kind, c), g, M["ap"])) for c in names]
+                            for g in GUARDS]), ""]
+    base = metric(main, "test", "gnn+files", M["ap"])
     rows = []
     for ab in ABLATE:
         r = runs_of(store, "ablate/%s" % ab, seeds)
         if r:
-            v = metric(r, "test", "gnn+files", M["f1"])
-            rows.append([ABL_NAME[ab], pm(v), "%+.3f" % (nanmean(v) - nanmean(base)), pm(metric(r, "test", "gnn+files", M["rej"]))])
+            v = metric(r, "test", "gnn+files", M["ap"])
+            rows.append([ABL_NAME[ab], pm(v), "%+.3f" % (nanmean(v) - nanmean(base)), ci(r, "test", "gnn+files", "ap"),
+                         pm(metric(r, "test", "gnn+files", M["rf"]))])
     if rows:
-        L += ["## Ablations (GNN + files, test)", "", "Full model: macro-F1 %s." % pm(base), "",
-              md_table(["removed", "macro-F1", "Δ vs full", "reject recall"], rows), ""]
+        L += ["## Ablations (GNN + files, test)", "",
+              "Full model: AUPRC %s, 95%% CI %s. A change smaller than the interval is not a finding." % (
+                  pm(base), ci(main, "test", "gnn+files", "ap")), "",
+              md_table(["removed", "AUPRC", "Δ vs full", "95% CI", "reject recall @ 1% FPR"], rows), ""]
     if transfer:
-        L += ["## Cross-agent transfer (test macro-F1)", "",
-              md_table(["train → test"] + [GUARD_NAME[g] for g in GUARDS],
-                       [[k.split("/", 1)[1]] + [pm(metric(runs_of(store, k, seeds), "test", g, M["f1"])) for g in GUARDS]
+        L += ["## Cross-agent transfer (test AUPRC)", "",
+              md_table(["train → test", "test reject actions"] + [GUARD_NAME[g] for g in GUARDS],
+                       [[k.split("/", 1)[1], counts(runs_of(store, k, seeds), "test")[0]]
+                        + [pm(metric(runs_of(store, k, seeds), "test", g, M["ap"])) for g in GUARDS]
                         for k in transfer]), ""]
     L += ["## Leakage audit", "", "Hard overlaps (must be 0): %s." % ("all 0" if leak["ok"] else "**NOT 0**"), "",
           md_table(["overlap", "count"], [[k, v] for k, v in leak["hard"].items()]), "",
@@ -217,7 +312,7 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status):
                                                         status.count("failed")),
           "Platform: %s, Python %s." % (platform.platform(), platform.python_version()), ""]
     md = "\n".join(L)
-    return md, render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md)
+    return md, render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv)
 
 
 def _git():
@@ -253,42 +348,54 @@ def bars(items, title):
     return "".join(out)
 
 
-def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md):
+def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv=()):
     from report_page import CSS, JS, div_color, esc, heatmap, seq_color, table
     from src.tracegen_gnn import ABLATE, GUARDS
     cls = {"majority": "nog", "tool-lookup": "s4", "mlp": "s3", "gnn": "s2", "gnn+files": "s1"}
-    te = lambda g: metric(main, "test", g, M["f1"])
+    head = cv or main   # the headline numbers: pooled cross-validation when it is complete
+    te = lambda g: metric(head, "test", g, M["ap"])
     tot = {k: sum(s[k] for s in summary.values()) for k in ("traces", "attack_traces", "reject", "actions")}
-    best = max(GUARDS, key=lambda g: nanmean(te(g)) if te(g) else -1)
+    best = max(GUARDS, key=lambda g: nanmean(te(g)) if nanmean(te(g)) == nanmean(te(g)) else -1)
     tiles = [("traces", tot["traces"], "%d attacked" % tot["attack_traces"]),
              ("reject actions", tot["reject"], "of %d actions" % tot["actions"]),
-             ("GNN + files, test macro-F1", pm(te("gnn+files")), "GNN without files %s" % pm(te("gnn"))),
+             ("GNN + files, %s AUPRC" % ("cross-validation" if cv else "test"), pm(te("gnn+files")),
+              "95%% CI %s · %d reject actions tested" % (ci(head, "test", "gnn+files", "ap"), counts(head, "test")[0])),
              ("leakage audit", "clean" if leak["ok"] else "overlap", "hard overlaps all 0" if leak["ok"] else "see table")]
     S = ['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,'
          'initial-scale=1"><title>Tracegen GNN guard</title><style>%s</style></head><body><main>' % CSS,
          '<header><div class="eyebrow">tracegen · AgentDojo · %s</div><h1>GNN guard on real agent traces, with file nodes'
          '</h1><p class="lede">Per-action approve/reject on AgentDojo runs from tracegen. Held-out splits have unseen '
-         'user tasks (with all their paraphrases) and unseen injection tasks. Best guard on test: <b>%s</b>.</p></header>'
+         'user tasks (with all their paraphrases) and unseen injection tasks. Highest AUPRC: <b>%s</b>.</p></header>'
          % (esc(", ".join(agents) or datetime.date.today().isoformat()), esc(GUARD_NAME[best])),
          '<div class="tiles">%s</div>' % "".join('<div class="tile"><div class="k">%s</div><div class="v">%s</div>'
                                                  '<div class="s">%s</div></div>' % (esc(k), esc(v), esc(s))
                                                  for k, v, s in tiles)]
-    for ev, title in (("test", "Test"), ("val", "Validation")):
-        items = [(GUARD_NAME[g], metric(main, ev, g, M["f1"]), cls[g]) for g in GUARDS]
-        S.append('<section><h2>%s macro-F1</h2><div class="panel">%s%s</div></section>'
-                 % (title, bars(items, "%s macro-F1 by guard" % title),
-                    table(GHEAD, [[esc(c) for c in r] for r in guard_rows(main, ev, GUARDS)])))
+    if cv:
+        items = [(GUARD_NAME[g], metric(cv, "test", g, M["ap"]), cls[g]) for g in GUARDS]
+        S.append('<section><h2>Cross-validation AUPRC (%d × %d folds, pooled)</h2><p>Every run is tested once, by a '
+                 'guard that saw neither its user task nor its injection task. %s</p><div class="panel">%s%s</div>'
+                 '<p>%s</p></section>'
+                 % (a.folds, a.folds, esc(set_line(cv, "test")), bars(items, "Cross-validation AUPRC by guard"),
+                    table(GHEAD, [[esc(c) for c in r] for r in guard_rows(cv, "test", GUARDS)]), esc(GNOTE)))
+    for ev, title in (("test", "Fixed split: test"), ("val", "Fixed split: validation (used for model selection)")):
+        items = [(GUARD_NAME[g], metric(main, ev, g, M["ap"]), cls[g]) for g in GUARDS]
+        S.append('<section><h2>%s AUPRC</h2><p>%s</p><div class="panel">%s%s</div><p>%s</p></section>'
+                 % (title, esc(set_line(main, ev)), bars(items, "%s AUPRC by guard" % title),
+                    table(GHEAD, [[esc(c) for c in r] for r in guard_rows(main, ev, GUARDS)]), esc(GNOTE)))
     for kind, cols in (("suite", suites), ("agent", agents)):
         if cols:
-            def cell(r, c, kind=kind):
-                v = metric(main, "test|%s=%s" % (kind, c), [g for g in GUARDS if GUARD_NAME[g] == r][0], M["f1"])
-                if not v:
-                    return None
+            shown = dict(zip(slice_cols(main, kind, cols, "%s (%d)"), cols))
+
+            def cell(r, c, kind=kind, shown=shown):
+                v = metric(main, "test|%s=%s" % (kind, shown[c]), [g for g in GUARDS if GUARD_NAME[g] == r][0], M["ap"])
                 m = nanmean(v)
+                if m != m:   # no reject action in this slice
+                    return None
                 fill, ink = seq_color(m)
-                return fill, ink, "%.2f" % m, "%s · %s: macro-F1 %s" % (r, c, pm(v))
-            S.append('<section><h2>Test macro-F1 per %s</h2><div class="panel">%s</div></section>'
-                     % (kind, heatmap([GUARD_NAME[g] for g in GUARDS], cols, cell, "macro-F1 per %s" % kind)))
+                return fill, ink, "%.2f" % m, "%s · %s: AUPRC %s" % (r, c, pm(v))
+            S.append('<section><h2>Test AUPRC per %s</h2><p>In brackets: reject actions in the slice. A slice with none has no score.</p>'
+                     '<div class="panel">%s</div></section>'
+                     % (kind, heatmap([GUARD_NAME[g] for g in GUARDS], list(shown), cell, "AUPRC per %s" % kind)))
     rows = [(ab, runs_of(store, "ablate/%s" % ab, seeds)) for ab in ABLATE]
     rows = [(ab, r) for ab, r in rows if r]
     if rows:
@@ -296,22 +403,27 @@ def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, 
 
         def acell(r, c):
             ab = [k for k, v in ABL_NAME.items() if v == r][0]
-            v = metric(dict(rows)[ab], "test", "gnn+files", M["f1"])
+            v = metric(dict(rows)[ab], "test", "gnn+files", M["ap"])
             d = nanmean(v) - bm
+            if d != d:
+                return None
             fill, ink = div_color(d, 0.2)
-            return fill, ink, "%+.3f" % d, "without %s: macro-F1 %s (full %.3f)" % (r, pm(v), bm)
-        S.append('<section><h2>Ablations</h2><p>Change in test macro-F1 of GNN + files when one input is removed '
-                 '(full model %s). Red means the input helps.</p><div class="panel">%s</div></section>'
-                 % (esc(pm(base)), heatmap([ABL_NAME[ab] for ab, _ in rows], ["Δ macro-F1"], acell, "ablations")))
+            return fill, ink, "%+.3f" % d, "without %s: AUPRC %s (full %.3f)" % (r, pm(v), bm)
+        S.append('<section><h2>Ablations</h2><p>Change in test AUPRC of GNN + files when one input is removed '
+                 '(full model %s, 95%% CI %s). Red means the input helps. A change smaller than the interval is not a '
+                 'finding.</p><div class="panel">%s</div></section>'
+                 % (esc(pm(base)), esc(ci(main, "test", "gnn+files", "ap")),
+                    heatmap([ABL_NAME[ab] for ab, _ in rows], ["Δ AUPRC"], acell, "ablations")))
     if transfer:
         def tcell(r, c):
             g = [k for k, v in GUARD_NAME.items() if v == c][0]
-            v = metric(runs_of(store, "transfer/" + r, seeds), "test", g, M["f1"])
-            if not v:
+            v = metric(runs_of(store, "transfer/" + r, seeds), "test", g, M["ap"])
+            if nanmean(v) != nanmean(v):
                 return None
             fill, ink = seq_color(nanmean(v))
-            return fill, ink, "%.2f" % nanmean(v), "%s, %s: %s" % (r, c, pm(v))
-        S.append('<section><h2>Cross-agent transfer</h2><div class="panel">%s</div></section>'
+            return fill, ink, "%.2f" % nanmean(v), "%s, %s: AUPRC %s" % (r, c, pm(v))
+        S.append('<section><h2>Cross-agent transfer (test AUPRC)</h2><p>Blank: the target agent has no reject action '
+                 'in test.</p><div class="panel">%s</div></section>'
                  % heatmap([k.split("/", 1)[1] for k in transfer], [GUARD_NAME[g] for g in GUARDS], tcell, "transfer"))
     S.append('<section><h2>Data and leakage</h2><div class="panel">%s%s%s</div></section>' % (
         table(["split", "traces", "attacked", "followed attack", "actions", "reject", "tasks", "injection tasks"],
@@ -333,7 +445,8 @@ def main():
     ap.add_argument("--tracegen", default=os.path.join(ROOT, "data", "tracegen"), help="tracegen output dir")
     ap.add_argument("--agentdojo", default=os.path.join(ROOT, "data", "agentdojo"), help="static AgentDojo export")
     ap.add_argument("--outdir", default=os.path.join(ROOT, "results", "tracegen"))
-    ap.add_argument("--sections", default="main,ablate,transfer")
+    ap.add_argument("--sections", default="main,cv,ablate,transfer")
+    ap.add_argument("--folds", type=int, default=5, help="cv: task folds and injection-task folds (>= 3)")
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--lr", type=float, default=3e-3)
@@ -343,7 +456,7 @@ def main():
     ap.add_argument("--report-only", action="store_true", help="only re-render the report from stored results")
     a = ap.parse_args()
 
-    from src.tracegen_gnn import Data, audit, cells, code_hash, fingerprint
+    from src.tracegen_gnn import Data, audit, cells, code_hash, cv_reports, fingerprint
     data = Data(a.tracegen, a.agentdojo)
     summary, leak = data.summary(), audit(data)
     print("traces:", json.dumps({k: (v["traces"], v["attack_traces"], v["reject"]) for k, v in summary.items()}),
@@ -360,7 +473,7 @@ def main():
     path = os.path.join(a.outdir, "experiments.json")
     store = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
     seeds = list(range(a.seeds))
-    keys = cells(data, a.sections.split(","))
+    keys = cells(data, a.sections.split(","), a.folds)
     code = code_hash()
     fps = {(k, s): fingerprint(data, k, s, a.epochs, a.lr, a.hidden, code) for k in keys for s in seeds}
     status, jobs = [], []
@@ -388,7 +501,11 @@ def main():
     # only report runs that match the current inputs
     cur = {k: {str(s): store[k][str(s)] for s in seeds if str(s) in store.get(k, {})
                and store[k][str(s)].get("fp") == fps[(k, s)]} for k in keys}
-    md, page = build_report(a, cur, summary, leak, data.stats, seeds, devices, status)
+    n_cv = sum(k.startswith("cv/") for k in keys)
+    cv = cv_reports(data, cur, seeds, a.folds) if n_cv else []
+    if n_cv and len(cv) < len(seeds):
+        print("cross-validation: %d of %d seeds have every cell; the others are left out of the report" % (len(cv), len(seeds)))
+    md, page = build_report(a, cur, summary, leak, data.stats, seeds, devices, status, cv, n_cv)
     for name, text in (("REPORT.md", md), ("report.html", page)):
         with open(os.path.join(a.outdir, name), "w", encoding="utf-8", newline="\n") as f:
             f.write(text)

@@ -49,6 +49,8 @@ verify:
 
 trace:
   agents: [llama3.1:8b, qwen2.5:7b]   # Ollama tool-calling models. gemma2 does not support tools.
+  # llama3.1:8b follows almost no attack (1 reject action in about 1,900 attacked runs), so it adds approve actions only.
+  # For more reject labels add an agent that follows injections more often; the runs already recorded are kept.
   # API agents: {name: gpt-4o-mini-2024-07-18, base_url: https://api.openai.com/v1, api_key_env: OPENAI_API_KEY}
   samples_per_prompt: 1
   temperature: 0.0            # used when samples_per_prompt == 1
@@ -63,9 +65,13 @@ trace:
 attacks:
   enabled: false
   names: [important_instructions]
+  # More attack styles give more followed attacks, one full set of attack runs per name. AgentDojo 0.1.35 also has:
+  # tool_knowledge, injecagent, ignore_previous, system_message, direct, important_instructions_no_names
   injection_tasks: null       # null = every injection task in the suite, or a list of ids
   # Pair a user task only with injection tasks assigned to the same split (injection tasks get their own seeded
   # train/val/test split per suite), so the GNN guard is tested on attacks it never trained on. About halves the runs.
+  # false = every (user task, injection task) pair, about 2x the attack runs. The fixed train/val/test split ignores
+  # the extra pairs; the cross-validation of scripts/run_tracegen_gnn.py trains and tests on them.
   match_splits: true
   rows: all                   # all = originals + verified variants | originals = original prompts only (~4x fewer runs)
 

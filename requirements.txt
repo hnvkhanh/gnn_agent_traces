@@ -9,3 +9,5 @@ agentdojo==0.1.35
 transformers>=4.41
 pyyaml
 tqdm
+# tracegen.agentlab (SHADE-Arena environments of AgentLAB)
+pandas
