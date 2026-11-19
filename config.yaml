@@ -74,6 +74,17 @@ attacks:
   # the extra pairs; the cross-validation of scripts/run_tracegen_gnn.py trains and tests on them.
   match_splits: true
   rows: all                   # all = originals + verified variants | originals = original prompts only (~4x fewer runs)
+  # Attack search (stage `attack-search`, SecPO-style): for (user task, injection task) pairs where every attack run
+  # failed, try seed + LLM-mutated injection templates against the --agents model until AgentDojo's security check
+  # passes. Winners are appended to traces.jsonl as attack_name "searched"; every episode goes to search_log.jsonl.
+  search:
+    enabled: false            # same as --search; also run by `all` after the trace stage
+    steps: 3                  # step 0 = seed templates, later steps = proposer mutations
+    candidates: 4             # episodes per step
+    islands: 2
+    max_pairs: null           # cap on pairs searched per run (null = all); partially searched pairs go first
+    proposer_model: null      # null = the agent model itself (no model swap); an Ollama model name otherwise
+    max_format_retries: 5
 
 build:
   dedup: false                # same as --dedup

@@ -208,6 +208,7 @@ in `NOTES.md`.
 | 2 generate | `python -m tracegen generate` | `candidates.jsonl`, `generate_log.jsonl` |
 | 3–5 verify | `python -m tracegen verify [--judge]` | `verified_variants.jsonl`, `rejected_variants.jsonl` |
 | 6 / 6b trace | `python -m tracegen trace [--attacks]` | `traces.jsonl` (append-only) |
+| 6c attack search | `python -m tracegen attack-search [--search-pairs N] [--search-steps K]` | `search_log.jsonl`, winners appended to `traces.jsonl` |
 | 7 build | `python -m tracegen build [--dedup]` | `splits/{train,val,test}.jsonl`, `report.md`, `report.html` |
 | all | `python -m tracegen all` | everything above |
 
@@ -230,6 +231,34 @@ in `NOTES.md`.
   (suite, task, mode, action signature, utility[, security]). The report covers the variant funnel and rejection
   reasons, the NLI score histogram, utility on originals vs. paraphrases, unique action signatures per task, average
   steps, the most common divergence from the ground-truth call sequence, ASR, and leakage controls.
+
+### Attack search (Stage 6c)
+
+Natural attacks rarely succeed on a strong agent (qwen3.8:27b: 10 of 2,148 attack runs). `attack-search` adds
+attack-succeeded traces, following SecPO's Qwen/AgentDojo search (exact success check first, LLM mutation of the best
+candidates). It only touches (user task, injection task) pairs of the `--agents` model where no attack run succeeded
+(any attack, any prompt variant), using the same task/injection split matching as Stage 6b.
+
+```
+python -m tracegen attack-search --out data/tracegen_qwen38 --agents qwen3.8:27b --gpu-mode split --search-pairs 20
+python -m tracegen build --out data/tracegen_qwen38 --attacks        # splits and report include the new traces
+powershell -File scriptsun_qwen38.ps1 -SkipTrace -Search -SearchPairs 20    # search + build + GNN training
+```
+
+- A candidate is an injection **template** containing `{goal}` (also `{user}`, `{model}`, `{task}`); `{goal}` becomes the
+  AgentDojo injection task goal, so the attacker goal and the `security` check are AgentDojo's own. Step 0 tries eight
+  seed templates (skipping AgentDojo attacks already tried on the pair); later steps ask a proposer model for
+  mutations of the best-scoring template of the current island, given the agent's reply to it and the other attempts.
+- Success is `security=True` with no run error. Failures get a dense score, 1 + 8 x the share of the attacker's tools
+  (not needed by the user task) that the agent called; it only guides the proposer.
+- Every episode is appended to `search_log.jsonl` (template, score, tools called, trace id). The first success is
+  appended to `traces.jsonl` as a normal attack trace with `attack_name: "searched"` and its `attack_template`.
+  Failed episodes stay only in the log. Resuming rebuilds each pair's state from the log and skips pairs that already
+  succeeded or used up their steps.
+- `attacks.search` in `config.yaml`: `steps` (3), `candidates` per step (4), `islands` (2), `max_pairs`,
+  `proposer_model` (default: the agent itself, so no model swap), `max_format_retries`. `--search` makes `all` run the
+  stage after Stage 6 and before the build.
+- `searched` ASR is tuned against one agent, so the report marks it as not comparable to natural ASR.
 
 Every stage is resumable: it skips items that are already in its output. `--limit K` takes the first K user tasks per
 suite. Model names with Ollama digests and seeds are logged on every candidate and every trace.

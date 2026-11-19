@@ -266,8 +266,9 @@ def render_md(st):
                 L.append("- **%s** most common divergence from the ground-truth call sequence: %s" % (
                     a, "; ".join("%s (×%d)" % kv for kv in x["top_divergence"])))
             for an, y in x["attacks"].items():
-                L.append("- **%s** attack `%s`: ASR %s over %d runs, utility under attack %s" % (
-                    a, an, _f(y["asr"], 1), y["n"], _f(y["utility_under_attack"], 1)))
+                L.append("- **%s** attack `%s`: ASR %s over %d runs, utility under attack %s%s" % (
+                    a, an, _f(y["asr"], 1), y["n"], _f(y["utility_under_attack"], 1),
+                    " (search-optimized against this agent: not comparable to natural ASR)" if an == "searched" else ""))
         L.append("")
     lk = st["leakage"]
     L += ["## Splits and leakage controls", "",

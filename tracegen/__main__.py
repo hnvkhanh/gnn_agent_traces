@@ -5,7 +5,7 @@ import logging
 from tracegen import config as C
 from tracegen import gpu, progress
 
-STAGES = ["extract", "generate", "verify", "trace", "build", "all"]
+STAGES = ["extract", "generate", "verify", "trace", "attack-search", "build", "all"]
 
 
 def main(argv=None):
@@ -19,6 +19,10 @@ def main(argv=None):
     ap.add_argument("--judge", action=argparse.BooleanOptionalAction, default=None, help="Stage 5 LLM judge")
     ap.add_argument("--dedup", action=argparse.BooleanOptionalAction, default=None)
     ap.add_argument("--attacks", action=argparse.BooleanOptionalAction, default=None, help="Stage 6b attacked traces")
+    ap.add_argument("--search", action=argparse.BooleanOptionalAction, default=None,
+                    help="attack search after the trace stage (always on for the attack-search stage)")
+    ap.add_argument("--search-steps", type=int, help="attack search: steps per pair")
+    ap.add_argument("--search-pairs", type=int, help="attack search: search at most N pairs in this run")
     ap.add_argument("--agents", help="comma-separated Ollama agent models (overrides trace.agents)")
     ap.add_argument("-v", "--verbose", action="store_true", help="debug logging; also print every finished run")
     a = ap.parse_args(argv)
@@ -32,6 +36,18 @@ def main(argv=None):
         over["attacks"] = {"enabled": a.attacks}
     if a.agents:
         over["trace"] = {"agents": a.agents.split(",")}
+    srch = {}
+    if a.search is not None:
+        srch["enabled"] = a.search
+    if a.stage == "attack-search":
+        srch["enabled"] = True
+        over.setdefault("attacks", {})["enabled"] = True
+    if a.search_steps:
+        srch["steps"] = a.search_steps
+    if a.search_pairs:
+        srch["max_pairs"] = a.search_pairs
+    if srch:
+        over.setdefault("attacks", {})["search"] = srch
     cfg = C.load(a.config, over)
     suites = a.suites.split(",") if a.suites else cfg["suites"]
 
@@ -71,6 +87,9 @@ def main(argv=None):
         elif a.stage == "verify":
             from tracegen.stages.verify import verify
             verify(cfg, suites, judge=a.judge, limit=a.limit)
+        elif a.stage == "attack-search":
+            from tracegen.stages import attacksearch as S
+            S.search(cfg, suites, a.limit)
         elif a.stage == "trace":
             from tracegen.stages import trace as T
             g = cfg["gpu"]

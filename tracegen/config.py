@@ -22,7 +22,9 @@ DEFAULTS = {
               "sample_temperature": 0.7, "base_seed": 0, "run_timeout_s": 300, "request_timeout_s": 180,
               "concurrency": 2, "max_iters": 15, "include_originals": True},
     "attacks": {"enabled": False, "names": ["important_instructions"], "injection_tasks": None,
-                "match_splits": True, "rows": "all"},
+                "match_splits": True, "rows": "all",
+                "search": {"enabled": False, "steps": 3, "candidates": 4, "islands": 2, "max_pairs": None,
+                           "proposer_model": None, "max_format_retries": 5}},
     "build": {"dedup": False, "split_ratios": [0.7, 0.15, 0.15], "split_seed": 0},
 }
 

@@ -130,8 +130,10 @@ def tool_calls_of(smsgs):
 
 
 def run_one(suite, task, prompt, agent, local_url, seed=0, temperature=0.0, injection_task=None, attack_name=None,
-            run_timeout=300, request_timeout=180, max_iters=15):
-    """Run `task` with `prompt` substituted. Never raises: failures come back as a record with `error` set."""
+            run_timeout=300, request_timeout=180, max_iters=15, attack_template=None):
+    """Run `task` with `prompt` substituted. Never raises: failures come back as a record with `error` set.
+    attack_template (with injection_task): a FixedJailbreakAttack template ({goal}, {user}, {model}, {task}) used instead
+    of the registered attack `attack_name`; this is how the attack search tries its own injection strings."""
     t0 = time.monotonic()
     utask = with_prompt(task, prompt)
     rec = {"trace_id": uuid.uuid4().hex, "messages": [], "tool_calls": [], "final_answer": None, "utility": False,
@@ -147,7 +149,13 @@ def run_one(suite, task, prompt, agent, local_url, seed=0, temperature=0.0, inje
         injections = {}
         if injection_task is not None:
             from agentdojo.attacks.attack_registry import load_attack
-            injections = load_attack(attack_name, suite, pipe).attack(utask, injection_task)
+            if attack_template is not None:
+                from agentdojo.attacks.base_attacks import FixedJailbreakAttack
+                attack = FixedJailbreakAttack(attack_template, suite, pipe)
+                rec["attack_template"] = attack_template
+            else:
+                attack = load_attack(attack_name, suite, pipe)
+            injections = attack.attack(utask, injection_task)
             rec["injection_placements"] = sorted(injections)
             rec["injections"] = {k: str(v) for k, v in sorted(injections.items())}
         env = suite.load_and_inject_default_environment(injections)

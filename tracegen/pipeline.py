@@ -53,6 +53,9 @@ def run_all(cfg, suites, limit=None, judge=None, dedup=None):
         run_split(cfg, gpus, suites, rows, limit, judge)
     else:
         run_parallel(cfg, gpus, suites, rows, limit, judge)
+    if cfg["attacks"]["search"]["enabled"]:
+        from tracegen.stages import attacksearch as S
+        S.search(cfg, suites, limit)
     return B.build(cfg, suites, do_dedup=dedup, limit=limit)
 
 

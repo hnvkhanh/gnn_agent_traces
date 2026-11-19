@@ -1,5 +1,5 @@
 # Generate traces with qwen3.8:27b and train the GNN guard on them.
-# Usage (from anywhere):  powershell -File scripts\run_qwen38.ps1 [-Limit 2] [-SkipTrace] [-StartAt "23:30" | -DelayMinutes 90]
+# Usage (from anywhere):  powershell -File scripts\run_qwen38.ps1 [-Limit 2] [-SkipTrace] [-StartAt "23:30" | -DelayMinutes 90] [-Search [-SearchPairs 20]]
 param(
     [string]$Model   = "qwen3.8:27b",
     [string]$DataDir = "data/tracegen_qwen38",
@@ -7,6 +7,9 @@ param(
     [string]$Devices = "cuda:0,cuda:1",
     [int]$Limit      = 0,      # >0: only the first N user tasks per suite (smoke test)
     [switch]$SkipTrace,        # skip trace generation, only build + train
+    [switch]$Search,           # after the traces, search injection strings for attack pairs with no success yet
+    [int]$SearchPairs = 0,     # >0: search at most N pairs per run (resumes on the next run)
+    [int]$SearchSteps = 0,     # >0: override attacks.search.steps
     [string]$StartAt = "",     # schedule: "23:30" (next occurrence) or "2026-11-19 02:00"
     [double]$DelayMinutes = 0  # schedule: start after N minutes (ignored if -StartAt is set)
 )
@@ -64,6 +67,15 @@ if (-not $SkipTrace) {
     $traceArgs = @("trace", "--out", $DataDir, "--agents", $Model, "--gpu-mode", "split", "--attacks")
     if ($Limit -gt 0) { $traceArgs += @("--limit", $Limit) }
     Run-Step "2. Generate traces" { & $Py -m tracegen @traceArgs }
+}
+
+# 2b. Attack search (SecPO-style): continues from search_log.jsonl, only touches pairs with no successful attack yet
+if ($Search) {
+    $searchArgs = @("attack-search", "--out", $DataDir, "--agents", $Model, "--gpu-mode", "split")
+    if ($Limit -gt 0) { $searchArgs += @("--limit", $Limit) }
+    if ($SearchPairs -gt 0) { $searchArgs += @("--search-pairs", $SearchPairs) }
+    if ($SearchSteps -gt 0) { $searchArgs += @("--search-steps", $SearchSteps) }
+    Run-Step "2b. Attack search" { & $Py -m tracegen @searchArgs }
 }
 
 # 3. Build the dataset (splits and report)
