@@ -1,0 +1,72 @@
+{
+  "created": "2026-11-20T11:07:21",
+  "sources": [
+    "data\\tracegen",
+    "data\\tracegen_qwen14b",
+    "data\\tracegen_qwen38"
+  ],
+  "filter": "error field empty",
+  "traces": 10099,
+  "splits": {
+    "train": 8810,
+    "val": 671,
+    "test": 618
+  },
+  "tasks_split_by_assign_splits": 0,
+  "copied": [
+    "originals.jsonl",
+    "verified_variants.jsonl"
+  ],
+  "counts": [
+    {
+      "source": "data\\tracegen",
+      "agent": "llama3.1:8b",
+      "read": 2568,
+      "errored": 61,
+      "duplicate": 0,
+      "kept": 2507
+    },
+    {
+      "source": "data\\tracegen",
+      "agent": "qwen2.5:7b",
+      "read": 2568,
+      "errored": 89,
+      "duplicate": 0,
+      "kept": 2479
+    },
+    {
+      "source": "data\\tracegen_qwen14b",
+      "agent": "qwen2.5:14b",
+      "read": 2588,
+      "errored": 31,
+      "duplicate": 0,
+      "kept": 2557
+    },
+    {
+      "source": "data\\tracegen_qwen38",
+      "agent": "qwen3.8:27b",
+      "read": 2568,
+      "errored": 12,
+      "duplicate": 0,
+      "kept": 2556
+    }
+  ],
+  "by_agent": {
+    "llama3.1:8b": {
+      "benign": 405,
+      "attack": 2102
+    },
+    "qwen2.5:14b": {
+      "benign": 412,
+      "attack": 2145
+    },
+    "qwen2.5:7b": {
+      "benign": 399,
+      "attack": 2080
+    },
+    "qwen3.8:27b": {
+      "benign": 415,
+      "attack": 2141
+    }
+  }
+}

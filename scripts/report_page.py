@@ -251,7 +251,7 @@ CSS = """
 :root{
   --page:#f7f8f6; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#7a7873; --grid:#e1e0d9; --axis:#c3c2b7;
   --mid:#e8e7e3; --ring:#fcfcfb; --accent:#1c5cab; --good:#006300; --bad:#b93636;
-  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --nog:#898781;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#8a5cd1; --nog:#898781;
   --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
@@ -259,11 +259,11 @@ CSS = """
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
   --page:#0f100f; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a988f; --grid:#2c2c2a; --axis:#383835;
   --mid:#383835; --ring:#1a1a19; --accent:#86b6ef; --good:#0ca30c; --bad:#e66767;
-  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --nog:#898781;}}
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#9b72e0; --nog:#898781;}}
 :root[data-theme="dark"]{color-scheme:dark;
   --page:#0f100f; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a988f; --grid:#2c2c2a; --axis:#383835;
   --mid:#383835; --ring:#1a1a19; --accent:#86b6ef; --good:#0ca30c; --bad:#e66767;
-  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --nog:#898781;}
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#9b72e0; --nog:#898781;}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--f-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -310,7 +310,7 @@ svg .axis{stroke:var(--axis);stroke-width:1}
 svg .whisker{stroke:var(--ink2);stroke-width:1.25}
 svg .rail{stroke:var(--axis);stroke-width:2}
 svg .empty{fill:none;stroke:var(--grid)}
-svg .s1{fill:var(--s1)} svg .s2{fill:var(--s2)} svg .s3{fill:var(--s3)} svg .s4{fill:var(--s4)}
+svg .s1{fill:var(--s1)} svg .s2{fill:var(--s2)} svg .s3{fill:var(--s3)} svg .s4{fill:var(--s4)} svg .s5{fill:var(--s5)}
 svg .nog{fill:var(--surface);stroke:var(--nog);stroke-width:2}
 svg .ring{stroke:var(--ring);stroke-width:2}
 svg [data-tip]{cursor:default}

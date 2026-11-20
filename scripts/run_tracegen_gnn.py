@@ -9,7 +9,8 @@
 Needs attacked traces: `python -m tracegen --attacks` (config.yaml `attacks`). Without them the script stops and says so.
 
 Guards: majority, tool-lookup, mlp (no graph), gnn (docs/GRAPH.md graph), gnn+files (plus file nodes,
-src/graph/files.py). Sections: main (val + test, per suite, per agent), cv, ablate (gnn+files), transfer (agent -> agent).
+src/graph/files.py), transformer (attention over the gnn+files graph: same nodes, features, edges as attention bias,
+causal mask; src/model/transformer.py). Sections: main (val + test, per suite, per agent), cv, ablate (gnn+files), transfer (agent -> agent).
 cv: cross-validation over --folds task folds x --folds injection-task folds (src/tracegen_gnn.py). Every run is tested
 once, by a guard that saw neither its user task nor its injection task, and the cells are pooled per seed. This is the
 headline number: the fixed test split holds only a few followed attacks.
@@ -46,7 +47,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 GUARD_NAME = {"majority": "Majority", "tool-lookup": "Tool lookup", "mlp": "MLP (no graph)", "gnn": "GNN",
-              "gnn+files": "GNN + files"}
+              "gnn+files": "GNN + files", "transformer": "Transformer"}
 ABL_NAME = {"files": "file edges", "observation": "observations", "injected": "injected text", "copies": "copies edges",
             "mentions": "mentions edges", "tool_feat": "tool features", "attacker_values": "attacker constants masked"}
 
@@ -77,14 +78,45 @@ def devices_of(spec):
     return ["cuda:%d" % i for i in range(n)] or ["cpu"]
 
 
-def run_parallel(jobs, devices, a):
-    """jobs: [(key, seed)] -> {(key, seed): (run, seconds)}. One worker process per device, pulling from one queue."""
+def _hms(sec):
+    sec = int(max(0, sec))
+    return "%d:%02d:%02d" % (sec // 3600, sec % 3600 // 60, sec % 60)
+
+
+def run_parallel(jobs, devices, a, weight=None, on_done=None, progress_path=None):
+    """jobs: [(key, seed)] -> {(key, seed): (run, seconds)}. One worker process per device, pulling from one queue.
+
+    Progress: a line per started / finished run with elapsed time and ETA, and (progress_path) a JSON file rewritten
+    after every event. The ETA is elapsed wall time x remaining work / finished work, where a run's work is
+    weight[(key, seed)] (default 1), e.g. its number of training traces. on_done(key, seed, res) runs under the lock
+    after each finished run (used to save results incrementally)."""
     q, out, lock = queue.Queue(), {}, threading.Lock()
     for j in jobs:
         q.put(j)
     threads = max(1, (os.cpu_count() or 2) // len(devices))
     ctx = mp.get_context("spawn")
     errors = []
+    w = {j: (weight or {}).get(j, 1) for j in jobs}
+    total_w, t0 = float(sum(w.values())) or 1.0, time.time()
+    running = {}
+
+    def report(event=None):
+        done_w = sum(w[j] for j in out) + sum(w[(k, s)] for k, s, _ in errors)
+        el = time.time() - t0
+        eta = el * (total_w - done_w) / done_w if done_w else None
+        info = dict(started=datetime.datetime.fromtimestamp(t0).isoformat(timespec="seconds"),
+                    updated=datetime.datetime.now().isoformat(timespec="seconds"), event=event,
+                    done=len(out), failed=len(errors), total=len(jobs), work_done_pct=round(100 * done_w / total_w, 1),
+                    elapsed=_hms(el), eta=_hms(eta) if eta is not None else None,
+                    expected_finish=(datetime.datetime.now() + datetime.timedelta(seconds=eta)).isoformat(
+                        timespec="minutes") if eta is not None else None,
+                    running={d: "%s seed %d" % r for d, r in running.items()})
+        if progress_path:
+            tmp = progress_path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(info, f, indent=1)
+            os.replace(tmp, progress_path)
+        return info
 
     def drive(dev):
         with cf.ProcessPoolExecutor(1, mp_context=ctx, initializer=_init,
@@ -93,17 +125,32 @@ def run_parallel(jobs, devices, a):
                 try:
                     key, seed = q.get_nowait()
                 except queue.Empty:
+                    with lock:
+                        running.pop(dev, None)
                     return
+                with lock:
+                    running[dev] = (key, seed)
+                    report("start %s seed %d on %s" % (key, seed, dev))
+                    print("[%s] start %-33s seed %d  (elapsed %s)" % (dev, key, seed, _hms(time.time() - t0)),
+                          flush=True)
                 try:
                     res = ex.submit(_job, key, seed, a.epochs, a.lr, a.hidden).result()
                 except Exception as e:  # noqa: BLE001
-                    errors.append((key, seed, repr(e)))
+                    with lock:
+                        errors.append((key, seed, repr(e)))
+                        running.pop(dev, None)
+                        report("failed %s seed %d" % (key, seed))
                     print("[%s] FAILED %s seed %d: %r" % (dev, key, seed, e), flush=True)
                     continue
                 with lock:
                     out[(key, seed)] = res
-                    print("[%s] done %-34s seed %d  %.0fs  (%d/%d)" % (dev, key, seed, res[1], len(out), len(jobs)),
-                          flush=True)
+                    running.pop(dev, None)
+                    if on_done:
+                        on_done(key, seed, res)
+                    p = report("done %s seed %d" % (key, seed))
+                    print("[%s] done  %-33s seed %d  %5.0fs  (%d/%d, %.0f%% of work)  elapsed %s  ETA %s  (~%s)"
+                          % (dev, key, seed, res[1], len(out), len(jobs), p["work_done_pct"], p["elapsed"], p["eta"],
+                             p["expected_finish"][11:]), flush=True)
 
     ts = [threading.Thread(target=drive, args=(d,)) for d in devices]
     for t in ts:
@@ -351,7 +398,7 @@ def bars(items, title):
 def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv=()):
     from report_page import CSS, JS, div_color, esc, heatmap, seq_color, table
     from src.tracegen_gnn import ABLATE, GUARDS
-    cls = {"majority": "nog", "tool-lookup": "s4", "mlp": "s3", "gnn": "s2", "gnn+files": "s1"}
+    cls = {"majority": "nog", "tool-lookup": "s4", "mlp": "s3", "gnn": "s2", "gnn+files": "s1", "transformer": "s5"}
     head = cv or main   # the headline numbers: pooled cross-validation when it is complete
     te = lambda g: metric(head, "test", g, M["ap"])
     tot = {k: sum(s[k] for s in summary.values()) for k in ("traces", "attack_traces", "reject", "actions")}
@@ -487,17 +534,20 @@ def main():
     print("%d runs: %d reused, %d to train on %s" % (len(fps), status.count("reused"), len(jobs), ",".join(devices)),
           flush=True)
     if jobs:
-        res = run_parallel(jobs, devices, a)
-        for (k, s) in jobs:
-            if (k, s) not in res:
-                status.append("failed")
-                continue
-            run, sec = res[(k, s)]
-            store.setdefault(k, {})[str(s)] = dict(fp=fps[(k, s)], run=run, seconds=round(sec, 1),
+        def save(k, s, r):  # after every finished run, so an interrupted run resumes from what is stored
+            store.setdefault(k, {})[str(s)] = dict(fp=fps[(k, s)], run=r[0], seconds=round(r[1], 1),
                                                     time=time.strftime("%Y-%m-%dT%H:%M:%S"))
-            status.append("computed")
-        with open(path, "w", encoding="utf-8", newline="\n") as f:
-            json.dump(store, f, indent=1, sort_keys=True)
+            with open(path + ".tmp", "w", encoding="utf-8", newline="\n") as f:
+                json.dump(store, f, indent=1, sort_keys=True)
+            os.replace(path + ".tmp", path)
+
+        from src.tracegen_gnn import cell_spec
+        ntrain = {k: len(cell_spec(data, k)[0]) for k in {k for k, _ in jobs}}
+        prog = os.path.join(a.outdir, "progress.json")
+        print("progress file:", prog, flush=True)
+        res = run_parallel(jobs, devices, a, weight={(k, s): ntrain[k] for k, s in jobs}, on_done=save,
+                           progress_path=prog)
+        status += ["computed" if j in res else "failed" for j in jobs]
     # only report runs that match the current inputs
     cur = {k: {str(s): store[k][str(s)] for s in seeds if str(s) in store.get(k, {})
                and store[k][str(s)].get("fp") == fps[(k, s)]} for k in keys}

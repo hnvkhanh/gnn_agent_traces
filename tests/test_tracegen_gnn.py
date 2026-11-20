@@ -9,8 +9,9 @@ from src.benchmarks import tracegen as TG
 from src.graph.files import (FILE_EDGE_TYPES, MASK, arg_refs, file_edges, listing_pairs, mask_attacker_values,
                              trace_to_graph_files)
 from src.model.gnn_files import FileHeteroGNN
+from src.model.transformer import GraphTransformer
 from src.rank_metrics import average_precision, rank_report, recall_at_fpr, threshold_for_f1
-from src.tracegen_gnn import Data, audit, cell_spec, cells, cv_reports, cv_spec, fingerprint, run_cell
+from src.tracegen_gnn import GUARDS, Data, audit, cell_spec, cells, cv_reports, cv_spec, fingerprint, run_cell
 from tracegen.stages.build import assign_injection_splits
 
 META = TG.suite_meta("data/agentdojo")
@@ -157,6 +158,51 @@ def test_future_perturbation_no_leak_with_files():
     assert torch.allclose(base[:2], out[:2], atol=1e-5)
 
 
+def _perturb_pair():
+    tr = conv(rec(calls=[("list_files", {}, LISTING), ("get_file_by_id", {"file_id": "0"}, "a,b"),
+                         ("delete_file", {"file_id": "2"}, "ok"), ("share_file", {"file_id": "0"}, "ok")]))
+    t2 = copy.deepcopy(tr)
+    for e in t2["events"][2:]:   # later events name new files: new file tokens must stay invisible to actions 0-1
+        e["tool"], e["args"], e["observation"] = "zzz", {"file_path": "secret.pdf", "file_id": "9"}, "other.docx id_: '9'"
+    t2["events"][1]["observation"] = LISTING + "\n- filename: new.txt\n  id_: '5'\n"   # observation of action 1 itself
+    return tr, t2
+
+
+@pytest.mark.parametrize("ablate", [(), ("files",)])
+def test_future_perturbation_no_leak_transformer(ablate):
+    torch.manual_seed(0)
+    m = GraphTransformer(16).eval()
+    with torch.no_grad():
+        for p in m.parameters():   # zero-initialised biases would hide a leak through the edge bias
+            p.add_(torch.randn_like(p) * 0.1)
+    tr, t2 = _perturb_pair()
+    g1, g2 = trace_to_graph_files(tr, ablate), trace_to_graph_files(t2, ablate)
+    assert g2["file"].x.shape[0] > g1["file"].x.shape[0]   # the perturbation really adds file tokens
+    base, out = m(g1).detach(), m(g2).detach()
+    assert torch.allclose(base[:2], out[:2], atol=1e-5)
+    assert not torch.allclose(base[2:], out[2:], atol=1e-5)
+
+
+def test_file_times():
+    tr, _ = _perturb_pair()
+    g = trace_to_graph_files(dict(tr, user_task="Please look at feedback.xlsx"))
+    # feedback.xlsx: user task (-1); project-plan.docx: first in observation 0 (1)
+    assert g["file"].time.tolist()[:2] == [-1, 1]
+
+
+def test_transformer_batch_matches_single_graphs():
+    from torch_geometric.loader import DataLoader
+    torch.manual_seed(0)
+    m = GraphTransformer(16).eval()
+    tr, t2 = _perturb_pair()
+    t3 = conv(rec(calls=[("list_files", {}, LISTING)], prompt="hello"))
+    gs = [trace_to_graph_files(t) for t in (tr, t3, t2)]
+    single = torch.cat([m(g) for g in gs]).detach()
+    batched = m(next(iter(DataLoader(gs, batch_size=3)))).detach()
+    assert batched.shape == (sum(g["action"].x.shape[0] for g in gs), 2)
+    assert torch.allclose(single, batched, atol=1e-5)
+
+
 def test_graph_ignores_label_bearing_fields():
     atk = META["banking"]["inj_gt"]["injection_task_0"][0]
     tr = conv(rec("attack", "banking", "user_task_0", inj="injection_task_0", calls=[
@@ -277,7 +323,7 @@ def test_run_cell_and_fingerprint(tmp_path):
     assert va and all(data.trs[i]["model"] == "m1" and data.trs[i]["split"] == "val" for i in va)   # selection: agent A
     out = run_cell(data, "main", 0, epochs=2, hidden=8, n_boot=20)
     assert {"val", "test", "test|suite=banking", "test|agent=m1"} <= set(out)
-    assert set(out["test"]) == {"majority", "tool-lookup", "mlp", "gnn", "gnn+files"}
+    assert set(out["test"]) == set(GUARDS)
     r = out["test"]["gnn+files"]
     assert r["n_reject"] > 0 and 0 <= r["auprc"] <= 1 and r["auprc_ci"][0] <= r["auprc_ci"][1]
     assert r["selected"] and r["threshold_tuned"] and 1 <= r["best_epoch"] <= 2 and 0 <= r["threshold"] <= 1
@@ -310,7 +356,7 @@ def test_cv_pool_report(tmp_path):
     data = Data(str(_dataset(tmp_path)), "data/agentdojo")
     ks = cells(data, ["cv"], 3)
     store = {key: {"0": {"run": run_cell(data, key, 0, epochs=1, hidden=8, n_boot=0)}} for key in ks}
-    assert set(store[ks[0]]["0"]["run"]["_pool"]["scores"]) == {"majority", "tool-lookup", "mlp", "gnn", "gnn+files"}
+    assert set(store[ks[0]]["0"]["run"]["_pool"]["scores"]) == set(GUARDS)
     json.dumps(store)
     (run,) = cv_reports(data, store, [0, 1], 3, n_boot=10)   # seed 1 has no cells: left out
     r = run["test"]["gnn+files"]

@@ -1,0 +1,15 @@
+{
+ "started": "2026-11-20T12:14:28",
+ "updated": "2026-11-20T14:29:40",
+ "event": "done transfer/qwen3.8:27b->qwen2.5:7b seed 2",
+ "done": 134,
+ "failed": 0,
+ "total": 135,
+ "work_done_pct": 99.2,
+ "elapsed": "2:15:11",
+ "eta": "0:01:03",
+ "expected_finish": "2026-11-20T14:30",
+ "running": {
+  "cuda:0": "cv/5/2-2 seed 0"
+ }
+}

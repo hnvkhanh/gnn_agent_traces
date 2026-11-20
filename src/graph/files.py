@@ -7,7 +7,8 @@ file_id, attachments, ...) or in an observation (a name with a file extension, o
 workspace file listing). Its key is the filename when known, else `id:<N>`. For action i, a file_id is resolved to a
 filename only through observations j < i, so a later observation can never merge or rename the node action i uses.
 
-Feature: build.feat(key), the shared 66-d layout (step 0).
+Feature: build.feat(key), the shared 66-d layout (step 0). `g["file"].time` (file_times) records when the node first
+exists; only the transformer reads it.
 Edges (file nodes have NO incoming edges, so their state never depends on any event):
   (file, targets, action)          action i's arguments reference file f
   (file, appears_in, observation)  observation j names file f (observation j feeds only actions k > j)
@@ -108,6 +109,18 @@ def file_edges(tr):
     return keys, sorted(set(map(tuple, targets))), sorted(set(map(tuple, appears)))
 
 
+def file_times(keys, targets, appears, task_names=()):
+    """When each file node first exists, on the transformer's clock (src/model/transformer.py): -1 = named in the user
+    task, 2i = first named by action i's arguments, 2j+1 = first named by observation j. Taken before any edge ablation,
+    so a file that only a later event names is never visible earlier. The GNN ignores it (files have no in-edges)."""
+    t = [-1 if k in task_names else None for k in keys]
+    for f, i in targets:
+        t[f] = 2 * i if t[f] is None else min(t[f], 2 * i)
+    for f, j in appears:
+        t[f] = 2 * j + 1 if t[f] is None else min(t[f], 2 * j + 1)
+    return torch.tensor([-1 if x is None else x for x in t], dtype=torch.long)
+
+
 def mask_attacker_values(tr):
     vals = sorted({v for v in tr.get("suite_attacker_values", []) if len(v) >= 4}, key=len, reverse=True)
     if not vals:
@@ -143,6 +156,7 @@ def trace_to_graph_files(tr, ablate=frozenset()):
                    events=[dict(e, observation=e["observation"].replace(inj, "")) for e in tr["events"]])
     keys, targets, appears = file_edges(src)
     g["file"].x = _stack([feat(k) for k in keys])
+    g["file"].time = file_times(keys, targets, appears, set(_names(src["user_task"])))
     drop = "files" in ablate
     g[("file", "targets", "action")].edge_index = _ei([] if drop else [list(p) for p in targets])
     g[("file", "appears_in", "observation")].edge_index = _ei([] if drop else [list(p) for p in appears])

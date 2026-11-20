@@ -115,6 +115,12 @@ and edge type lists as parameters.
 - `HeteroGNN`: a per-type `Linear(F, 64)` + ReLU, then 2 `HeteroConv` layers (one `SAGEConv` per edge type, summed),
   each with ReLU and a residual, then an MLP head on `x["action"]` → 2 logits per action.
 - `ActionMLP` (baseline): the same action features, no edges.
+- `GraphTransformer` (`src/model/transformer.py`, tracegen guard `transformer`): it runs on the same files graph as
+  `FileHeteroGNN`. Every node is a token (per-type `Linear(F, 64)` + ReLU + a type embedding). 2 pre-LN attention
+  layers with 4 heads. A causal mask lets action i attend only to the context (task/memory/tool/file nodes), actions
+  ≤ i and observations < i. Each edge type adds a learned per-head bias to the attention logit dst → src, so the
+  model sees the same relations as the GNN and the edge ablations apply to it too. The MLP head sits on the action
+  tokens.
 - Training (`src/train.py:fit`): batches of 32 graphs, class-weighted cross-entropy over all action nodes, Adam.
 
 ## Split metadata

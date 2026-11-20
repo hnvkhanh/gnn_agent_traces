@@ -1,7 +1,8 @@
 """Approve / reject guard on tracegen (real AgentDojo) traces, with and without file nodes.
 
 Used by scripts/run_tracegen_gnn.py (CLI, parallel devices, report). Cells:
-  main                  train split -> val and test; guards majority, tool-lookup, mlp, gnn, gnn+files
+  main                  train split -> val and test; guards majority, tool-lookup, mlp, gnn, gnn+files, transformer
+                        (src/model/transformer.py: attention over the gnn+files graph, same nodes / features / causality)
   ablate/<a>            gnn+files with ablation <a> (src/graph/files.py FILE_ABLATIONS)
   transfer/<A>-><B>     train split of agent A -> test split of agent B (still task- and attack-disjoint)
   cv/<k>/<a>-<b>        cross-validation over k task folds x k injection-task folds (cv_folds). Cell (a, b) tests the
@@ -44,10 +45,10 @@ from .graph.files import FILE_ABLATIONS, trace_to_graph_files
 from .rank_metrics import average_precision, rank_report, threshold_for_f1
 from .sandbox.policy import LABELS
 
-GUARDS = ["majority", "tool-lookup", "mlp", "gnn", "gnn+files"]
+GUARDS = ["majority", "tool-lookup", "mlp", "gnn", "gnn+files", "transformer"]
 ABLATE = ["files", "observation", "injected", "copies", "mentions", "tool_feat", "attacker_values"]
 CODE = TRAIN_CODE + ["src/tracegen_gnn.py", "src/graph/build.py", "src/graph/files.py", "src/model/gnn_files.py",
-                     "src/benchmarks/tracegen.py", "src/rank_metrics.py"]
+                     "src/model/transformer.py", "src/benchmarks/tracegen.py", "src/rank_metrics.py"]
 
 
 def code_hash():
@@ -261,6 +262,7 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200):
     """Train every guard of the cell once (seed) and score every eval set."""
     from .model.gnn import ActionMLP, HeteroGNN
     from .model.gnn_files import FileHeteroGNN
+    from .model.transformer import GraphTransformer
     tr, va, ev, guards, ab = cell_spec(data, key)
     allev = sorted({i for v in ev.values() for i in v})
     gf, gp = data.graphs("files", ab), data.graphs("plain", ())
@@ -283,7 +285,8 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200):
         else:
             G = gp if gname == "gnn" else gf
             model = {"mlp": lambda: ActionMLP(hidden, ncls), "gnn": lambda: HeteroGNN(hidden, classes=ncls),
-                     "gnn+files": lambda: FileHeteroGNN(hidden, classes=ncls)}[gname]()
+                     "gnn+files": lambda: FileHeteroGNN(hidden, classes=ncls),
+                     "transformer": lambda: GraphTransformer(hidden, classes=ncls)}[gname]()
             sv, se, inf = fit_select(model, [G[i] for i in tr], [G[i] for i in va], [G[i] for i in allev], epochs, lr, w)
         thr = threshold_for_f1(yva, sv) if sv is not None and yva.any() else None
         info[gname] = dict(inf, threshold=0.5 if thr is None else thr, threshold_tuned=thr is not None)
