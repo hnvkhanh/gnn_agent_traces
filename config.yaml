@@ -48,7 +48,7 @@ verify:
   judge_url: null             # null = agent_url (parallel) / split_url (split). Set an API base_url to use one.
 
 trace:
-  agents: [llama3.1:8b, qwen2.5:7b]   # Ollama tool-calling models. gemma2 does not support tools.
+  agents: [llama3.1:8b, qwen2.5:7b]   # Ollama tool-calling models. gemma2 does not support tools. Others (qwen2.5:14b, qwen3.8:27b): --agents or scripts/run_qwen38.ps1 -Model
   # llama3.1:8b follows almost no attack (1 reject action in about 1,900 attacked runs), so it adds approve actions only.
   # For more reject labels add an agent that follows injections more often; the runs already recorded are kept.
   # API agents: {name: gpt-4o-mini-2024-07-18, base_url: https://api.openai.com/v1, api_key_env: OPENAI_API_KEY}

@@ -1,4 +1,5 @@
-# Generate traces with qwen3.8:27b and train the GNN guard on them.
+# Generate traces with an Ollama agent (default qwen3.8:27b) and train the GNN guard on them.
+# Other agent, e.g.: -Model qwen2.5:14b -DataDir data/tracegen_qwen14b -OutDir results/tracegen_qwen14b
 # Usage (from anywhere):  powershell -File scripts\run_qwen38.ps1 [-Limit 2] [-SkipTrace] [-StartAt "23:30" | -DelayMinutes 90] [-Search [-SearchPairs 20]]
 param(
     [string]$Model   = "qwen3.8:27b",

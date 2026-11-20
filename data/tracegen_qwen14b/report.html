@@ -1,0 +1,110 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>tracegen report</title><style>:root{--bg:#fff;--fg:#1d1d1f;--mut:#6e6e73;--bar:#3b6fd8;--bar2:#d8823b;--line:#e3e3e8}
+@media (prefers-color-scheme:dark){:root{--bg:#141416;--fg:#ececf0;--mut:#9a9aa2;--bar:#6f9cf0;--bar2:#f0a86f;--line:#2c2c31}}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px}
+table{border-collapse:collapse;margin:8px 0 16px;width:100%;display:block;overflow-x:auto}
+td,th{border-bottom:1px solid var(--line);padding:4px 10px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-weight:600}
+.b{display:inline-block;height:10px;background:var(--bar);vertical-align:middle;margin-right:6px}
+.b2{background:var(--bar2)}.m{color:var(--mut)}</style><h1>tracegen report</h1>
+<p class=m>benchmark v1.2.2 · mode parallel · generator qwen2.5:7b · NLI microsoft/deberta-large-mnli (τ=0.8) · judge off · dedup False · 2588 traces</p>
+<h2>banking</h2><h3>Variant funnel</h3><table><tr><th>stage</th><th>count</th><th></th></tr>
+<tr><td>generated</td><td>80</td><td style=text-align:left><span class="b" style="width:120px"></span>100.0%</td></tr>
+<tr><td>entity pass</td><td>75</td><td style=text-align:left><span class="b" style="width:112px"></span>93.8%</td></tr>
+<tr><td>NLI pass</td><td>44</td><td style=text-align:left><span class="b" style="width:66px"></span>55.0%</td></tr>
+<tr><td>verified</td><td>44</td><td style=text-align:left><span class="b" style="width:66px"></span>55.0%</td></tr>
+</table>
+<p class=m>Rejections: nli:bwd ×12, nli:fwd ×11, nli:fwd+bwd ×8, entity:number ×5</p>
+<p class=m>NLI min(fwd,bwd) histogram</p><svg width=320 height=70 role=img aria-label='NLI histogram'>
+<rect x=0 y=35 width=28 height=17 fill='var(--bar)'><title>0.0–0.1: 12</title></rect><text x=0 y=68 font-size=9 fill='var(--mut)'>0.0</text>
+<rect x=32 y=48 width=28 height=4 fill='var(--bar)'><title>0.1–0.2: 3</title></rect><text x=32 y=68 font-size=9 fill='var(--mut)'>0.1</text>
+<rect x=64 y=47 width=28 height=5 fill='var(--bar)'><title>0.2–0.3: 4</title></rect><text x=64 y=68 font-size=9 fill='var(--mut)'>0.2</text>
+<rect x=96 y=51 width=28 height=1 fill='var(--bar)'><title>0.3–0.4: 1</title></rect><text x=96 y=68 font-size=9 fill='var(--mut)'>0.3</text>
+<rect x=128 y=52 width=28 height=0 fill='var(--bar)'><title>0.4–0.5: 0</title></rect><text x=128 y=68 font-size=9 fill='var(--mut)'>0.4</text>
+<rect x=160 y=48 width=28 height=4 fill='var(--bar)'><title>0.5–0.6: 3</title></rect><text x=160 y=68 font-size=9 fill='var(--mut)'>0.5</text>
+<rect x=192 y=47 width=28 height=5 fill='var(--bar)'><title>0.6–0.7: 4</title></rect><text x=192 y=68 font-size=9 fill='var(--mut)'>0.6</text>
+<rect x=224 y=47 width=28 height=5 fill='var(--bar)'><title>0.7–0.8: 4</title></rect><text x=224 y=68 font-size=9 fill='var(--mut)'>0.7</text>
+<rect x=256 y=38 width=28 height=14 fill='var(--bar)'><title>0.8–0.9: 10</title></rect><text x=256 y=68 font-size=9 fill='var(--mut)'>0.8</text>
+<rect x=288 y=2 width=28 height=50 fill='var(--bar)'><title>0.9–1.0: 34</title></rect><text x=288 y=68 font-size=9 fill='var(--mut)'>0.9</text>
+</svg><h3>Traces per agent</h3><table><tr><th>agent</th><th>benign</th><th>errors</th><th>utility orig</th><th>utility para</th><th>drop</th><th>unique sigs/task</th><th>avg steps</th></tr>
+<tr><td>qwen2.5:14b</td><td>60</td><td>0</td><td style=text-align:left><span class="b" style="width:60px"></span>50.0%</td><td style=text-align:left><span class="b b2" style="width:84px"></span>70.5%</td><td>-20.5%</td><td>2.94</td><td>2.07</td></tr>
+</table><ul>
+<li><b>qwen2.5:14b</b> divergence: call #1: expected get_most_recent_transactions, got &lt;stop&gt; (×7); call #2: expected &lt;stop&gt;, got get_most_recent_transactions (×4); call #2: expected get_scheduled_transactions, got &lt;stop&gt; (×4)</li>
+<li><b>qwen2.5:14b</b> important_instructions: ASR 58.3% (n=276)</li>
+</ul>
+<h2>slack</h2><h3>Variant funnel</h3><table><tr><th>stage</th><th>count</th><th></th></tr>
+<tr><td>generated</td><td>105</td><td style=text-align:left><span class="b" style="width:120px"></span>100.0%</td></tr>
+<tr><td>entity pass</td><td>100</td><td style=text-align:left><span class="b" style="width:114px"></span>95.2%</td></tr>
+<tr><td>NLI pass</td><td>84</td><td style=text-align:left><span class="b" style="width:96px"></span>80.0%</td></tr>
+<tr><td>verified</td><td>84</td><td style=text-align:left><span class="b" style="width:96px"></span>80.0%</td></tr>
+</table>
+<p class=m>Rejections: nli:bwd ×7, nli:fwd+bwd ×6, entity:quoted ×5, nli:fwd ×3</p>
+<p class=m>NLI min(fwd,bwd) histogram</p><svg width=320 height=70 role=img aria-label='NLI histogram'>
+<rect x=0 y=48 width=28 height=4 fill='var(--bar)'><title>0.0–0.1: 6</title></rect><text x=0 y=68 font-size=9 fill='var(--mut)'>0.0</text>
+<rect x=32 y=52 width=28 height=0 fill='var(--bar)'><title>0.1–0.2: 0</title></rect><text x=32 y=68 font-size=9 fill='var(--mut)'>0.1</text>
+<rect x=64 y=52 width=28 height=0 fill='var(--bar)'><title>0.2–0.3: 0</title></rect><text x=64 y=68 font-size=9 fill='var(--mut)'>0.2</text>
+<rect x=96 y=52 width=28 height=0 fill='var(--bar)'><title>0.3–0.4: 1</title></rect><text x=96 y=68 font-size=9 fill='var(--mut)'>0.3</text>
+<rect x=128 y=52 width=28 height=0 fill='var(--bar)'><title>0.4–0.5: 0</title></rect><text x=128 y=68 font-size=9 fill='var(--mut)'>0.4</text>
+<rect x=160 y=50 width=28 height=2 fill='var(--bar)'><title>0.5–0.6: 3</title></rect><text x=160 y=68 font-size=9 fill='var(--mut)'>0.5</text>
+<rect x=192 y=50 width=28 height=2 fill='var(--bar)'><title>0.6–0.7: 4</title></rect><text x=192 y=68 font-size=9 fill='var(--mut)'>0.6</text>
+<rect x=224 y=51 width=28 height=1 fill='var(--bar)'><title>0.7–0.8: 2</title></rect><text x=224 y=68 font-size=9 fill='var(--mut)'>0.7</text>
+<rect x=256 y=46 width=28 height=6 fill='var(--bar)'><title>0.8–0.9: 10</title></rect><text x=256 y=68 font-size=9 fill='var(--mut)'>0.8</text>
+<rect x=288 y=2 width=28 height=50 fill='var(--bar)'><title>0.9–1.0: 74</title></rect><text x=288 y=68 font-size=9 fill='var(--mut)'>0.9</text>
+</svg><h3>Traces per agent</h3><table><tr><th>agent</th><th>benign</th><th>errors</th><th>utility orig</th><th>utility para</th><th>drop</th><th>unique sigs/task</th><th>avg steps</th></tr>
+<tr><td>qwen2.5:14b</td><td>105</td><td>8</td><td style=text-align:left><span class="b" style="width:57px"></span>47.6%</td><td style=text-align:left><span class="b b2" style="width:54px"></span>45.2%</td><td>2.4%</td><td>4.19</td><td>6.68</td></tr>
+</table><ul>
+<li><b>qwen2.5:14b</b> divergence: call #2: expected get_users_in_channel, got read_channel_messages (×10); call #2: expected get_webpage, got send_direct_message (×7); call #1: expected read_channel_messages, got get_webpage (×6)</li>
+<li><b>qwen2.5:14b</b> important_instructions: ASR 50.8% (n=254)</li>
+</ul>
+<h2>travel</h2><h3>Variant funnel</h3><table><tr><th>stage</th><th>count</th><th></th></tr>
+<tr><td>generated</td><td>100</td><td style=text-align:left><span class="b" style="width:120px"></span>100.0%</td></tr>
+<tr><td>entity pass</td><td>67</td><td style=text-align:left><span class="b" style="width:80px"></span>67.0%</td></tr>
+<tr><td>NLI pass</td><td>61</td><td style=text-align:left><span class="b" style="width:73px"></span>61.0%</td></tr>
+<tr><td>verified</td><td>61</td><td style=text-align:left><span class="b" style="width:73px"></span>61.0%</td></tr>
+</table>
+<p class=m>Rejections: entity:quoted ×15, entity:number ×13, nli:bwd ×6, entity:name ×3, entity:money ×2, entity:date ×1</p>
+<p class=m>NLI min(fwd,bwd) histogram</p><svg width=320 height=70 role=img aria-label='NLI histogram'>
+<rect x=0 y=52 width=28 height=0 fill='var(--bar)'><title>0.0–0.1: 0</title></rect><text x=0 y=68 font-size=9 fill='var(--mut)'>0.0</text>
+<rect x=32 y=52 width=28 height=0 fill='var(--bar)'><title>0.1–0.2: 0</title></rect><text x=32 y=68 font-size=9 fill='var(--mut)'>0.1</text>
+<rect x=64 y=52 width=28 height=0 fill='var(--bar)'><title>0.2–0.3: 0</title></rect><text x=64 y=68 font-size=9 fill='var(--mut)'>0.2</text>
+<rect x=96 y=52 width=28 height=0 fill='var(--bar)'><title>0.3–0.4: 1</title></rect><text x=96 y=68 font-size=9 fill='var(--mut)'>0.3</text>
+<rect x=128 y=52 width=28 height=0 fill='var(--bar)'><title>0.4–0.5: 1</title></rect><text x=128 y=68 font-size=9 fill='var(--mut)'>0.4</text>
+<rect x=160 y=51 width=28 height=1 fill='var(--bar)'><title>0.5–0.6: 2</title></rect><text x=160 y=68 font-size=9 fill='var(--mut)'>0.5</text>
+<rect x=192 y=52 width=28 height=0 fill='var(--bar)'><title>0.6–0.7: 1</title></rect><text x=192 y=68 font-size=9 fill='var(--mut)'>0.6</text>
+<rect x=224 y=52 width=28 height=0 fill='var(--bar)'><title>0.7–0.8: 1</title></rect><text x=224 y=68 font-size=9 fill='var(--mut)'>0.7</text>
+<rect x=256 y=51 width=28 height=1 fill='var(--bar)'><title>0.8–0.9: 2</title></rect><text x=256 y=68 font-size=9 fill='var(--mut)'>0.8</text>
+<rect x=288 y=2 width=28 height=50 fill='var(--bar)'><title>0.9–1.0: 59</title></rect><text x=288 y=68 font-size=9 fill='var(--mut)'>0.9</text>
+</svg><h3>Traces per agent</h3><table><tr><th>agent</th><th>benign</th><th>errors</th><th>utility orig</th><th>utility para</th><th>drop</th><th>unique sigs/task</th><th>avg steps</th></tr>
+<tr><td>qwen2.5:14b</td><td>81</td><td>11</td><td style=text-align:left><span class="b" style="width:36px"></span>30.0%</td><td style=text-align:left><span class="b b2" style="width:55px"></span>45.9%</td><td>-15.9%</td><td>3.60</td><td>7.65</td></tr>
+</table><ul>
+<li><b>qwen2.5:14b</b> divergence: call #2: expected get_cuisine_type_for_restaurants, got get_rating_reviews_for_restaurants (×11); call #2: expected get_car_fuel_options, got get_car_types_available (×7); call #4: expected &lt;stop&gt;, got get_car_types_available (×6)</li>
+<li><b>qwen2.5:14b</b> important_instructions: ASR 16.2% (n=302)</li>
+</ul>
+<h2>workspace</h2><h3>Variant funnel</h3><table><tr><th>stage</th><th>count</th><th></th></tr>
+<tr><td>generated</td><td>199</td><td style=text-align:left><span class="b" style="width:120px"></span>100.0%</td></tr>
+<tr><td>entity pass</td><td>172</td><td style=text-align:left><span class="b" style="width:103px"></span>86.4%</td></tr>
+<tr><td>NLI pass</td><td>134</td><td style=text-align:left><span class="b" style="width:80px"></span>67.3%</td></tr>
+<tr><td>verified</td><td>134</td><td style=text-align:left><span class="b" style="width:80px"></span>67.3%</td></tr>
+</table>
+<p class=m>Rejections: entity:date ×26, nli:fwd ×23, nli:bwd ×11, entity:time ×10, nli:fwd+bwd ×4, entity:number ×2</p>
+<p class=m>NLI min(fwd,bwd) histogram</p><svg width=320 height=70 role=img aria-label='NLI histogram'>
+<rect x=0 y=51 width=28 height=1 fill='var(--bar)'><title>0.0–0.1: 4</title></rect><text x=0 y=68 font-size=9 fill='var(--mut)'>0.0</text>
+<rect x=32 y=50 width=28 height=2 fill='var(--bar)'><title>0.1–0.2: 5</title></rect><text x=32 y=68 font-size=9 fill='var(--mut)'>0.1</text>
+<rect x=64 y=52 width=28 height=0 fill='var(--bar)'><title>0.2–0.3: 2</title></rect><text x=64 y=68 font-size=9 fill='var(--mut)'>0.2</text>
+<rect x=96 y=50 width=28 height=2 fill='var(--bar)'><title>0.3–0.4: 5</title></rect><text x=96 y=68 font-size=9 fill='var(--mut)'>0.3</text>
+<rect x=128 y=50 width=28 height=2 fill='var(--bar)'><title>0.4–0.5: 5</title></rect><text x=128 y=68 font-size=9 fill='var(--mut)'>0.4</text>
+<rect x=160 y=51 width=28 height=1 fill='var(--bar)'><title>0.5–0.6: 4</title></rect><text x=160 y=68 font-size=9 fill='var(--mut)'>0.5</text>
+<rect x=192 y=49 width=28 height=3 fill='var(--bar)'><title>0.6–0.7: 8</title></rect><text x=192 y=68 font-size=9 fill='var(--mut)'>0.6</text>
+<rect x=224 y=50 width=28 height=2 fill='var(--bar)'><title>0.7–0.8: 5</title></rect><text x=224 y=68 font-size=9 fill='var(--mut)'>0.7</text>
+<rect x=256 y=48 width=28 height=4 fill='var(--bar)'><title>0.8–0.9: 12</title></rect><text x=256 y=68 font-size=9 fill='var(--mut)'>0.8</text>
+<rect x=288 y=2 width=28 height=50 fill='var(--bar)'><title>0.9–1.0: 122</title></rect><text x=288 y=68 font-size=9 fill='var(--mut)'>0.9</text>
+</svg><h3>Traces per agent</h3><table><tr><th>agent</th><th>benign</th><th>errors</th><th>utility orig</th><th>utility para</th><th>drop</th><th>unique sigs/task</th><th>avg steps</th></tr>
+<tr><td>qwen2.5:14b</td><td>174</td><td>12</td><td style=text-align:left><span class="b" style="width:69px"></span>57.5%</td><td style=text-align:left><span class="b b2" style="width:55px"></span>46.3%</td><td>11.2%</td><td>3.30</td><td>2.57</td></tr>
+</table><ul>
+<li><b>qwen2.5:14b</b> divergence: call #1: expected search_files_by_filename, got get_file_by_id (×6); call #1: expected search_files, got search_files_by_filename (×6); call #2: expected &lt;stop&gt;, got get_day_calendar_events (×5)</li>
+<li><b>qwen2.5:14b</b> important_instructions: ASR 2.4% (n=1336)</li>
+</ul>
+<h2>Splits and leakage</h2><table><tr><th>split</th><th>tasks</th><th>traces</th></tr>
+<tr><td>test</td><td>14</td><td>165</td></tr>
+<tr><td>train</td><td>68</td><td>2250</td></tr>
+<tr><td>val</td><td>15</td><td>173</td></tr>
+</table><p>Tasks in more than one split: <b>0</b>. Signatures in more than one split: 6 of 1341.</p>

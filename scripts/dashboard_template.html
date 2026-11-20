@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trace Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script>window.Plotly||document.write('<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"><\/script>')</script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1c2330;--mut:#667085;--bd:#e2e5ea;--acc:#2f6fed;--bad:#d9382f;--good:#1e9e63}
+@media (prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--fg:#e6e9ef;--mut:#98a2b3;--bd:#2d3440;--acc:#6b9bff;--bad:#ff6b62;--good:#4cc790}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,Segoe UI,sans-serif}
+header{padding:16px 24px;border-bottom:1px solid var(--bd);display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+h1{font-size:18px;margin:0}h2{font-size:14px;margin:0 0 6px}
+.sub{color:var(--mut)}
+#filters{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 24px;border-bottom:1px solid var(--bd);display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+.f select,.f input{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:6px;padding:5px 8px;font-size:13px;min-width:130px}
+.f select[multiple]{height:78px}
+button{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+main{padding:16px 24px;display:grid;gap:16px;max-width:1500px;margin:auto}
+#kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px}
+.kpi{cursor:pointer;border-left:4px solid var(--c)}
+.kpi.off{opacity:.45}
+.kpi .name{font-weight:600;margin-bottom:6px}
+.kpi table{width:100%;border-collapse:collapse}.kpi td{padding:1px 0}.kpi td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(480px,1fr));gap:16px}
+.chart{height:340px}
+.ctl{display:flex;gap:8px;align-items:center;margin-bottom:4px;color:var(--mut);font-size:12px}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;cursor:pointer;padding:6px;border-bottom:2px solid var(--bd);white-space:nowrap;user-select:none}
+table.t td{padding:5px 6px;border-bottom:1px solid var(--bd);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.t tr.r{cursor:pointer}table.t tr.r:hover{background:color-mix(in srgb,var(--acc) 10%,transparent)}
+.pill{padding:1px 7px;border-radius:99px;font-size:11px;border:1px solid var(--bd)}
+.ok{color:var(--good)}.no{color:var(--bad)}
+#modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20}
+#modal .box{background:var(--card);border:1px solid var(--bd);border-radius:12px;width:min(900px,94vw);max-height:88vh;overflow:auto;padding:18px}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px;margin:4px 0;font-size:12px}
+.step{border-left:3px solid var(--acc);padding-left:10px;margin:10px 0}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}header,#filters,main{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+<header><h1>Agent trace dashboard</h1><span class="sub" id="sum"></span></header>
+<div id="filters"></div>
+<main>
+  <div id="kpis"></div>
+  <div class="grid2">
+    <div class="card"><div class="ctl"><h2>Rate by suite</h2><select id="m1"><option value="util">Utility (task success)</option><option value="asr">Attack success rate</option><option value="err">Error rate</option></select></div><div id="c1" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Rate by attack-condition</h2><select id="m2"><option value="util">Utility</option><option value="asr">Attack success rate</option><option value="err">Error rate</option></select></div><div id="c2" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Attack success heatmap: model × injection task</h2></div><div id="c3" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Utility heatmap: model × user task (per suite)</h2></div><div id="c4" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Steps per trace</h2></div><div id="c5" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Latency (s)</h2><label><input type="checkbox" id="loglat"> log scale</label></div><div id="c6" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Tool usage (% of traces calling the tool)</h2></div><div id="c7" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Tokens</h2><select id="m8"><option value="tout">Output tokens</option><option value="tin">Input tokens</option></select></div><div id="c8" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Errors by type</h2></div><div id="c9" class="chart"></div></div>
+    <div class="card"><div class="ctl"><h2>Outcome mix</h2><span>(attack traces: utility × security)</span></div><div id="c10" class="chart"></div></div>
+  </div>
+  <div class="card">
+    <div class="ctl"><h2>Traces</h2><input id="q" placeholder="search prompt / answer / tool / task…" style="flex:1;max-width:420px;background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:6px;padding:5px 8px"><span id="cnt"></span><button id="prev">‹</button><button id="next">›</button></div>
+    <div style="overflow:auto"><table class="t" id="tbl"></table></div>
+  </div>
+</main>
+<div id="modal"><div class="box" id="mbox"></div></div>
+
+<script>
+if(!window.Plotly){document.body.insertAdjacentHTML('afterbegin','<p style="padding:12px;color:#d9382f">Plotly failed to load (no internet or blocked CDN). Charts unavailable.</p>');}
+const DATA = __DATA__;
+const PALETTE = ['#2f6fed','#e8822a','#1e9e63','#b04fd6','#d9382f','#14a3b8','#8a8f1c','#c2467b'];
+const MODELS = [...new Set(DATA.map(d=>d.model))].sort();
+const COLOR = Object.fromEntries(MODELS.map((m,i)=>[m,PALETTE[i%PALETTE.length]]));
+const uniq = k => [...new Set(DATA.map(d=>d[k]).filter(x=>x!=null))].sort();
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// ---------- filter state ----------
+const F = {models:new Set(MODELS), run:new Set(), suite:new Set(), mode:new Set(), atk:new Set(), inj:new Set(),
+           errors:'include', orig:'all'};
+const FIELDS = [['run','Run'],['suite','Suite'],['mode','Mode'],['atk','Attack'],['inj','Injection task']];
+
+function buildFilters(){
+  const el = document.getElementById('filters'); let h='';
+  for(const [k,l] of FIELDS){
+    h += `<label class="f">${l}<select multiple id="f_${k}">${uniq(k).map(v=>`<option value="${v}">${v}</option>`).join('')}</select></label>`;
+  }
+  h += `<label class="f">Errored traces<select id="f_errors"><option value="include">include</option><option value="exclude">exclude</option><option value="only">only errors</option></select></label>`;
+  h += `<label class="f">Prompt type<select id="f_orig"><option value="all">all</option><option value="orig">original only</option><option value="var">paraphrase variants only</option></select></label>`;
+  h += `<button id="reset">Reset</button>`;
+  el.innerHTML = h;
+  for(const [k] of FIELDS) document.getElementById('f_'+k).onchange = e=>{F[k]=new Set([...e.target.selectedOptions].map(o=>o.value)); update();};
+  document.getElementById('f_errors').onchange = e=>{F.errors=e.target.value; update();};
+  document.getElementById('f_orig').onchange = e=>{F.orig=e.target.value; update();};
+  document.getElementById('reset').onclick = ()=>{
+    F.models=new Set(MODELS); for(const [k] of FIELDS){F[k]=new Set(); [...document.getElementById('f_'+k).options].forEach(o=>o.selected=false);}
+    F.errors='include';F.orig='all';document.getElementById('f_errors').value='include';document.getElementById('f_orig').value='all';
+    document.getElementById('q').value='';update();};
+}
+const pass = d => F.models.has(d.model)
+  && FIELDS.every(([k])=>!F[k].size || F[k].has(d[k]))
+  && (F.errors==='include' || (F.errors==='exclude'?!d.err:!!d.err))
+  && (F.orig==='all' || (F.orig==='orig')===d.orig);
+
+// ---------- aggregation helpers ----------
+const mean = a => a.length? a.reduce((s,x)=>s+x,0)/a.length : null;
+const pct = x => x==null?'–':(100*x).toFixed(1)+'%';
+const rate = (rows,kind) => {
+  if(kind==='util'){const r=rows.filter(d=>!d.err); return r.length? r.filter(d=>d.util).length/r.length : null;}
+  if(kind==='asr'){const r=rows.filter(d=>d.mode==='attack'&&!d.err); return r.length? r.filter(d=>d.sec===true).length/r.length : null;}
+  return rows.length? rows.filter(d=>d.err).length/rows.length : null;
+};
+const byModel = rows => Object.fromEntries(MODELS.map(m=>[m,rows.filter(d=>d.model===m)]));
+const LABEL = {util:'Utility',asr:'Attack success rate',err:'Error rate'};
+const lay = (o={}) => Object.assign({paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:css('--fg'),size:12},margin:{l:50,r:10,t:10,b:50},legend:{orientation:'h',y:-0.2}},o);
+const CFG = {displaylogo:false,responsive:true};
+const plot = (id,tr,l) => Plotly.react(id,tr,lay(l),CFG);
+const empty = id => plot(id,[],{annotations:[{text:'no data for current filters',showarrow:false,font:{color:css('--mut')}}]});
+
+// ---------- charts ----------
+function kpis(rows){
+  const el=document.getElementById('kpis'); const bm=byModel(DATA.filter(d=>true));
+  el.innerHTML = MODELS.map(m=>{
+    const all=rows.filter(d=>d.model===m), ben=all.filter(d=>d.mode==='benign'), att=all.filter(d=>d.mode==='attack');
+    const on=F.models.has(m);
+    return `<div class="card kpi ${on?'':'off'}" data-m="${m}" style="--c:${COLOR[m]}"><div class="name">${m}</div><table>
+    <tr><td>Traces</td><td>${all.length}</td></tr>
+    <tr><td>Error rate</td><td>${pct(rate(all,'err'))}</td></tr>
+    <tr><td>Utility (benign)</td><td>${pct(rate(ben,'util'))}</td></tr>
+    <tr><td>Utility (under attack)</td><td>${pct(rate(att,'util'))}</td></tr>
+    <tr><td>Attack success rate</td><td>${pct(rate(att,'asr'))} <span class="sub">(${att.filter(d=>d.sec===true&&!d.err).length})</span></td></tr>
+    <tr><td>Avg steps</td><td>${(mean(all.filter(d=>!d.err).map(d=>d.steps))??0).toFixed(2)}</td></tr>
+    <tr><td>Avg latency</td><td>${(mean(all.map(d=>d.lat))??0).toFixed(1)} s</td></tr>
+    <tr><td>Avg tokens in / out</td><td>${Math.round(mean(all.map(d=>d.tin))||0)} / ${Math.round(mean(all.map(d=>d.tout))||0)}</td></tr></table></div>`}).join('');
+  el.querySelectorAll('.kpi').forEach(k=>k.onclick=()=>{const m=k.dataset.m; F.models.has(m)?F.models.delete(m):F.models.add(m); update();});
+}
+
+function groupedRate(id,rows,key,kind,keys){
+  if(!rows.length) return empty(id);
+  keys = keys || [...new Set(rows.map(d=>d[key]))].sort();
+  const bm=byModel(rows);
+  const tr=MODELS.filter(m=>F.models.has(m)).map(m=>{
+    const y=keys.map(k=>rate(bm[m].filter(d=>d[key]===k),kind));
+    const n=keys.map(k=>bm[m].filter(d=>d[key]===k).length);
+    return {type:'bar',name:m,x:keys,y:y.map(v=>v==null?null:v*100),marker:{color:COLOR[m]},customdata:n,
+      hovertemplate:'%{x}<br>'+m+': %{y:.1f}% (n=%{customdata})<extra></extra>'};
+  });
+  plot(id,tr,{barmode:'group',yaxis:{title:LABEL[kind]+' (%)',gridcolor:css('--bd')}});
+}
+
+function heat(id,rows,xkey,ycats,valfn,title,filterRows){
+  const ms=MODELS.filter(m=>F.models.has(m)); const xs=[...new Set(rows.map(d=>d[xkey]).filter(x=>x!=null))].sort();
+  if(!rows.length||!xs.length) return empty(id);
+  const z=ms.map(m=>xs.map(x=>valfn(rows.filter(d=>d.model===m&&d[xkey]===x))));
+  const n=ms.map(m=>xs.map(x=>rows.filter(d=>d.model===m&&d[xkey]===x).length));
+  plot(id,[{type:'heatmap',x:xs,y:ms,z:z.map(r=>r.map(v=>v==null?null:v*100)),customdata:n,colorscale:'YlOrRd',zmin:0,zmax:100,
+    hovertemplate:'%{y} / %{x}<br>%{z:.1f}% (n=%{customdata})<extra></extra>',colorbar:{title:'%'}}],{margin:{l:110,r:10,t:10,b:90}});
+}
+
+function dist(id,rows,field,type,log){
+  const tr=MODELS.filter(m=>F.models.has(m)).map(m=>{
+    const v=rows.filter(d=>d.model===m&&!d.err).map(d=>d[field]);
+    return type==='hist'? {type:'histogram',name:m,x:v,opacity:.65,marker:{color:COLOR[m]},histnorm:'percent'}
+      : {type:'box',name:m,y:v,marker:{color:COLOR[m]},boxmean:true};
+  });
+  if(!rows.length) return empty(id);
+  plot(id,tr,type==='hist'?{barmode:'overlay',xaxis:{title:field==='steps'?'tool-call steps':field},yaxis:{title:'% of traces',gridcolor:css('--bd')}}
+    :{yaxis:{type:log?'log':'linear',gridcolor:css('--bd')}});
+}
+
+function tools(rows){
+  const ms=MODELS.filter(m=>F.models.has(m)); const cnt={};
+  rows.forEach(d=>new Set(d.tools).forEach(t=>{cnt[t]=(cnt[t]||0)+1}));
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,15).map(e=>e[0]).reverse();
+  if(!top.length) return empty('c7');
+  const bm=byModel(rows);
+  plot('c7',ms.map(m=>({type:'bar',orientation:'h',name:m,y:top,marker:{color:COLOR[m]},
+    x:top.map(t=>bm[m].length?100*bm[m].filter(d=>d.tools.includes(t)).length/bm[m].length:0),
+    hovertemplate:'%{y}: %{x:.1f}%<extra>'+m+'</extra>'})),{barmode:'group',margin:{l:170,r:10,t:10,b:50},xaxis:{title:'% of traces',gridcolor:css('--bd')},height:undefined});
+}
+
+function errors(rows){
+  const er=rows.filter(d=>d.err); if(!er.length) return empty('c9');
+  const types=[...new Set(er.map(d=>d.err))].sort();
+  plot('c9',MODELS.filter(m=>F.models.has(m)).map(m=>({type:'bar',name:m,x:types,marker:{color:COLOR[m]},
+    y:types.map(t=>er.filter(d=>d.model===m&&d.err===t).length)})),{barmode:'group',yaxis:{title:'count',gridcolor:css('--bd')},margin:{l:50,r:10,t:10,b:110}});
+}
+
+function outcomes(rows){
+  const att=rows.filter(d=>d.mode==='attack'&&!d.err); if(!att.length) return empty('c10');
+  const cats=[['Safe + useful',d=>d.util&&d.sec===false,'#1e9e63'],['Safe, task failed',d=>!d.util&&d.sec===false,'#9aa3b2'],
+              ['Attacked + useful',d=>d.util&&d.sec===true,'#e8822a'],['Attacked, task failed',d=>!d.util&&d.sec===true,'#d9382f']];
+  const ms=MODELS.filter(m=>F.models.has(m));
+  plot('c10',cats.map(([n,f,c])=>({type:'bar',name:n,x:ms,marker:{color:c},
+    y:ms.map(m=>{const r=att.filter(d=>d.model===m); return r.length?100*r.filter(f).length/r.length:0;})})),
+    {barmode:'stack',yaxis:{title:'% of attack traces',gridcolor:css('--bd')}});
+}
+
+// ---------- table ----------
+let sortKey='model',sortDir=1,page=0;const PAGE=50;let shown=[];
+const COLS=[['model','Model'],['mode','Mode'],['suite','Suite'],['task','Task'],['inj','Inj. task'],['atk','Attack'],['util','Utility'],['sec','Attack ok'],['steps','Steps'],['lat','Lat (s)'],['tout','Tok out'],['err','Error']];
+function table(rows){
+  const q=document.getElementById('q').value.toLowerCase().trim();
+  shown=q?rows.filter(d=>(d.prompt+' '+(d.ans||'')+' '+d.tools.join(' ')+' '+d.task+' '+(d.inj||'')+' '+(d.err||'')).toLowerCase().includes(q)):rows.slice();
+  shown.sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (x==null)-(y==null)||(x>y?1:x<y?-1:0)*sortDir;});
+  const maxp=Math.max(0,Math.ceil(shown.length/PAGE)-1); page=Math.min(page,maxp);
+  document.getElementById('cnt').textContent=`${shown.length} traces · page ${page+1}/${maxp+1}`;
+  const b=(v)=>v===true?'<span class="ok">✔</span>':v===false?'<span class="no">✘</span>':'–';
+  document.getElementById('tbl').innerHTML='<tr>'+COLS.map(([k,l])=>`<th data-k="${k}">${l}${k===sortKey?(sortDir>0?' ▲':' ▼'):''}</th>`).join('')+'</tr>'+
+    shown.slice(page*PAGE,page*PAGE+PAGE).map((d,i)=>`<tr class="r" data-i="${page*PAGE+i}"><td><span class="pill" style="border-color:${COLOR[d.model]}">${d.model}</span></td><td>${d.mode}</td><td>${d.suite}</td><td>${d.task}</td><td>${d.inj||''}</td><td>${d.atk||''}</td><td>${b(d.util)}</td><td>${d.mode==='attack'?b(d.sec):'–'}</td><td>${d.steps}</td><td>${d.lat.toFixed?d.lat.toFixed(1):d.lat}</td><td>${d.tout}</td><td class="no">${d.err||''}</td></tr>`).join('');
+  document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=(k===sortKey)?-sortDir:1;sortKey=k;table(rows);});
+  document.querySelectorAll('#tbl tr.r').forEach(tr=>tr.onclick=()=>detail(shown[+tr.dataset.i]));
+}
+document.getElementById('prev').onclick=()=>{page=Math.max(0,page-1);table(cur)};
+document.getElementById('next').onclick=()=>{page++;table(cur)};
+document.getElementById('q').oninput=()=>{page=0;table(cur)};
+
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function detail(d){
+  document.getElementById('mbox').innerHTML=`<div style="display:flex;justify-content:space-between"><h2>${esc(d.model)} · ${esc(d.suite)}/${esc(d.task)} ${d.inj?'· '+esc(d.inj):''}</h2><button onclick="closeM()">Close</button></div>
+  <p class="sub">mode: ${d.mode} · attack: ${esc(d.atk||'–')} · utility: ${d.util} · attack succeeded: ${d.mode==='attack'?d.sec:'–'} · steps: ${d.steps} · ${d.lat}s · tokens ${d.tin}/${d.tout} · run: ${esc(d.run)}<br>id ${d.id}</p>
+  <b>User prompt</b><pre>${esc(d.prompt)}</pre>
+  ${d.injtxt?`<b>Injection</b><pre>${esc(d.injtxt)}</pre>`:''}
+  ${d.calls.map((c,i)=>`<div class="step"><b>${i+1}. ${esc(c[0])}</b> <span class="sub">${esc(c[1])}</span><pre>${esc(c[3]?'ERROR: '+c[3]:c[2])}</pre></div>`).join('')||'<p class="sub">no tool calls</p>'}
+  <b>Final answer</b><pre>${esc(d.ans||'(none)')}</pre>
+  ${d.errmsg?`<b class="no">Error</b><pre>${esc(d.errmsg)}</pre>`:''}`;
+  document.getElementById('modal').style.display='flex';
+}
+function closeM(){document.getElementById('modal').style.display='none'}
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeM()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+
+// ---------- main ----------
+let cur=[];
+function update(){
+  cur=DATA.filter(pass);
+  document.getElementById('sum').textContent=`${cur.length.toLocaleString()} of ${DATA.length.toLocaleString()} traces · ${MODELS.length} models`;
+  kpis(cur);
+  groupedRate('c1',cur,'suite',document.getElementById('m1').value);
+  groupedRate('c2',cur.map(d=>({...d,cond:d.mode==='benign'?'benign':(d.atk||'attack')})),'cond',document.getElementById('m2').value);
+  heat('c3',cur.filter(d=>d.mode==='attack'),'inj',null,r=>rate(r,'asr'));
+  heat('c4',cur.map(d=>({...d,ut:d.suite+'/'+d.task})),'ut',null,r=>rate(r,'util'));
+  dist('c5',cur,'steps','hist');
+  dist('c6',cur,'lat','box',document.getElementById('loglat').checked);
+  tools(cur);
+  dist('c8',cur,document.getElementById('m8').value,'box');
+  errors(cur);outcomes(cur);
+  page=0;table(cur);
+}
+['m1','m2','m8','loglat'].forEach(i=>document.getElementById(i).onchange=update);
+buildFilters();update();
+</script>
+</body>
+</html>
