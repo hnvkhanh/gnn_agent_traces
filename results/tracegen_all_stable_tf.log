@@ -1,0 +1,236 @@
+﻿python.exe : C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: 
+FutureWarning: `torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or 
+`torch.export`.
+At line:1 char:658
++ ... o20_tf.log; & $py scripts\run_tracegen_gnn.py @common --outdir result ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\khanh\...`torch.export`.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+traces: {"train": [8419, 7340, 1053], "val": [627, 380, 81], "test": [586, 353, 13]} (traces, attacked, reject actions)
+78 runs: 0 reused, 78 to train on cuda:0,cuda:0,cuda:1,cuda:1
+prompt embeddings (sentence-transformers/all-MiniLM-L6-v2): 420 distinct prompts -> C:\Users\khanh\Documents\gnn_agent_traces\data\cache\prompt_emb_sentence-transformers_all-MiniLM-L6-v2.pt
+progress file: results\tracegen_all_stable_tf\progress.json
+[cuda:0] start main                              seed 0  (elapsed 0:00:00)
+[cuda:0] start main                              seed 1  (elapsed 0:00:00)
+[cuda:1] start main                              seed 2  (elapsed 0:00:00)
+[cuda:1] start cv/5/0-0                          seed 0  (elapsed 0:00:00)
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:410: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:410: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:410: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:410: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+[cuda:1] done  cv/5/0-0                          seed 0     73s  (1/78, 1% of work)  elapsed 0:01:21  ETA 2:07:16  (~01:59)
+[cuda:1] start cv/5/0-0                          seed 1  (elapsed 0:01:21)
+[cuda:1] done  cv/5/0-0                          seed 1     54s  (2/78, 2% of work)  elapsed 0:02:16  ETA 1:44:50  (~01:37)
+[cuda:1] start cv/5/0-0                          seed 2  (elapsed 0:02:16)
+[cuda:1] done  main                              seed 2    145s  (3/78, 5% of work)  elapsed 0:02:33  ETA 0:50:49  (~00:43)
+[cuda:0] done  main                              seed 0    146s  (4/78, 8% of work)  elapsed 0:02:34  ETA 0:31:49  (~00:24)
+[cuda:0] start cv/5/0-1                          seed 1  (elapsed 0:02:34)
+[cuda:0] done  main                              seed 1    147s  (5/78, 10% of work)  elapsed 0:02:35  ETA 0:22:57  (~00:16)
+[cuda:0] start cv/5/0-1                          seed 2  (elapsed 0:02:35)
+Exception in thread Thread-4 (drive):
+Traceback (most recent call last):
+  File "C:\Users\khanh\AppData\Roaming\uv\python\cpython-3.14.4-windows-x86_64-none\Lib\threading.py", line 1082, in 
+_bootstrap_inner
+    self._context.run(self.run)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\khanh\AppData\Roaming\uv\python\cpython-3.14.4-windows-x86_64-none\Lib\threading.py", line 1024, in 
+run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\khanh\Documents\gnn_agent_traces\scripts\run_tracegen_gnn.py", line 171, in drive
+    report("start %s seed %d on %s" % (key, seed, dev))
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\khanh\Documents\gnn_agent_traces\scripts\run_tracegen_gnn.py", line 156, in report
+    os.replace(tmp, progress_path)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'results\\tracegen_all_stable_tf\\progress.json.tmp' -> 
+'results\\tracegen_all_stable_tf\\progress.json'
+[cuda:1] done  cv/5/0-0                          seed 2     52s  (6/78, 11% of work)  elapsed 0:03:08  ETA 0:24:46  (~00:18)
+[cuda:1] start cv/5/0-2                          seed 0  (elapsed 0:03:08)
+[cuda:0] done  cv/5/0-1                          seed 1     53s  (7/78, 12% of work)  elapsed 0:03:28  ETA 0:24:33  (~00:18)
+[cuda:0] start cv/5/0-2                          seed 1  (elapsed 0:03:28)
+[cuda:0] done  cv/5/0-1                          seed 2     54s  (8/78, 14% of work)  elapsed 0:03:29  ETA 0:22:22  (~00:16)
+[cuda:0] start cv/5/0-2                          seed 2  (elapsed 0:03:29)
+[cuda:1] done  cv/5/0-2                          seed 0     51s  (9/78, 15% of work)  elapsed 0:03:59  ETA 0:23:12  (~00:17)
+[cuda:1] start cv/5/0-3                          seed 0  (elapsed 0:03:59)
+[cuda:0] done  cv/5/0-2                          seed 1     53s  (10/78, 16% of work)  elapsed 0:04:20  ETA 0:23:09  (~00:17)
+[cuda:0] start cv/5/0-3                          seed 1  (elapsed 0:04:20)
+[cuda:0] done  cv/5/0-2                          seed 2     53s  (11/78, 17% of work)  elapsed 0:04:22  ETA 0:21:26  (~00:16)
+[cuda:0] start cv/5/0-3                          seed 2  (elapsed 0:04:22)
+[cuda:1] done  cv/5/0-3                          seed 0     52s  (12/78, 18% of work)  elapsed 0:04:51  ETA 0:22:04  (~00:17)
+[cuda:1] start cv/5/0-4                          seed 0  (elapsed 0:04:51)
+[cuda:0] done  cv/5/0-3                          seed 1     53s  (13/78, 19% of work)  elapsed 0:05:13  ETA 0:22:06  (~00:17)
+[cuda:0] start cv/5/0-4                          seed 1  (elapsed 0:05:13)
+[cuda:0] done  cv/5/0-3                          seed 2     53s  (14/78, 20% of work)  elapsed 0:05:15  ETA 0:20:44  (~00:16)
+[cuda:0] start cv/5/0-4                          seed 2  (elapsed 0:05:15)
+[cuda:1] done  cv/5/0-4                          seed 0     52s  (15/78, 21% of work)  elapsed 0:05:43  ETA 0:21:03  (~00:17)
+[cuda:1] start cv/5/1-0                          seed 0  (elapsed 0:05:43)
+[cuda:0] done  cv/5/0-4                          seed 1     53s  (16/78, 22% of work)  elapsed 0:06:07  ETA 0:21:02  (~00:17)
+[cuda:0] start cv/5/1-0                          seed 1  (elapsed 0:06:07)
+[cuda:0] done  cv/5/0-4                          seed 2     53s  (17/78, 24% of work)  elapsed 0:06:09  ETA 0:19:51  (~00:16)
+[cuda:0] start cv/5/1-0                          seed 2  (elapsed 0:06:09)
+[cuda:1] done  cv/5/1-0                          seed 0     54s  (18/78, 25% of work)  elapsed 0:06:37  ETA 0:20:04  (~00:17)
+[cuda:1] start cv/5/1-1                          seed 0  (elapsed 0:06:37)
+[cuda:0] done  cv/5/1-0                          seed 1     57s  (19/78, 26% of work)  elapsed 0:07:04  ETA 0:20:08  (~00:17)
+[cuda:0] start cv/5/1-1                          seed 1  (elapsed 0:07:04)
+[cuda:0] done  cv/5/1-0                          seed 2     56s  (20/78, 27% of work)  elapsed 0:07:05  ETA 0:19:03  (~00:16)
+[cuda:0] start cv/5/1-1                          seed 2  (elapsed 0:07:05)
+[cuda:1] done  cv/5/1-1                          seed 0     60s  (21/78, 28% of work)  elapsed 0:07:37  ETA 0:19:12  (~00:17)
+[cuda:1] start cv/5/1-2                          seed 0  (elapsed 0:07:37)
+[cuda:0] done  cv/5/1-1                          seed 1     61s  (22/78, 30% of work)  elapsed 0:08:04  ETA 0:19:08  (~00:17)
+[cuda:0] start cv/5/1-2                          seed 1  (elapsed 0:08:04)
+[cuda:0] done  cv/5/1-1                          seed 2     61s  (23/78, 31% of work)  elapsed 0:08:06  ETA 0:18:04  (~00:16)
+[cuda:0] start cv/5/1-2                          seed 2  (elapsed 0:08:06)
+[cuda:1] done  cv/5/1-2                          seed 0     58s  (24/78, 32% of work)  elapsed 0:08:35  ETA 0:18:02  (~00:17)
+[cuda:1] start cv/5/1-3                          seed 0  (elapsed 0:08:35)
+[cuda:0] done  cv/5/1-2                          seed 1     59s  (25/78, 34% of work)  elapsed 0:09:04  ETA 0:17:57  (~00:17)
+[cuda:0] start cv/5/1-3                          seed 1  (elapsed 0:09:04)
+[cuda:0] done  cv/5/1-2                          seed 2     59s  (26/78, 35% of work)  elapsed 0:09:06  ETA 0:17:00  (~00:16)
+[cuda:0] start cv/5/1-3                          seed 2  (elapsed 0:09:06)
+[cuda:1] done  cv/5/1-3                          seed 0     54s  (27/78, 36% of work)  elapsed 0:09:30  ETA 0:16:52  (~00:16)
+[cuda:1] start cv/5/1-4                          seed 0  (elapsed 0:09:30)
+[cuda:0] done  cv/5/1-3                          seed 1     55s  (28/78, 37% of work)  elapsed 0:09:59  ETA 0:16:50  (~00:17)
+[cuda:0] start cv/5/1-4                          seed 1  (elapsed 0:09:59)
+[cuda:0] done  cv/5/1-3                          seed 2     55s  (29/78, 38% of work)  elapsed 0:10:01  ETA 0:16:03  (~00:16)
+[cuda:0] start cv/5/1-4                          seed 2  (elapsed 0:10:01)
+[cuda:1] done  cv/5/1-4                          seed 0     55s  (30/78, 40% of work)  elapsed 0:10:25  ETA 0:15:52  (~00:16)
+[cuda:1] start cv/5/2-0                          seed 0  (elapsed 0:10:25)
+[cuda:0] done  cv/5/1-4                          seed 1     58s  (31/78, 41% of work)  elapsed 0:10:57  ETA 0:15:50  (~00:17)
+[cuda:0] start cv/5/2-0                          seed 1  (elapsed 0:10:57)
+[cuda:0] done  cv/5/1-4                          seed 2     57s  (32/78, 42% of work)  elapsed 0:10:58  ETA 0:15:05  (~00:16)
+[cuda:0] start cv/5/2-0                          seed 2  (elapsed 0:10:58)
+[cuda:1] done  cv/5/2-0                          seed 0     55s  (33/78, 43% of work)  elapsed 0:11:21  ETA 0:14:50  (~00:16)
+[cuda:1] start cv/5/2-1                          seed 0  (elapsed 0:11:21)
+[cuda:0] done  cv/5/2-0                          seed 1     57s  (34/78, 45% of work)  elapsed 0:11:54  ETA 0:14:48  (~00:17)
+[cuda:0] start cv/5/2-1                          seed 1  (elapsed 0:11:54)
+[cuda:0] done  cv/5/2-0                          seed 2     57s  (35/78, 46% of work)  elapsed 0:11:55  ETA 0:14:06  (~00:16)
+[cuda:0] start cv/5/2-1                          seed 2  (elapsed 0:11:55)
+[cuda:1] done  cv/5/2-1                          seed 0     60s  (36/78, 47% of work)  elapsed 0:12:21  ETA 0:13:49  (~00:16)
+[cuda:1] start cv/5/2-2                          seed 0  (elapsed 0:12:21)
+[cuda:0] done  cv/5/2-1                          seed 1     63s  (37/78, 49% of work)  elapsed 0:12:57  ETA 0:13:42  (~00:17)
+[cuda:0] start cv/5/2-2                          seed 1  (elapsed 0:12:57)
+[cuda:0] done  cv/5/2-1                          seed 2     63s  (38/78, 50% of work)  elapsed 0:12:58  ETA 0:12:59  (~00:16)
+[cuda:0] start cv/5/2-2                          seed 2  (elapsed 0:12:58)
+[cuda:1] done  cv/5/2-2                          seed 0     61s  (39/78, 51% of work)  elapsed 0:13:22  ETA 0:12:39  (~00:16)
+Exception in thread Thread-3 (drive):
+Traceback (most recent call last):
+  File "C:\Users\khanh\AppData\Roaming\uv\python\cpython-3.14.4-windows-x86_64-none\Lib\threading.py", line 1082, in 
+_bootstrap_inner
+    self._context.run(self.run)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\khanh\AppData\Roaming\uv\python\cpython-3.14.4-windows-x86_64-none\Lib\threading.py", line 1024, in 
+run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\khanh\Documents\gnn_agent_traces\scripts\run_tracegen_gnn.py", line 171, in drive
+    report("start %s seed %d on %s" % (key, seed, dev))
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\khanh\Documents\gnn_agent_traces\scripts\run_tracegen_gnn.py", line 156, in report
+    os.replace(tmp, progress_path)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'results\\tracegen_all_stable_tf\\progress.json.tmp' -> 
+'results\\tracegen_all_stable_tf\\progress.json'
+[cuda:0] done  cv/5/2-2                          seed 1     59s  (40/78, 53% of work)  elapsed 0:13:56  ETA 0:12:29  (~00:16)
+[cuda:0] start cv/5/2-3                          seed 1  (elapsed 0:13:56)
+[cuda:0] done  cv/5/2-2                          seed 2     59s  (41/78, 54% of work)  elapsed 0:13:58  ETA 0:11:49  (~00:16)
+[cuda:0] start cv/5/2-3                          seed 2  (elapsed 0:13:58)
+[cuda:0] done  cv/5/2-3                          seed 1     54s  (42/78, 55% of work)  elapsed 0:14:50  ETA 0:11:56  (~00:17)
+[cuda:0] start cv/5/2-4                          seed 0  (elapsed 0:14:50)
+[cuda:0] done  cv/5/2-3                          seed 2     54s  (43/78, 57% of work)  elapsed 0:14:51  ETA 0:11:21  (~00:16)
+[cuda:0] start cv/5/2-4                          seed 1  (elapsed 0:14:51)
+[cuda:0] done  cv/5/2-4                          seed 0     55s  (44/78, 58% of work)  elapsed 0:15:45  ETA 0:11:25  (~00:17)
+[cuda:0] start cv/5/2-4                          seed 2  (elapsed 0:15:45)
+[cuda:0] done  cv/5/2-4                          seed 1     54s  (45/78, 59% of work)  elapsed 0:15:46  ETA 0:10:50  (~00:17)
+[cuda:0] start cv/5/3-0                          seed 0  (elapsed 0:15:46)
+[cuda:0] done  cv/5/2-4                          seed 2     55s  (46/78, 61% of work)  elapsed 0:16:40  ETA 0:10:51  (~00:17)
+[cuda:0] done  cv/5/3-0                          seed 0     54s  (47/78, 62% of work)  elapsed 0:16:40  ETA 0:10:17  (~00:17)
+[cuda:0] start cv/5/3-0                          seed 1  (elapsed 0:16:41)
+[cuda:0] start cv/5/3-0                          seed 2  (elapsed 0:16:41)
+[cuda:0] done  cv/5/3-0                          seed 2     54s  (48/78, 63% of work)  elapsed 0:17:35  ETA 0:10:17  (~00:18)
+[cuda:0] start cv/5/3-1                          seed 0  (elapsed 0:17:35)
+[cuda:0] done  cv/5/3-0                          seed 1     55s  (49/78, 64% of work)  elapsed 0:17:35  ETA 0:09:44  (~00:17)
+[cuda:0] start cv/5/3-1                          seed 1  (elapsed 0:17:35)
+[cuda:0] done  cv/5/3-1                          seed 0     58s  (50/78, 66% of work)  elapsed 0:18:33  ETA 0:09:38  (~00:18)
+[cuda:0] start cv/5/3-1                          seed 2  (elapsed 0:18:33)
+[cuda:0] done  cv/5/3-1                          seed 1     58s  (51/78, 67% of work)  elapsed 0:18:34  ETA 0:09:02  (~00:18)
+[cuda:0] start cv/5/3-2                          seed 0  (elapsed 0:18:34)
+[cuda:0] done  cv/5/3-2                          seed 0     61s  (52/78, 69% of work)  elapsed 0:19:35  ETA 0:08:56  (~00:18)
+[cuda:0] start cv/5/3-2                          seed 1  (elapsed 0:19:35)
+[cuda:0] done  cv/5/3-1                          seed 2     63s  (53/78, 70% of work)  elapsed 0:19:36  ETA 0:08:22  (~00:18)
+[cuda:0] start cv/5/3-2                          seed 2  (elapsed 0:19:36)
+[cuda:0] done  cv/5/3-2                          seed 1     58s  (54/78, 72% of work)  elapsed 0:20:32  ETA 0:08:12  (~00:19)
+[cuda:0] start cv/5/3-3                          seed 0  (elapsed 0:20:32)
+[cuda:0] done  cv/5/3-2                          seed 2     58s  (55/78, 73% of work)  elapsed 0:20:34  ETA 0:07:39  (~00:18)
+[cuda:0] start cv/5/3-3                          seed 1  (elapsed 0:20:34)
+[cuda:0] done  cv/5/3-3                          seed 0     52s  (56/78, 74% of work)  elapsed 0:21:24  ETA 0:07:28  (~00:19)
+[cuda:0] start cv/5/3-3                          seed 2  (elapsed 0:21:24)
+[cuda:0] done  cv/5/3-3                          seed 1     52s  (57/78, 75% of work)  elapsed 0:21:26  ETA 0:07:00  (~00:18)
+[cuda:0] start cv/5/3-4                          seed 0  (elapsed 0:21:26)
+[cuda:0] done  cv/5/3-3                          seed 2     53s  (58/78, 77% of work)  elapsed 0:22:17  ETA 0:06:48  (~00:19)
+[cuda:0] start cv/5/3-4                          seed 1  (elapsed 0:22:17)
+[cuda:0] done  cv/5/3-4                          seed 0     56s  (59/78, 78% of work)  elapsed 0:22:22  ETA 0:06:19  (~00:19)
+[cuda:0] start cv/5/3-4                          seed 2  (elapsed 0:22:22)
+[cuda:0] done  cv/5/3-4                          seed 1     55s  (60/78, 79% of work)  elapsed 0:23:13  ETA 0:06:04  (~00:19)
+[cuda:0] start cv/5/4-0                          seed 0  (elapsed 0:23:13)
+[cuda:0] done  cv/5/3-4                          seed 2     55s  (61/78, 81% of work)  elapsed 0:23:17  ETA 0:05:36  (~00:19)
+[cuda:0] start cv/5/4-0                          seed 1  (elapsed 0:23:17)
+[cuda:0] done  cv/5/4-0                          seed 0     45s  (62/78, 82% of work)  elapsed 0:23:58  ETA 0:05:23  (~00:19)
+[cuda:0] start cv/5/4-0                          seed 2  (elapsed 0:23:58)
+[cuda:0] done  cv/5/4-0                          seed 1     45s  (63/78, 83% of work)  elapsed 0:24:02  ETA 0:05:01  (~00:19)
+[cuda:0] start cv/5/4-1                          seed 0  (elapsed 0:24:02)
+[cuda:0] done  cv/5/4-0                          seed 2     48s  (64/78, 84% of work)  elapsed 0:24:46  ETA 0:04:48  (~00:20)
+[cuda:0] start cv/5/4-1                          seed 1  (elapsed 0:24:46)
+[cuda:0] done  cv/5/4-1                          seed 0     53s  (65/78, 85% of work)  elapsed 0:24:55  ETA 0:04:25  (~00:19)
+[cuda:0] start cv/5/4-1                          seed 2  (elapsed 0:24:55)
+[cuda:0] done  cv/5/4-1                          seed 1     51s  (66/78, 86% of work)  elapsed 0:25:38  ETA 0:04:07  (~00:20)
+[cuda:0] start cv/5/4-2                          seed 0  (elapsed 0:25:38)
+[cuda:0] done  cv/5/4-1                          seed 2     50s  (67/78, 87% of work)  elapsed 0:25:45  ETA 0:03:44  (~00:19)
+[cuda:0] start cv/5/4-2                          seed 1  (elapsed 0:25:45)
+[cuda:0] done  cv/5/4-2                          seed 0     51s  (68/78, 88% of work)  elapsed 0:26:29  ETA 0:03:25  (~00:20)
+[cuda:0] start cv/5/4-2                          seed 2  (elapsed 0:26:29)
+[cuda:0] done  cv/5/4-2                          seed 1     52s  (69/78, 90% of work)  elapsed 0:26:37  ETA 0:03:02  (~00:20)
+[cuda:0] start cv/5/4-3                          seed 0  (elapsed 0:26:37)
+[cuda:0] done  cv/5/4-2                          seed 2     54s  (70/78, 91% of work)  elapsed 0:27:23  ETA 0:02:43  (~00:20)
+[cuda:0] start cv/5/4-3                          seed 1  (elapsed 0:27:23)
+[cuda:0] done  cv/5/4-3                          seed 0     49s  (71/78, 92% of work)  elapsed 0:27:27  ETA 0:02:22  (~00:20)
+[cuda:0] start cv/5/4-3                          seed 2  (elapsed 0:27:27)
+[cuda:0] done  cv/5/4-3                          seed 1     47s  (72/78, 93% of work)  elapsed 0:28:10  ETA 0:02:04  (~00:20)
+[cuda:0] start cv/5/4-4                          seed 0  (elapsed 0:28:10)
+[cuda:0] done  cv/5/4-3                          seed 2     47s  (73/78, 94% of work)  elapsed 0:28:14  ETA 0:01:44  (~00:20)
+[cuda:0] start cv/5/4-4                          seed 1  (elapsed 0:28:14)
+[cuda:0] done  cv/5/4-4                          seed 0     51s  (74/78, 95% of work)  elapsed 0:29:02  ETA 0:01:25  (~00:20)
+[cuda:0] start cv/5/4-4                          seed 2  (elapsed 0:29:02)
+[cuda:0] done  cv/5/4-4                          seed 1     51s  (75/78, 96% of work)  elapsed 0:29:06  ETA 0:01:03  (~00:20)
+[cuda:0] done  cv/5/4-4                          seed 2     46s  (76/78, 98% of work)  elapsed 0:29:48  ETA 0:00:44  (~00:21)
+cross-validation: 2 of 3 seeds have every cell; the others are left out of the report
+wrote results\tracegen_all_stable_tf\REPORT.md and report.html

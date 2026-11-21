@@ -144,8 +144,8 @@ Edge GNN plus epoch averaging does.
 
 1. **lr 1e-3 and `clip_grad_norm_(…, 1.0)` in `fit_select`, for Edge GNN only.** This removes Edge GNN's loss
    spikes and collapse, and halves its seed sd (0.15 → 0.07). The CV check below confirms the gain for Edge GNN and
-   shows it hurts GNN + files. A learning-rate decay probably helps further (not tested). Now available as
-   `run_tracegen_gnn.py --stable` (or `--lr/--clip/--score/--select` separately).
+   shows it hurts GNN + files and the Transformer. A learning-rate decay probably helps further (not tested). Now
+   the default for Edge GNN (`GUARD_FIX`), or `run_tracegen_gnn.py --stable` for every guard.
 2. **Replace argmax-validation epoch selection with averaging:** average the predictions (rank-average or mean
    logits) over the last half of training, or average the weights (SWA). With fix 1, Edge GNN's runs land at
    0.68–0.71 (sd 0.01). This needs no validation set; keep validation only for the threshold.
@@ -205,7 +205,42 @@ What the CV shows:
 
 Remaining confounds: the stable config also switches from probabilities to logit margins, so "lower lr + clipping" is
 not separated from the score type (this matters only for averaging and cross-cell pooling). Learning rate and
-clipping were changed together. Only Edge GNN and GNN + files were run.
+clipping were changed together.
+
+### Transformer (2026-11-22)
+
+Same design, `--guards transformer`: `results/tracegen_all_repo20_tf` and `results/tracegen_all_stable_tf`, summarized
+in `results/training_compare_transformer.json`. Two stable runs (cv/5/0-1 and cv/5/2-3, seed 0) were lost when a worker
+stopped. They were trained afterwards with the same settings and added to the store, marked `note`.
+
+| Transformer · settings · selection | pooled CV AUPRC | CV recall @1% FPR | per-cell AUPRC | cell seed sd | test AUPRC |
+|---|---|---|---|---|---|
+| repo · best of 10 | 0.179 ± 0.013 | 0.146 | – | 0.072 | 0.26 ± 0.09 |
+| repo · best of 20 | 0.187 ± 0.026 | 0.143 | 0.355 | 0.068 | 0.39 ± 0.17 |
+| **repo · avg** | **0.221 ± 0.003** | 0.183 | 0.368 | **0.043** | 0.52 ± 0.07 |
+| stable · best of 20 | 0.166 ± 0.008 | 0.183 | 0.384 | 0.060 | 0.52 ± 0.03 |
+| stable · avg | 0.197 ± 0.006 | 0.184 | 0.373 | 0.043 | 0.50 ± 0.02 |
+
+- **Averaging helps** at the repo learning rate: pooled 0.187 → 0.221, per cell 0.355 → 0.368, within-cell seed sd
+  0.068 → 0.043, and the pooled seed sd drops from 0.026 to 0.003.
+- **Lower lr + clipping are not confirmed.** With averaging they lower pooled AUPRC (0.221 → 0.197) and barely move
+  per-cell AUPRC (0.368 → 0.373). Gradient norms stay above the clip (4.3 at epoch 1, 1.6 at epoch 20), so clipping
+  is active throughout and slows training further.
+- **No overfitting.** Mean CV *test* AUPRC per epoch rises from 0.30 to about 0.33 by epoch 4 and stays there to
+  epoch 20 (repo settings; 0.32 → 0.35 with stable). Training loss keeps falling (0.40 → 0.07).
+
+### Per-guard settings now in the pipeline
+
+`scripts/run_tracegen_gnn.py` `GUARD_FIX` applies only what the CV confirmed for each guard, by default:
+
+| guard | settings | evidence |
+|---|---|---|
+| Edge GNN | lr 1e-3, clip 1.0, logit score, avg | pooled CV 0.294 → 0.377, per cell 0.459 → 0.509 |
+| Transformer | repo lr and score, avg | pooled CV 0.187 → 0.221, per cell 0.355 → 0.368 |
+| GNN + files | repo (unchanged) | lr 1e-3 + clip hurt; averaging mixed (pooled up, per cell down) |
+| MLP, GNN, prompt and content guards | repo (unchanged) | not tested |
+
+`--stable-guards=` restores the repo settings for every guard and `--stable` applies the full fix to every guard.
 
 ## What this means for the claims
 
@@ -220,10 +255,10 @@ clipping were changed together. Only Edge GNN and GNN + files were run.
 ## Recommended next runs
 
 1. **Done (2026-11-21): CV of the training fix** for Edge GNN and GNN + files. See "CV confirmation" above.
-2. **Per-guard training settings.** `--stable` for Edge GNN (and Edge GNN + prompt). For GNN + files, keep lr 3e-3 and
-   try earlier stopping or more regularization, since it overfits within 1–2 epochs. Then run the CV for the other
-   guards (MLP, GNN, Transformer, prompt variants) and the ablations, ≥ 3 seeds. Main + CV for two guards took
-   about 1.5 h per config on 2 GPUs with 2 workers each (`--devices cuda:0,cuda:0,cuda:1,cuda:1`).
+2. **Per-guard training settings.** Done for Edge GNN and Transformer (`GUARD_FIX`, see above). Still to test: MLP,
+   GNN and the prompt and content variants. For GNN + files, try earlier stopping or more regularization, since it
+   overfits within 1–2 epochs. Main + CV took about 1.5 h per config for Edge GNN + GNN + files and about 25 min for
+   the Transformer on 2 GPUs with 2 workers each (`--devices cuda:0,cuda:0,cuda:1,cuda:1`).
 3. **Separate the score type.** Rerun the stable config with `--score prob` to split lr/clipping from the logit switch.
 4. **Edge GNN with attacker constants masked, 3 seeds**, to check whether its CV lead survives without memorized constants.
 5. **Relay pattern.** Count third-party relay calls in train. If they are rare, report them as their own category.

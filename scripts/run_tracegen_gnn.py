@@ -14,7 +14,8 @@ causal mask; src/model/transformer.py), edge-gnn (artifacts are nodes, actions a
 action; src/graph/edges.py, src/model/edge_gnn.py), gnn+files+prompt and edge-gnn+prompt (plus a frozen sentence
 embedding of the user prompt; src/prompt_embed.py), mlp+content and gnn+files+content (plus frozen all-MiniLM-L6-v2
 embeddings of action and observation text, src/node_embed.py; content features after Zavrak, "Content-Aware Attack
-Detection in LLM Agent Tool-Call Traffic", arXiv:2605.11053). Sections: main (val + test, per suite, per agent), cv,
+Detection in LLM Agent Tool-Call Traffic", arXiv:2605.11053), and gnn+files+prompt+content (both embeddings; it is in
+the prompt study and in the content study). Sections: main (val + test, per suite, per agent), cv,
 ablate (gnn+files, edge-gnn, the prompt controls and the content guards), cvprompt (cross-validation of the prompt
 controls), transfer (agent -> agent).
 Content study: each content guard against the same model without content, and gnn+files+content against mlp+content.
@@ -27,9 +28,10 @@ Splits: tracegen's task-level split; injection tasks have their own split, so he
 unseen attacks (src/benchmarks/tracegen.py). The leakage audit runs first and the script refuses to train if a hard
 overlap is not 0.
 
-Training settings (src/tracegen_gnn.py REPO / STABLE): guards in STABLE_GUARDS (below, the ones the CV confirmed) train
-with lr 1e-3, gradient clip 1.0, logit-margin scores and the mean score of the second half of training; every other
-guard keeps the repo settings (lr 3e-3, no clip, probabilities, the epoch with the best validation AUPRC). --stable puts
+Training settings (src/tracegen_gnn.py REPO / STABLE): each guard in GUARD_FIX (below) gets the part of the fix the CV
+confirmed for it: edge-gnn all of STABLE (lr 1e-3, gradient clip 1.0, logit-margin scores, the mean score of the second
+half of training), transformer only the averaging. Every other guard keeps the repo settings (lr 3e-3, no clip,
+probabilities, the epoch with the best validation AUPRC). --stable puts
 every guard on the stable settings, --stable-guards= every guard on the repo settings; --lr/--clip/--score/--select set
 the non-stable guards; --extra stores more selection rules from the same training run as '<guard>@<rule>'.
 
@@ -64,7 +66,8 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 GUARD_NAME = {"majority": "Majority", "tool-lookup": "Tool lookup", "mlp": "MLP (no graph)", "gnn": "GNN",
               "gnn+files": "GNN + files", "transformer": "Transformer", "edge-gnn": "Edge GNN",
               "gnn+files+prompt": "GNN + files + prompt", "edge-gnn+prompt": "Edge GNN + prompt",
-              "mlp+content": "MLP + content (no graph)", "gnn+files+content": "GNN + files + content"}
+              "mlp+content": "MLP + content (no graph)", "gnn+files+content": "GNN + files + content",
+              "gnn+files+prompt+content": "GNN + files + prompt + content"}
 PAPER = ("Zavrak, \"Content-Aware Attack Detection in LLM Agent Tool-Call Traffic: An Empirical Study of Features, "
          "Architectures, and Evaluation Protocols\", arXiv:2605.11053 (2026)")
 ABL_NAME = {"files": "file edges", "observation": "observations", "injected": "injected text", "copies": "copies edges",
@@ -95,15 +98,25 @@ def _job(key, seed, epochs, lr, hidden, opts):
 
 # Guards trained with the STABLE settings (src/tracegen_gnn.py) by default: only those where the pooled 25-cell CV
 # (3 seeds) confirmed that they beat the repo settings, see results/tracegen_all_edge/ANALYSIS.md "CV confirmation".
-# GNN + files is worse with them; guards not listed were not tested and keep the repo settings.
-STABLE_GUARDS = ["edge-gnn"]
+# Each guard gets only the part of the fix that was confirmed for it:
+#   edge-gnn     all of STABLE (lr 1e-3, clip 1, logit, avg): pooled CV 0.294 -> 0.377
+#   transformer  only the averaging (select avg; lr 1e-3 + clip lowered pooled AUPRC): 0.187 -> 0.221
+# GNN + files is worse with lr 1e-3 + clip and mixed with averaging; guards not listed were not tested. Both keep the
+# repo settings.
+GUARD_FIX = {"edge-gnn": "stable", "transformer": {"select": "avg"}}
+STABLE_GUARDS = list(GUARD_FIX)
+
+
+def _fix(g):
+    from src.tracegen_gnn import STABLE
+    f = GUARD_FIX.get(g, "stable")
+    return dict(STABLE) if f == "stable" else dict(f)
 
 
 def train_opts(a):
     """run_cell options from the command line (fingerprinted with the run)."""
-    from src.tracegen_gnn import STABLE
     return dict(clip=a.clip, score=a.score, select=a.select, extra=tuple(a.extra), guards=a.guards,
-                guard_opts={g: dict(STABLE) for g in a.stable_guards} if not a.stable else {})
+                guard_opts={g: _fix(g) for g in a.stable_guards} if not a.stable else {})
 
 
 def devices_of(spec):
@@ -394,8 +407,9 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
          "select %s%s · devices %s · git %s." % (
              datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), list(seeds), a.epochs, a.lr,
              "off" if a.clip is None else "%g" % a.clip, a.score, a.select,
-             "" if a.stable or not a.stable_guards else " · stable settings (lr 1e-3, clip 1, logit, avg) for %s"
-             % ", ".join(a.stable_guards), ",".join(devices), _git()), "",
+             "" if a.stable or not a.stable_guards else " · per-guard fixes: %s" % "; ".join(
+                 "%s %s" % (g, ", ".join("%s %s" % kv for kv in sorted(_fix(g).items()))) for g in a.stable_guards),
+             ",".join(devices), _git()), "",
          "Per-action approve/reject. A held-out split has unseen user tasks (and all their paraphrases) and unseen "
          "injection tasks. Scores are mean ± std over seeds. Each guard uses %s "
          "and the reject threshold with the best validation reject F1, so validation scores are optimistic and test "
@@ -473,8 +487,8 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
     if ceffects:
         L += ["## Does node content help?", "",
               "Frozen all-MiniLM-L6-v2 embeddings of the action and observation text added to the initial state of "
-              "those nodes (GNN + files + content) or to the action features (MLP + content). The content features "
-              "follow %s." % PAPER, ""]
+              "those nodes (GNN + files + content; GNN + files + prompt + content also has the prompt embedding) or "
+              "to the action features (MLP + content). The content features follow %s." % PAPER, ""]
         for ev, title in (("cv", "Cross-validation (pooled, the deciding number)"), ("test", "Fixed split: test")):
             rows = prompt_rows(ceffects, ev)
             if rows:
@@ -542,7 +556,7 @@ def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, 
     from src.tracegen_gnn import ABLATE, GUARDS
     cls = {"majority": "nog", "tool-lookup": "s4", "mlp": "s3", "gnn": "s2", "gnn+files": "s1", "transformer": "s5",
            "edge-gnn": "s6", "gnn+files+prompt": "s7", "edge-gnn+prompt": "s8", "mlp+content": "s9",
-           "gnn+files+content": "s10"}
+           "gnn+files+content": "s10", "gnn+files+prompt+content": "s11"}
     head = cv or main   # the headline numbers: pooled cross-validation when it is complete
     te = lambda g: metric(head, "test", g, M["ap"])
     tot = {k: sum(s[k] for s in summary.values()) for k in ("traces", "attack_traces", "reject", "actions")}
@@ -668,8 +682,8 @@ def main():
                     help="every guard: lr 1e-3, clip 1.0, logit score, select avg (results/tracegen_all_edge/"
                          "ANALYSIS.md); explicit flags override")
     ap.add_argument("--stable-guards", default=",".join(STABLE_GUARDS),
-                    help="without --stable: guards that still get the stable settings (default: %(default)s, the "
-                         "ones the CV confirmed); '' = repo settings for every guard")
+                    help="without --stable: guards that get their confirmed fix (GUARD_FIX; all of the stable "
+                         "settings for a guard not in it). Default: %(default)s; '' = repo settings for every guard")
     ap.add_argument("--guards", default="", help="train only these guards (comma separated; default all)")
     ap.add_argument("--hidden", type=int, default=64)
     ap.add_argument("--devices", default="auto",

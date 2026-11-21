@@ -140,7 +140,7 @@ with residual connections. The readout is `[h_agent; h_task; h_tool; mean h_args
 
 **Ablations:** `directed`, `entities`, `returned`, `task_mentions`, `observation` and `attacker_values`.
 
-## Prompt embedding (`src/prompt_embed.py`, guards `gnn+files+prompt`, `edge-gnn+prompt`)
+## Prompt embedding (`src/prompt_embed.py`, guards `gnn+files+prompt`, `edge-gnn+prompt`, `gnn+files+prompt+content`)
 
 A frozen `sentence-transformers/all-MiniLM-L6-v2` embedding of the user prompt (384-d, mean-pooled, L2-normalised,
 cached in `data/cache/`) is projected and used in two places:
@@ -153,6 +153,53 @@ There are two controls:
 
 The report compares each prompt guard with its no-prompt model and with both controls. It uses a paired bootstrap
 over traces.
+
+## Node content embedding (`src/node_embed.py`, guards `gnn+files+content`, `mlp+content`, `gnn+files+prompt+content`)
+
+The content features come from Zavrak, *Content-Aware Attack Detection in LLM Agent Tool-Call Traffic* [1], Sec. 4.2.
+That paper embeds a tool call's serialized arguments and its tool response with a frozen all-MiniLM-L6-v2. In its
+experiments these content features beat metadata features by a wide margin.
+
+The paper puts both embeddings on one node per tool call and classifies whole sessions. Here the embeddings go on the
+existing nodes, so the graph and its causality are unchanged:
+- each `action` node gets the embedding of `tool + " " + json.dumps(args, sort_keys=True)`;
+- each `observation` node gets the embedding of its result text.
+
+These are exactly the texts that are hashed for `x`. `node_texts` applies the same text ablations (`injected`,
+`attacker_values`), so an ablation cannot leak through the embedding. `tests/test_tracegen_gnn.py` checks this.
+
+**Windowing (differs from the paper).** The paper truncates each text to 512 characters. In `data/tracegen_all`, 60%
+of the injected observations start their injection after character 512 (median 726), so truncation would hide most
+injections. The default mode (`NODE_EMBED_MODE=chunk`) therefore embeds the whole text:
+1. Split the text into 256-token windows that overlap by 32 tokens.
+2. Mean-pool each window over its tokens and L2-normalise it.
+3. Use `[mean over windows ; max over windows]` as the feature (768 dims).
+
+`NODE_EMBED_MODE=trunc512` reproduces the paper's first-512-characters setting. It stores `[v ; v]`, so the dimension
+stays the same. Vectors are cached in `data/cache/node_emb_<model>_<mode>.pt`. The mode is part of the run fingerprint.
+
+**Models.**
+- `FileHeteroGNN(content=True)`: an action or observation node starts as `relu(proj(x) + proj_content(emb))`. That is
+  one linear layer over `[hashed features ; embedding]`, the paper's "combined" features. Everything after it is
+  unchanged.
+- `ContentMLP` (`mlp+content`): `ActionMLP` on `[x_action ; emb_action]`. It sees only the action's own call text,
+  never an observation.
+- `FileHeteroGNN(prompt=True, content=True)` (`gnn+files+prompt+content`): both embeddings. The prompt embedding goes
+  into the task node and the readout, as in `gnn+files+prompt`. The content embedding goes into action and
+  observation nodes, as above. This guard is in both studies:
+  - as a prompt guard: compared with `gnn+files+content`, plus the zeroed and shuffled prompt controls (`ablate-prompt`,
+    `cvprompt`);
+  - as a content guard: compared with `gnn+files+prompt`, plus the content ablations.
+
+**Comparisons.** The report runs these paired bootstraps, on the pooled CV and on the fixed test split:
+- `gnn+files+content` vs `gnn+files`
+- `mlp+content` vs `mlp`
+- `gnn+files+prompt+content` vs `gnn+files+prompt`
+- `gnn+files+content` vs `mlp+content`
+
+The last one asks whether the graph still adds anything once both models see the content. For whole sessions the
+paper found it barely did: MLP 0.896 vs GraphSAGE 0.917 AUROC. Ablations under `ablate-content/<a>`, for `a` in
+`observation`, `injected` and `attacker_values`, train every content guard.
 
 ## Model on top
 
@@ -172,3 +219,8 @@ over traces.
 `meta_of(tr)` records per graph: benchmark, model, agent, task `group`, `attack_id` (`attack_key`: the InjecAgent
 attacker tool or the AgentDojo injection task), attack style/mode/category, per-action `synthetic` flags and tool
 names. Splits use `group` and `attack_id` so train and test never share a task group (task split) or an attack.
+
+## References
+
+[1] S. Zavrak. *Content-Aware Attack Detection in LLM Agent Tool-Call Traffic: An Empirical Study of Features,
+Architectures, and Evaluation Protocols.* arXiv:2605.11053, 2026. https://arxiv.org/abs/2605.11053

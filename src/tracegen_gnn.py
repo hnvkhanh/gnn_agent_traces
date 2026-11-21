@@ -6,12 +6,12 @@ Used by scripts/run_tracegen_gnn.py (CLI, parallel devices, report). Cells:
                         edge-gnn (src/graph/edges.py + src/model/edge_gnn.py: artifacts are nodes, actions are edges),
                         gnn+files+prompt and edge-gnn+prompt (plus the frozen prompt embedding, src/prompt_embed.py),
                         mlp+content and gnn+files+content (plus frozen MiniLM embeddings of action / observation
-                        text, src/node_embed.py, after Zavrak, arXiv:2605.11053)
+                        text, src/node_embed.py, after Zavrak, arXiv:2605.11053), and gnn+files+prompt+content (both)
   ablate/<a>            gnn+files with ablation <a> (src/graph/files.py FILE_ABLATIONS)
-  ablate-content/<a>    the two content guards with ablation <a> (CONTENT_ABLATE); the text ablations also apply to
-                        the embedded text
+  ablate-content/<a>    the content guards (CONTENT_GUARDS) with ablation <a> (CONTENT_ABLATE); the text ablations
+                        also apply to the embedded text
   ablate-edge/<a>       edge-gnn with ablation <a> (src/graph/edges.py EDGE_ABLATIONS)
-  ablate-prompt/<a>     the two prompt guards with the prompt control <a>: prompt_zero (all-zero embedding) or
+  ablate-prompt/<a>     the prompt guards (PROMPT_GUARDS) with the prompt control <a>: prompt_zero (all-zero embedding) or
                         prompt_shuffle (the prompt of another user task of the same suite)
   cvprompt/<a>/<k>/<i>-<j>  the cross-validation cell cv/<k>/<i>-<j> for the prompt guards under control <a>
   transfer/<A>-><B>     train split of agent A -> test split of agent B (still task- and attack-disjoint)
@@ -56,11 +56,14 @@ from .rank_metrics import average_precision, paired_delta, rank_report, threshol
 from .sandbox.policy import LABELS
 
 GUARDS = ["majority", "tool-lookup", "mlp", "gnn", "gnn+files", "transformer", "edge-gnn", "gnn+files+prompt",
-          "edge-gnn+prompt", "mlp+content", "gnn+files+content"]
-PROMPT_GUARDS = ["gnn+files+prompt", "edge-gnn+prompt"]
-PROMPT_BASE = {"gnn+files+prompt": "gnn+files", "edge-gnn+prompt": "edge-gnn"}   # the same model without the prompt
-CONTENT_GUARDS = ["mlp+content", "gnn+files+content"]
-CONTENT_BASE = {"mlp+content": "mlp", "gnn+files+content": "gnn+files"}   # the same model without the content
+          "edge-gnn+prompt", "mlp+content", "gnn+files+content", "gnn+files+prompt+content"]
+# gnn+files+prompt+content is in both studies: prompt controls / ablate-prompt / cvprompt, and the content ablations
+PROMPT_GUARDS = ["gnn+files+prompt", "edge-gnn+prompt", "gnn+files+prompt+content"]
+PROMPT_BASE = {"gnn+files+prompt": "gnn+files", "edge-gnn+prompt": "edge-gnn",   # the same model without the prompt
+               "gnn+files+prompt+content": "gnn+files+content"}
+CONTENT_GUARDS = ["mlp+content", "gnn+files+content", "gnn+files+prompt+content"]
+CONTENT_BASE = {"mlp+content": "mlp", "gnn+files+content": "gnn+files",   # the same model without the content
+                "gnn+files+prompt+content": "gnn+files+prompt"}
 CONTENT_ABLATE = ["observation", "injected", "attacker_values"]
 ABLATE = ["files", "observation", "injected", "copies", "mentions", "tool_feat", "attacker_values"]
 EDGE_ABLATE = list(EDGE_ABLATIONS)
@@ -455,7 +458,8 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200, clip=No
                  "edge-gnn+prompt": lambda: data.graphs("edges", ab, prompt=True),
                  "gnn+files+prompt": lambda: data.graphs("files", ab, prompt=True),
                  "mlp+content": lambda: data.graphs("files", fab, content=True),
-                 "gnn+files+content": lambda: data.graphs("files", fab, content=True)}
+                 "gnn+files+content": lambda: data.graphs("files", fab, content=True),
+                 "gnn+files+prompt+content": lambda: data.graphs("files", ab, prompt=True, content=True)}
     ncls = len(LABELS)
     ytr = _ys([gf[i] for i in tr])
     yva = _ys([gf[i] for i in va]).numpy()
@@ -485,7 +489,9 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200, clip=No
                      "gnn+files+prompt": lambda: FileHeteroGNN(hidden, classes=ncls, prompt=True),
                      "edge-gnn+prompt": lambda: EdgeGNN(hidden, classes=ncls, prompt=True),
                      "mlp+content": lambda: ContentMLP(hidden, ncls),
-                     "gnn+files+content": lambda: FileHeteroGNN(hidden, classes=ncls, content=True)}[gname]()
+                     "gnn+files+content": lambda: FileHeteroGNN(hidden, classes=ncls, content=True),
+                     "gnn+files+prompt+content": lambda: FileHeteroGNN(hidden, classes=ncls, prompt=True,
+                                                                       content=True)}[gname]()
             res = fit_select(model, [G[i] for i in tr], [G[i] for i in va], [G[i] for i in allev], epochs, o["lr"], w,
                              o["clip"], o["score"], rules, test_mask)
             res = {(None if r == o["select"] else r): v for r, v in res.items()}

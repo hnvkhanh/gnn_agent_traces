@@ -1,0 +1,15 @@
+{
+ "started": "2026-11-21T23:50:27",
+ "updated": "2026-11-22T00:20:16",
+ "event": "done cv/5/4-4 seed 2",
+ "done": 76,
+ "failed": 0,
+ "total": 78,
+ "work_done_pct": 97.6,
+ "elapsed": "0:29:48",
+ "eta": "0:00:44",
+ "expected_finish": "2026-11-22T00:21",
+ "running": {
+  "cuda:1": "cv/5/2-3 seed 0"
+ }
+}
