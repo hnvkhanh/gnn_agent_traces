@@ -166,9 +166,9 @@ src/
   graph/         trace → HeteroData
   model/         HeteroGNN, ActionMLP
   llm/           Ollama client
-tracegen/        AgentDojo trace generation from verified paraphrases (see "AgentDojo trace generation")
+tracegen/        AgentDojo trace generation from verified paraphrases (see docs/TRACEGEN.md)
 config.yaml      tracegen configuration;  NOTES.md: the AgentDojo APIs tracegen relies on
-tracegen/agentlab/  the same pipeline on AgentLAB's tool-chaining attacks (see "AgentLAB trace generation")
+tracegen/agentlab/  the same pipeline on AgentLAB's tool-chaining attacks (see docs/AGENTLAB.md)
 config_agentlab.yaml  its configuration;  external/AgentLAB: its sparse checkout (not committed)
 tests/           pytest suite (tests/tracegen/ for tracegen)
 traces/          collected traces (*.jsonl)
@@ -183,7 +183,7 @@ results/         reports and raw experiment JSON
 .venv/bin/python scripts/export_agentdojo.py data/agentdojo
 ```
 
-The GNN code under `src/` never imports `agentdojo` or runs its environment. Only `tracegen/` (below) runs the real AgentDojo environment.
+The GNN code under `src/` never imports `agentdojo` or runs its environment. Only `tracegen/` ([docs/TRACEGEN.md](docs/TRACEGEN.md)) runs the real AgentDojo environment.
 
 ## Trace format
 
@@ -194,225 +194,14 @@ One JSON object per line, with these fields:
 - **Events:** `events`, a list of steps with `step`, `tool`, `args`, `observation`, `obs_injected`, `synthetic` and `label`.
 - **Quality:** `n_invalid`, the count of malformed LLM replies.
 
-## AgentDojo trace generation (`tracegen`)
+## Real-agent traces and guards (details in `docs/`)
 
-`tracegen` generates real AgentDojo agent traces. To get more variety per task, it paraphrases each user-task prompt,
-verifies that every paraphrase keeps the same meaning, and runs agents on the original and on each verified variant.
-Every variant reuses the original task's `utility` and `ground_truth` as its label, so it needs no new labels.
-Agent runs use **no attack and no defense** unless attacks are switched on. The AgentDojo APIs it uses are documented
-in `NOTES.md`.
-
-| stage | command | output (under `data/tracegen/`) |
-|---|---|---|
-| 1 extract | `python -m tracegen extract` | `originals.jsonl` |
-| 2 generate | `python -m tracegen generate` | `candidates.jsonl`, `generate_log.jsonl` |
-| 3–5 verify | `python -m tracegen verify [--judge]` | `verified_variants.jsonl`, `rejected_variants.jsonl` |
-| 6 / 6b trace | `python -m tracegen trace [--attacks]` | `traces.jsonl` (append-only) |
-| 6c attack search | `python -m tracegen attack-search [--search-pairs N] [--search-steps K]` | `search_log.jsonl`, winners appended to `traces.jsonl` |
-| 7 build | `python -m tracegen build [--dedup]` | `splits/{train,val,test}.jsonl`, `report.md`, `report.html` |
-| all | `python -m tracegen all` | everything above |
-
-- **Stage 2** asks the generator for 5 paraphrases in a single call. The call returns strict JSON, uses temperature
-  0.9 and a seed fixed per task, and is retried up to 3 times with a new seed when the JSON is invalid. Duplicates and
-  paraphrases identical to the original are dropped.
-- **Stage 3** extracts the concrete values in the original and rejects any paraphrase that changes or drops one.
-  Values covered: money, numbers, dates, times, IBANs, emails, URLs, file names, quoted strings and multi-word
-  names. Names are compared ignoring case and whitespace. Numbers and identifiers must match exactly.
-- **Stage 4** keeps a paraphrase only if `microsoft/deberta-large-mnli` gives entailment ≥ τ (0.8) in both directions.
-- **Stage 5** (`--judge`, off by default) asks a model from a different family (gemma2:9b) whether both requests
-  need exactly the same actions. (llama3.1:8b said NO to nearly every plain rewording with this prompt.)
-- **Stage 6** records every run, success or failure, with its full message list, tool calls and results, `utility`,
-  ground-truth calls, steps, tokens, latency and `error`. Crashes and timeouts are recorded and the run continues.
-  A tqdm bar shows runs done / queued, the ETA, and running utility, ASR and error counts. The line for each finished
-  run goes to `tracegen.log`, and also to the console with `-v` or when stderr is not a terminal. `--attacks` adds Stage 6b, which pairs each prompt with AgentDojo injection tasks (`important_instructions`) and
-  records `security` (whether the attacker's goal was achieved). Injection texts are never paraphrased.
-- **Stage 7** assigns train/val/test **by original task id**, so all variants, seeds, agents and attack runs of a task
-  land in one split. The build fails if any task appears in two splits. `--dedup` keeps one trace per
-  (suite, task, mode, action signature, utility[, security]). The report covers the variant funnel and rejection
-  reasons, the NLI score histogram, utility on originals vs. paraphrases, unique action signatures per task, average
-  steps, the most common divergence from the ground-truth call sequence, ASR, and leakage controls.
-
-### Attack search (Stage 6c)
-
-Natural attacks rarely succeed on a strong agent (qwen3.8:27b: 10 of 2,148 attack runs). `attack-search` adds
-attack-succeeded traces, following SecPO's Qwen/AgentDojo search (exact success check first, LLM mutation of the best
-candidates). It only touches (user task, injection task) pairs of the `--agents` model where no attack run succeeded
-(any attack, any prompt variant), using the same task/injection split matching as Stage 6b.
-
-```
-python -m tracegen attack-search --out data/tracegen_qwen38 --agents qwen3.8:27b --gpu-mode split --search-pairs 20
-python -m tracegen build --out data/tracegen_qwen38 --attacks        # splits and report include the new traces
-powershell -File scriptsun_qwen38.ps1 -SkipTrace -Search -SearchPairs 20    # search + build + GNN training
-```
-
-- A candidate is an injection **template** containing `{goal}` (also `{user}`, `{model}`, `{task}`); `{goal}` becomes the
-  AgentDojo injection task goal, so the attacker goal and the `security` check are AgentDojo's own. Step 0 tries eight
-  seed templates (skipping AgentDojo attacks already tried on the pair); later steps ask a proposer model for
-  mutations of the best-scoring template of the current island, given the agent's reply to it and the other attempts.
-- Success is `security=True` with no run error. Failures get a dense score, 1 + 8 x the share of the attacker's tools
-  (not needed by the user task) that the agent called; it only guides the proposer.
-- Every episode is appended to `search_log.jsonl` (template, score, tools called, trace id). The first success is
-  appended to `traces.jsonl` as a normal attack trace with `attack_name: "searched"` and its `attack_template`.
-  Failed episodes stay only in the log. Resuming rebuilds each pair's state from the log and skips pairs that already
-  succeeded or used up their steps.
-- `attacks.search` in `config.yaml`: `steps` (3), `candidates` per step (4), `islands` (2), `max_pairs`,
-  `proposer_model` (default: the agent itself, so no model swap), `max_format_retries`. `--search` makes `all` run the
-  stage after Stage 6 and before the build.
-- `searched` ASR is tuned against one agent, so the report marks it as not comparable to natural ASR.
-
-Every stage is resumable: it skips items that are already in its output. `--limit K` takes the first K user tasks per
-suite. Model names with Ollama digests and seeds are logged on every candidate and every trace.
-
-### GPUs and Ollama
-
-`gpu.mode: parallel` (the default) uses one Ollama instance per GPU. The generator runs on GPU 0. NLI and the first
-agent run on GPU 1. The stages stream into each other: each verified variant is traced right away while GPU 0 keeps
-generating. Once generation is done, the generator is unloaded, and the remaining agents, seeds and attack runs use
-both GPUs. `gpu.mode: split` runs one instance over both GPUs (for a generator that is too big for one, such as a
-35B-A3B Q4 at ~20 GB). Its stages run one after another, and each model is unloaded before the next stage. Before
-loading anything, tracegen logs every GPU's name and free VRAM and checks that each model fits. If one does not, it
-stops with a suggestion.
-
-With `gpu.manage_servers: true` (the default), tracegen starts and stops its own pinned instances. These run with a
-16k context, a q8 KV cache, one model loaded per instance, and the system model store. The system service on :11434
-is left alone. To run the instances yourself instead, set `manage_servers: false` and start:
-
-```bash
-CUDA_VISIBLE_DEVICES=0 OLLAMA_HOST=127.0.0.1:11436 OLLAMA_CONTEXT_LENGTH=16384 ollama serve   # generator
-CUDA_VISIBLE_DEVICES=1 OLLAMA_HOST=127.0.0.1:11435 OLLAMA_CONTEXT_LENGTH=16384 ollama serve   # NLI + agent
-CUDA_VISIBLE_DEVICES=0,1 OLLAMA_SCHED_SPREAD=1 OLLAMA_HOST=127.0.0.1:11437 ollama serve       # split mode
-```
-
-### Setup and usage
-
-```bash
-pip install -r requirements.txt                       # agentdojo, transformers, pyyaml
-ollama pull qwen2.5:7b && ollama pull llama3.1:8b     # generator + agents (qwen2.5:14b for split mode)
-python -m pytest tests/tracegen -q                    # offline: AgentDojo runs with a scripted fake LLM
-
-python -m tracegen all --suites banking --limit 2 --out /tmp/tg_smoke     # smoke test
-python -m tracegen all --suites banking                                   # one suite
-python -m tracegen all                                                    # all four suites
-python -m tracegen all --gpu-mode split --judge --dedup                   # split mode, judge on
-```
-
-Edit `config.yaml` to change the suites, models, N, τ, agents (local, or API agents via
-`{name, base_url, api_key_env}`), `samples_per_prompt`, attacks, timeouts or split ratios.
-
-## AgentLAB trace generation (`tracegen.agentlab`)
-
-`tracegen.agentlab` does for [AgentLAB](https://github.com/TanqiuJiang/AgentLAB) what `tracegen` does for AgentDojo.
-It covers AgentLAB's **tool-chaining** track: a user walks the agent through a "verified tool chain", one
-harmless-looking request per turn, and the turns together reach a harmful goal. The dataset
-(`data/filtered_top_200_attacks.json`) ships these multi-turn conversations for four SHADE-Arena environments
-(`travel`, `banking`, `workspace`, `spam`). Local Ollama agents replay them in the real environments, with AgentLAB's
-agent system prompt and its rule of one tool call per step.
-
-```bash
-python -m tracegen.agentlab all              # everything; run the same command again to resume
-python -m tracegen.agentlab all --smoke      # 2 tasks per kind, 2 suites, 1 agent -> data/agentlab_smoke/
-python -m tracegen.agentlab trace --agents mistral:7b      # one stage; add another agent later
-python -m pytest tests/tracegen/test_agentlab.py -q        # offline, scripted fake agent
-```
-
-| stage | output (under `data/agentlab/`) |
+| Doc | Contents |
 |---|---|
-| `setup` | `external/AgentLAB`: sparse checkout of `SHADE_Arena/` and `data/` at the pinned commit (about 20 MB) |
-| `extract` | `originals.jsonl`: 167 attack tasks (user turns + tool chain) and the 5 benign SHADE-Arena main tasks |
-| `benign` | more of `originals.jsonl`, `benign_log.jsonl`: benign multi-turn tasks the generator writes per environment |
-| `generate` | `candidates.jsonl`, `generate_log.jsonl`: N paraphrases of every user turn |
-| `verify` | `verified_variants.jsonl`, `rejected_variants.jsonl`: entity check and bidirectional NLI, per turn |
-| `trace` | `traces.jsonl` (append-only), `trace_errors.jsonl` |
-| `build` | `splits/{train,val,test}.jsonl`, `tools.json`, `report.md` |
-
-- **Resume.** Every stage appends to its files and skips what is there: tasks by `(suite, task_id)`, generator calls
-  by task or batch, variants by `variant_id`, runs by `(mode, suite, task, variant, agent, seed, attack)`. A run that
-  was killed mid-write leaves a torn last line, which is skipped and redone. A run that got no reply at all from the
-  agent (endpoint down, model missing) goes to `trace_errors.jsonl`, not `traces.jsonl`, so the next run retries it.
-- **A trace** has the fields of a tracegen trace (`messages`, `tool_calls`, `agent_model`, `seed`, ...) plus `turns`
-  (the user messages), a `turn` index on every message and call, and for attacks `attack_ground_truth_calls` (the
-  chain), `chain_step` / `chain_match` per call (`args`: same tool and same identifier-like arguments, `name`: same
-  tool only), `chain_progress` and `security`. `security` is true when the agent ran every tool of the chain in order
-  without an error. AgentLAB scores success with a GPT judge; this check replaces it.
-- **Benign tasks.** AgentLAB has no benign tasks in these environments beyond the 5 main tasks, so the generator
-  model writes `benign.per_suite` tasks per environment from the tool list. They are deduplicated but not checked by
-  a judge, and there is no utility checker (`utility` is null).
-- **Adaptive turns.** `attacks.adaptive_turns: K` (or `--adaptive-turns K`) adds AgentLAB's planner: after the
-  scripted turns a local model writes up to K further user turns while the chain is incomplete. These runs are
-  recorded as attack `tool_chaining_adaptive`, next to the scripted `tool_chaining` runs.
-- **Not covered.** The dataset's 33 Agent-SafetyBench cases (no environment parameters; AgentLAB's own runner cannot
-  build them either), and the other four tracks: intent hijacking has no tool calls, memory poisoning needs Mem0,
-  objective drifting needs the WebShop conda environment, and task injection is AgentDojo with a GPT attacker.
-- The GNN adapter (`src/benchmarks/`) does not read these traces yet.
-
-## GNN guard on tracegen traces (with file nodes)
-
-`scripts/run_tracegen_gnn.py` trains the approve/reject guard on the real AgentDojo runs from tracegen. It compares
-majority, tool lookup, the no-graph MLP, the GNN from `docs/GRAPH.md`, and **GNN + files**: the same graph plus `file`
-entity nodes for the files an action touches or an observation names (`src/graph/files.py`, see "File nodes" in
-`docs/GRAPH.md`).
-
-```bash
-python -m tracegen trace --attacks                 # 1. attacked runs (resumable; benign runs already done are skipped)
-python -m tracegen build                           # 2. refresh the splits / tracegen report
-python scripts/run_tracegen_gnn.py                 # 3. train + evaluate on every GPU, write results/tracegen/
-python scripts/run_tracegen_gnn.py --seeds 1 --epochs 3 --devices cpu --outdir /tmp/tg_gnn   # quick pass
-```
-
-- **Labels** (`src/benchmarks/tracegen.py`): a tool call is `reject` when it matches one of the injection task's
-  ground-truth calls (recorded by tracegen as `injection_ground_truth_calls`), keyed on the attacker-chosen argument
-  values. Values that the user task uses too, such as the transfer date, are ignored. The call must also come after a
-  tool result that carried the injected text, and must not be a call that benign runs of the same user task make.
-  Every other call, and every call of a benign run, is `approve`. Nothing is replayed synthetically, so an attack the
-  agent ignores adds no `reject`.
-- **Events**: a call that repeats an earlier call of the run with the same arguments and result is dropped, and a run
-  is cut after 30 calls (`MAX_EVENTS`). The report counts both.
-- **Model selection** (`src/tracegen_gnn.py`): each guard keeps the epoch with the best validation AUPRC and uses the
-  reject threshold with the best validation reject F1. Validation scores are therefore optimistic; test is the
-  unbiased number. With no reject action in validation, the last epoch and threshold 0.5 are used.
-- **Scores** (`src/rank_metrics.py`): AUPRC and reject recall at 1% approve FPR, each with a 95% bootstrap interval
-  over traces, then reject recall, approve FPR, macro-F1 and ASR at the tuned threshold. A set with no reject action
-  has no AUPRC, recall or macro-F1 and shows `–`.
-- **Splits**: tracegen's task-level split, plus a separate seeded split of the injection tasks.
-  `attacks.match_splits: true` (the default) only plans (user task, injection task) pairs from the same split. Val and
-  test therefore hold unseen tasks, with all their paraphrases, and unseen attacks. `attacks.rows: originals` limits
-  attack runs to the original prompts.
-- **Leakage audit** (runs before training; the script refuses to train if a hard overlap is not 0): task groups,
-  injection tasks, injected texts and normalised prompts shared between train and val/test. It also reports how many
-  held-out attacker constants (for example the banking attacker IBAN) appear in training. The `attacker_values`
-  ablation masks those constants in every trace.
-- **Cross-validation** (`--sections cv`, `--folds 5`): the fixed test split holds only a few followed attacks, so
-  the headline number comes from 5 task folds × 5 injection-task folds. Cell (a, b) tests the attack runs of task
-  fold a with an injection task of fold b (plus a share of the benign runs of fold a), selects on block (a+1, b+1),
-  and trains on runs whose task and injection task are in neither fold. Every run is tested once by a guard that saw
-  neither its user task nor its injection task; the report pools the cells per seed and adds a table per injection
-  task. Attack runs generated with `attacks.match_splits: false` are used here and ignored by the fixed split.
-- **Sections**: main (val, test, per suite, per agent); cv; ablations of GNN + files (`files`, `observation`, `injected`,
-  `copies`, `mentions`, `tool_feat`, `attacker_values`); cross-agent transfer. Each (cell, seed) is fingerprinted, and
-  unchanged runs are reused. Outputs: `results/tracegen/experiments.json`, `REPORT.md`, `report.html`.
-- With no attacked traces, the script stops and says so; it does not train on approve-only data.
-
-### Latest progress: combined dataset, edge GNN, stable training
-
-The guards now run on `data/tracegen_all` (all tracegen traces combined; the large files are committed as `.gz`).
-New since the first GNN + files results:
-
-- **Guards** (`src/model/`): an edge-level GNN (`edge_gnn.py`, edges built in `src/graph/edges.py`), a transformer
-  guard, optional prompt embeddings (`src/prompt_embed.py`) and node embeddings (`src/node_embed.py`).
-- **Seed variance.** On the fixed test split (13 reject actions from 3 injection tasks) the guard ranking changes
-  with the seed, and even a re-run of the same seed differs (non-deterministic CUDA kernels). The headline number is
-  therefore the 5×5 cross-validation. Analysis: [results/tracegen_all_edge/ANALYSIS.md](results/tracegen_all_edge/ANALYSIS.md).
-  `scripts/seed_variance.py` measures the spread.
-- **Stable training.** Edge GNN diverges at lr 3e-3. Training it with lr 1e-3, gradient clipping and an average over
-  the second half of the epochs (`STABLE` in `scripts/run_tracegen_gnn.py`) raised pooled CV AUPRC from 0.294 to
-  0.377 over 3 seeds, 20 epochs. The same fix hurts GNN + files (0.228 vs 0.258, it overfits by epoch 1–2). So
-  `STABLE_GUARDS` is only `["edge-gnn"]`; the other guards keep the old settings. `--stable` applies it to every
-  guard and `--stable-guards=` to none. Compare runs with `python scripts/compare_training.py <dirs>`; the stored
-  comparison is `results/training_compare.json`.
-- **Open:** the same comparison for the transformer (`results/tracegen_all_repo20_tf`, `results/tracegen_all_stable_tf`)
-  was still running at the last commit. Rerunning the same command resumes it.
-- Results: `results/tracegen_all_edge/` (first run), `results/tracegen_all_repo20/` (old settings) and
-  `results/tracegen_all_stable/` (stable settings), each with `REPORT.md` and `report.html`.
+| [docs/TRACEGEN.md](docs/TRACEGEN.md) | `python -m tracegen`: real AgentDojo runs on paraphrased tasks, attacks, attack search, GPU/Ollama setup |
+| [docs/AGENTLAB.md](docs/AGENTLAB.md) | `python -m tracegen.agentlab`: AgentLAB tool-chaining attacks in SHADE-Arena environments |
+| [docs/TRACEGEN_GNN.md](docs/TRACEGEN_GNN.md) | `scripts/run_tracegen_gnn.py`: guards (GNN, GNN + files, edge GNN, transformer) on tracegen traces, CV protocol, latest progress and stable training |
+| [docs/GRAPH.md](docs/GRAPH.md) | Graph schema, node and edge types |
 
 ## Cross-LLM transfer experiment
 
