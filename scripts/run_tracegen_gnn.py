@@ -74,10 +74,15 @@ def _init(device, tg_dir, data_dir, threads):
     _W["data"] = Data(tg_dir, data_dir)
 
 
-def _job(key, seed, epochs, lr, hidden):
+def _job(key, seed, epochs, lr, hidden, opts):
     from src.tracegen_gnn import run_cell
     t0 = time.time()
-    return run_cell(_W["data"], key, seed, epochs, lr, hidden), time.time() - t0
+    return run_cell(_W["data"], key, seed, epochs, lr, hidden, **opts), time.time() - t0
+
+
+def train_opts(a):
+    """run_cell options from the command line (fingerprinted with the run)."""
+    return dict(clip=a.clip, score=a.score, select=a.select, extra=tuple(a.extra), guards=a.guards)
 
 
 def devices_of(spec):
@@ -144,7 +149,7 @@ def run_parallel(jobs, devices, a, weight=None, on_done=None, progress_path=None
                     print("[%s] start %-33s seed %d  (elapsed %s)" % (dev, key, seed, _hms(time.time() - t0)),
                           flush=True)
                 try:
-                    res = ex.submit(_job, key, seed, a.epochs, a.lr, a.hidden).result()
+                    res = ex.submit(_job, key, seed, a.epochs, a.lr, a.hidden, train_opts(a)).result()
                 except Exception as e:  # noqa: BLE001
                     with lock:
                         errors.append((key, seed, repr(e)))
@@ -342,12 +347,16 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
     agents = [e.split("=", 1)[1] for e in evs if e.startswith("test|agent=")]
     transfer = sorted(k for k in store if k.startswith("transfer/"))
     L = ["# GNN guard on tracegen traces (AgentDojo, with file nodes)", "",
-         "Generated %s by `scripts/run_tracegen_gnn.py` · seeds %s · epochs %d · devices %s · git %s." % (
-             datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), list(seeds), a.epochs, ",".join(devices), _git()), "",
+         "Generated %s by `scripts/run_tracegen_gnn.py` · seeds %s · epochs %d · lr %g · clip %s · score %s · "
+         "select %s · devices %s · git %s." % (
+             datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), list(seeds), a.epochs, a.lr,
+             "off" if a.clip is None else "%g" % a.clip, a.score, a.select, ",".join(devices), _git()), "",
          "Per-action approve/reject. A held-out split has unseen user tasks (and all their paraphrases) and unseen "
-         "injection tasks. Scores are mean ± std over seeds. Each guard uses the epoch with the best validation AUPRC "
+         "injection tasks. Scores are mean ± std over seeds. Each guard uses %s "
          "and the reject threshold with the best validation reject F1, so validation scores are optimistic and test "
-         "is the unbiased number. A set with no reject action has no AUPRC, recall or macro-F1 (shown as –).", "",
+         "is the unbiased number. A set with no reject action has no AUPRC, recall or macro-F1 (shown as –)." % (
+             "the mean score of the second half of training (no epoch selection)" if a.select == "avg" else
+             "the epoch with the best validation AUPRC" if a.select.startswith("best") else "the last epoch"), "",
          "## Data", "",
          md_table(["split", "traces", "benign", "attacked", "followed attack", "security true", "actions", "reject",
                    "tasks", "injection tasks"],
@@ -571,14 +580,33 @@ def main():
     ap.add_argument("--folds", type=int, default=5, help="cv: task folds and injection-task folds (>= 3)")
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--epochs", type=int, default=60)
-    ap.add_argument("--lr", type=float, default=3e-3)
+    ap.add_argument("--lr", type=float, default=None, help="default 3e-3 (1e-3 with --stable)")
+    ap.add_argument("--clip", type=float, default=None, help="gradient-norm clip (default off; 1.0 with --stable)")
+    ap.add_argument("--score", choices=["prob", "logit"], default=None,
+                    help="ranking score: reject probability (default) or logit margin (--stable)")
+    ap.add_argument("--select", default=None,
+                    help="epoch selection: best (best validation AUPRC, default) | best<N> | avg (mean score of the "
+                         "second half of training, --stable) | last")
+    ap.add_argument("--extra", default="", help="more selection rules from the same training run, stored as "
+                                                 "'<guard>@<rule>' pseudo-guards, e.g. best10,avg")
+    ap.add_argument("--stable", action="store_true",
+                    help="lr 1e-3, clip 1.0, logit score, select avg (results/tracegen_all_edge/ANALYSIS.md); "
+                         "explicit flags override")
+    ap.add_argument("--guards", default="", help="train only these guards (comma separated; default all)")
     ap.add_argument("--hidden", type=int, default=64)
-    ap.add_argument("--devices", default="auto", help="auto | cpu | cuda:0,cuda:1 | ...")
+    ap.add_argument("--devices", default="auto",
+                    help="auto | cpu | cuda:0,cuda:1 | ... (repeat a device to run several workers on it)")
     ap.add_argument("--no-reuse", dest="reuse", action="store_false")
     ap.add_argument("--report-only", action="store_true", help="only re-render the report from stored results")
     a = ap.parse_args()
+    from src.tracegen_gnn import REPO, STABLE
+    for k, v in (STABLE if a.stable else REPO).items():
+        if getattr(a, k) is None:
+            setattr(a, k, v)
+    a.extra = [r for r in a.extra.split(",") if r]
+    a.guards = [g for g in a.guards.split(",") if g] or None
 
-    from src.tracegen_gnn import Data, audit, cells, code_hash, cv_reports, fingerprint
+    from src.tracegen_gnn import Data, GUARDS, audit, cells, code_hash, cv_reports, fingerprint
     data = Data(a.tracegen, a.agentdojo)
     summary, leak = data.summary(), audit(data)
     print("traces:", json.dumps({k: (v["traces"], v["attack_traces"], v["reject"]) for k, v in summary.items()}),
@@ -597,7 +625,7 @@ def main():
     seeds = list(range(a.seeds))
     keys = cells(data, a.sections.split(","), a.folds)
     code = code_hash()
-    fps = {(k, s): fingerprint(data, k, s, a.epochs, a.lr, a.hidden, code) for k in keys for s in seeds}
+    fps = {(k, s): fingerprint(data, k, s, a.epochs, a.lr, a.hidden, code, train_opts(a)) for k in keys for s in seeds}
     status, jobs = [], []
     for (k, s), fp in fps.items():
         old = store.get(k, {}).get(str(s))
@@ -631,7 +659,8 @@ def main():
     cur = {k: {str(s): store[k][str(s)] for s in seeds if str(s) in store.get(k, {})
                and store[k][str(s)].get("fp") == fps[(k, s)]} for k in keys}
     n_cv = sum(k.startswith("cv/") for k in keys)
-    cv = cv_reports(data, cur, seeds, a.folds) if n_cv else []
+    cv = cv_reports(data, cur, seeds, a.folds, guards=[g for g in GUARDS if a.guards is None or g in a.guards]) \
+        if n_cv else []
     if n_cv and len(cv) < len(seeds):
         print("cross-validation: %d of %d seeds have every cell; the others are left out of the report" % (len(cv), len(seeds)))
     from src.tracegen_gnn import prompt_effects

@@ -37,7 +37,6 @@ import random
 import re
 import zlib
 
-import copy
 
 import numpy as np
 import torch
@@ -274,14 +273,21 @@ def cell_spec(data, key):
     raise KeyError(key)
 
 
-def fingerprint(data, key, seed, epochs, lr, hidden, code=None):
+def fingerprint(data, key, seed, epochs, lr, hidden, code=None, opts=None):
+    """opts: the other run_cell options (clip, score, select, extra, guards); only non-default ones enter the hash."""
     tr, va, ev, guards, ab = cell_spec(data, key)
+    opts = {k: list(v) if isinstance(v, tuple) else v for k, v in (opts or {}).items()
+            if v is not None and v != REPO.get(k) and v not in ((), [])}
+    if opts.get("guards"):
+        guards = [g for g in guards if g in opts["guards"]]
     allev = sorted({i for v in ev.values() for i in v})
     g = data.graphs("files", tuple(a for a in ab if ":" not in a))   # edge / prompt controls are in `key`
     parts =[([g[i] for i in tr], [data.metas[i] for i in tr], [g[i] for i in allev], [data.metas[i] for i in allev]),
              ([g[i] for i in va], [data.metas[i] for i in va], [], [])]
     blob = dict(code=code or code_hash(), key=key, seed=seed, epochs=epochs, lr=lr, hidden=hidden, guards=guards,
                 evals={k: [data.metas[i]["trace_id"] for i in v] for k, v in ev.items()}, data=data_hash(parts))
+    if opts:
+        blob["opts"] = opts
     return hashlib.sha256(json.dumps(blob, sort_keys=True, default=str).encode()).hexdigest()
 
 
@@ -294,41 +300,84 @@ def _ys(graphs):
     return torch.cat([_y(g) for g in graphs]) if graphs else torch.zeros(0, dtype=torch.long)
 
 
-def _scores(model, graphs, device):
-    """Reject probability per action, in graph order."""
+def _scores(model, graphs, device, score="prob"):
+    """Reject score per action, in graph order: the reject probability ('prob') or the reject-minus-approve logit
+    margin ('logit': the same order, but no ties from probabilities that round to 1.0)."""
     from torch_geometric.loader import DataLoader
     if not graphs:
         return np.zeros(0)
     model.eval()
+    out = []
     with torch.no_grad():
-        return torch.cat([torch.softmax(model(b.to(device)), 1)[:, 1].cpu()
-                          for b in DataLoader(graphs, batch_size=64)]).numpy()
+        for b in DataLoader(graphs, batch_size=64):
+            z = model(b.to(device)).double()
+            out.append((torch.softmax(z, 1)[:, 1] if score == "prob" else z[:, 1] - z[:, 0]).cpu())
+    return torch.cat(out).numpy()
 
 
-def fit_select(model, train, val, evalg, epochs, lr, weights):
-    """Train like src/train.py fit, keep the epoch with the best validation AUPRC (the last epoch when validation has
-    no reject action). Returns (validation scores, eval scores, info)."""
+# Training options (run_cell / fit_select). REPO reproduces the original runs; STABLE is the setting that fixed the
+# seed sensitivity in results/tracegen_all_edge/ANALYSIS.md: lower learning rate, gradient clipping, and the mean score
+# of the second half of training instead of the epoch picked on validation.
+REPO = dict(lr=3e-3, clip=None, score="prob", select="best")
+STABLE = dict(lr=1e-3, clip=1.0, score="logit", select="avg")
+
+
+def _rule(rule, val_ap, epochs):
+    """Epochs (1-based) whose scores a selection rule uses: 'best' the best validation AUPRC, 'best<N>' the same within
+    the first N epochs, 'avg' every epoch of the second half (> epochs // 2), 'last' the last epoch. A best rule with no
+    validation AUPRC (no reject action in validation) falls back to its last epoch."""
+    if rule == "avg":
+        return list(range(epochs // 2 + 1, epochs + 1))
+    if rule == "last":
+        return [epochs]
+    if rule.startswith("best"):
+        n = int(rule[4:] or epochs)
+        aps = val_ap[:n]
+        if any(a is None for a in aps):
+            return [n]
+        return [int(np.argmax(aps)) + 1]
+    raise ValueError(rule)
+
+
+def fit_select(model, train, val, evalg, epochs, lr, weights, clip=None, score="prob", rules=("best",)):
+    """Train like src/train.py fit (Adam, batch 32, class-weighted cross entropy), optionally clipping the gradient norm
+    at `clip`, and score validation and eval graphs after every epoch. Returns {rule: (validation scores, eval scores,
+    info)} for every selection rule in `rules` (see _rule); an averaging rule's scores are the per-action mean over its
+    epochs. One training run serves every rule."""
     from torch_geometric.loader import DataLoader
     from .train import DEVICE
     model, weights = model.to(DEVICE), weights.to(DEVICE)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     loader = DataLoader(train, batch_size=32, shuffle=True)
     yv = _ys(val).numpy()
-    best, state, best_epoch = None, None, epochs
+    SV, SE, VA, LOSS, GN = [], [], [], [], []
     for ep in range(1, epochs + 1):
         model.train()
+        tot, gn, nb = 0.0, 0.0, 0
         for b in loader:
             b = b.to(DEVICE)
             opt.zero_grad()
-            Fn.cross_entropy(model(b), _y(b), weight=weights).backward()
+            loss = Fn.cross_entropy(model(b), _y(b), weight=weights)
+            loss.backward()
+            if clip is not None:
+                gn += float(torch.nn.utils.clip_grad_norm_(model.parameters(), clip))
             opt.step()
-        ap = average_precision(yv, _scores(model, val, DEVICE)) if yv.any() else None
-        if ap is not None and (best is None or ap > best):
-            best, best_epoch, state = ap, ep, copy.deepcopy(model.state_dict())
-    if state is not None:
-        model.load_state_dict(state)
-    return _scores(model, val, DEVICE), _scores(model, evalg, DEVICE), dict(
-        best_epoch=best_epoch, val_auprc=best, selected=state is not None)
+            tot, nb = tot + float(loss), nb + 1
+        SV.append(_scores(model, val, DEVICE, score))
+        SE.append(_scores(model, evalg, DEVICE, score))
+        VA.append(average_precision(yv, SV[-1]) if yv.any() else None)
+        LOSS.append(round(tot / max(1, nb), 5))
+        GN.append(round(gn / max(1, nb), 4) if clip is not None else None)
+    out = {}
+    for r in rules:
+        E = _rule(r, VA, epochs)
+        sv, se = np.mean([SV[e - 1] for e in E], 0), np.mean([SE[e - 1] for e in E], 0)
+        va = VA[E[0] - 1] if len(E) == 1 else (average_precision(yv, sv) if yv.any() else None)
+        out[r] = (sv, se, dict(best_epoch=E[0] if len(E) == 1 else None, epochs_used=[E[0], E[-1]], val_auprc=va,
+                               selected=r.startswith("best") and VA[0] is not None, rule=r))
+    out[rules[0]][2].update(train_loss=LOSS, val_auprc_by_epoch=[None if a is None else round(a, 4) for a in VA],
+                            grad_norm=GN)
+    return out
 
 
 def tool_rate_scores(train_meta, train_y, metas):
@@ -343,13 +392,20 @@ def tool_rate_scores(train_meta, train_y, metas):
     return np.array([r[t] / n[t] if t in n else glob for m in metas for t in m["tools"]], dtype=float)
 
 
-def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200):
-    """Train every guard of the cell once (seed) and score every eval set."""
+def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200, clip=None, score="prob", select="best",
+             extra=(), guards=None):
+    """Train every guard of the cell once (seed) and score every eval set.
+
+    clip / score / select: see fit_select and _rule (REPO and STABLE above). extra: more selection rules, read off the
+    same training run and reported as pseudo-guards '<guard>@<rule>' (e.g. 'edge-gnn@best10'). guards: train only these
+    of the cell's guards (None: all)."""
     from .model.edge_gnn import EdgeGNN
     from .model.gnn import ActionMLP, HeteroGNN
     from .model.gnn_files import FileHeteroGNN
     from .model.transformer import GraphTransformer
-    tr, va, ev, guards, ab = cell_spec(data, key)
+    tr, va, ev, cell_guards, ab = cell_spec(data, key)
+    guards = [g for g in cell_guards if guards is None or g in guards]
+    rules = [select] + [r for r in extra if r != select]
     allev = sorted({i for v in ev.values() for i in v})
     gf, gp = data.graphs("files", tuple(a for a in ab if ":" not in a)), data.graphs("plain", ())
     graphs_of = {"gnn": lambda: gp, "edge-gnn": lambda: data.graphs("edges", ab),
@@ -362,15 +418,15 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200):
     w = cnt.sum() / (ncls * cnt)
     trm, vam, evm = ([data.metas[i] for i in I] for I in (tr, va, allev))
     n_act = [len(data.trs[i]["events"]) for i in allev]
-    scores, info = {}, {}
+    scores, info, names = {}, {}, []
     for gname in guards:
         torch.manual_seed(seed)
         np.random.seed(seed)
         inf = dict(best_epoch=None, val_auprc=None, selected=False)
         if gname == "majority":   # constant score: predicts the majority training label, no threshold to tune
-            sv, se = None, np.full(sum(n_act), float(ytr.bincount(minlength=ncls).argmax()))
+            res = {None: (None, np.full(sum(n_act), float(ytr.bincount(minlength=ncls).argmax())), inf)}
         elif gname == "tool-lookup":
-            sv, se = tool_rate_scores(trm, ytr.tolist(), vam), tool_rate_scores(trm, ytr.tolist(), evm)
+            res = {None: (tool_rate_scores(trm, ytr.tolist(), vam), tool_rate_scores(trm, ytr.tolist(), evm), inf)}
         else:
             G = graphs_of.get(gname, lambda: gf)()
             model = {"mlp": lambda: ActionMLP(hidden, ncls), "gnn": lambda: HeteroGNN(hidden, classes=ncls),
@@ -379,18 +435,24 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200):
                      "edge-gnn": lambda: EdgeGNN(hidden, classes=ncls),
                      "gnn+files+prompt": lambda: FileHeteroGNN(hidden, classes=ncls, prompt=True),
                      "edge-gnn+prompt": lambda: EdgeGNN(hidden, classes=ncls, prompt=True)}[gname]()
-            sv, se, inf = fit_select(model, [G[i] for i in tr], [G[i] for i in va], [G[i] for i in allev], epochs, lr, w)
-        thr = threshold_for_f1(yva, sv) if sv is not None and yva.any() else None
-        info[gname] = dict(inf, threshold=0.5 if thr is None else thr, threshold_tuned=thr is not None)
-        per, k = {}, 0
-        for i, n in zip(allev, n_act):
-            per[i] = se[k:k + n]
-            k += n
-        scores[gname] = per
+            res = fit_select(model, [G[i] for i in tr], [G[i] for i in va], [G[i] for i in allev], epochs, lr, w,
+                             clip, score, rules)
+            res = {(None if r == select else r): v for r, v in res.items()}
+        for r, (sv, se, inf) in res.items():
+            name = gname if r is None else "%s@%s" % (gname, r)
+            thr = threshold_for_f1(yva, sv) if sv is not None and yva.any() else None
+            dflt = 0.5 if score == "prob" or gname in ("majority", "tool-lookup") else 0.0
+            info[name] = dict(inf, threshold=dflt if thr is None else thr, threshold_tuned=thr is not None)
+            per, k = {}, 0
+            for i, n in zip(allev, n_act):
+                per[i] = se[k:k + n]
+                k += n
+            scores[name] = per
+            names.append(name)
     out = {}
     for name, I in ev.items():
         out[name] = {}
-        for gname in guards:
+        for gname in names:
             s = np.concatenate([scores[gname][i] for i in I]) if I else np.zeros(0)
             p = (s >= info[gname]["threshold"]).astype(int).tolist()
             out[name][gname] = dict(score_set(data, I, s, p, n_boot, seed), **info[gname])
@@ -398,8 +460,9 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200):
         I = ev["test"]
         out["_pool"] = dict(
             trace_ids=[data.metas[i]["trace_id"] for i in I],
-            scores={g: [round(float(x), 6) for i in I for x in scores[g][i]] for g in guards},
-            preds={g: [int(x >= info[g]["threshold"]) for i in I for x in scores[g][i]] for g in guards})
+            scores={g: [round(float(x), 6) for i in I for x in scores[g][i]] for g in names},
+            preds={g: [int(x >= info[g]["threshold"]) for i in I for x in scores[g][i]] for g in names})
+    out["_train"] = dict(epochs=epochs, lr=lr, clip=clip, score=score, select=select, extra=list(extra))
     return out
 
 
