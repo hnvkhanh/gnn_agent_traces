@@ -392,6 +392,28 @@ python scripts/run_tracegen_gnn.py --seeds 1 --epochs 3 --devices cpu --outdir /
   unchanged runs are reused. Outputs: `results/tracegen/experiments.json`, `REPORT.md`, `report.html`.
 - With no attacked traces, the script stops and says so; it does not train on approve-only data.
 
+### Latest progress: combined dataset, edge GNN, stable training
+
+The guards now run on `data/tracegen_all` (all tracegen traces combined; the large files are committed as `.gz`).
+New since the first GNN + files results:
+
+- **Guards** (`src/model/`): an edge-level GNN (`edge_gnn.py`, edges built in `src/graph/edges.py`), a transformer
+  guard, optional prompt embeddings (`src/prompt_embed.py`) and node embeddings (`src/node_embed.py`).
+- **Seed variance.** On the fixed test split (13 reject actions from 3 injection tasks) the guard ranking changes
+  with the seed, and even a re-run of the same seed differs (non-deterministic CUDA kernels). The headline number is
+  therefore the 5×5 cross-validation. Analysis: [results/tracegen_all_edge/ANALYSIS.md](results/tracegen_all_edge/ANALYSIS.md).
+  `scripts/seed_variance.py` measures the spread.
+- **Stable training.** Edge GNN diverges at lr 3e-3. Training it with lr 1e-3, gradient clipping and an average over
+  the second half of the epochs (`STABLE` in `scripts/run_tracegen_gnn.py`) raised pooled CV AUPRC from 0.294 to
+  0.377 over 3 seeds, 20 epochs. The same fix hurts GNN + files (0.228 vs 0.258, it overfits by epoch 1–2). So
+  `STABLE_GUARDS` is only `["edge-gnn"]`; the other guards keep the old settings. `--stable` applies it to every
+  guard and `--stable-guards=` to none. Compare runs with `python scripts/compare_training.py <dirs>`; the stored
+  comparison is `results/training_compare.json`.
+- **Open:** the same comparison for the transformer (`results/tracegen_all_repo20_tf`, `results/tracegen_all_stable_tf`)
+  was still running at the last commit. Rerunning the same command resumes it.
+- Results: `results/tracegen_all_edge/` (first run), `results/tracegen_all_repo20/` (old settings) and
+  `results/tracegen_all_stable/` (stable settings), each with `REPORT.md` and `report.html`.
+
 ## Cross-LLM transfer experiment
 
 Does a guard trained on one LLM's traces work on another LLM's? `python scripts/cross_llm_transfer.py` trains on each LLM
