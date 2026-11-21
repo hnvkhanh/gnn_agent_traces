@@ -1,0 +1,13 @@
+{
+ "started": "2026-11-20T17:41:45",
+ "updated": "2026-11-20T18:05:08",
+ "event": "done ablate-prompt/prompt_shuffle seed 0",
+ "done": 15,
+ "failed": 0,
+ "total": 15,
+ "work_done_pct": 100.0,
+ "elapsed": "0:23:22",
+ "eta": "0:00:00",
+ "expected_finish": "2026-11-20T18:05",
+ "running": {}
+}

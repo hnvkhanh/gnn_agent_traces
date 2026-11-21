@@ -10,7 +10,12 @@ Needs attacked traces: `python -m tracegen --attacks` (config.yaml `attacks`). W
 
 Guards: majority, tool-lookup, mlp (no graph), gnn (docs/GRAPH.md graph), gnn+files (plus file nodes,
 src/graph/files.py), transformer (attention over the gnn+files graph: same nodes, features, edges as attention bias,
-causal mask; src/model/transformer.py). Sections: main (val + test, per suite, per agent), cv, ablate (gnn+files), transfer (agent -> agent).
+causal mask; src/model/transformer.py), edge-gnn (artifacts are nodes, actions are edges, one causal snapshot per
+action; src/graph/edges.py, src/model/edge_gnn.py), gnn+files+prompt and edge-gnn+prompt (plus a frozen sentence
+embedding of the user prompt; src/prompt_embed.py). Sections: main (val + test, per suite, per agent), cv, ablate
+(gnn+files, edge-gnn and the prompt controls), cvprompt (cross-validation of the prompt controls), transfer (agent -> agent).
+Prompt study: each prompt guard against the same model without the prompt, with an all-zero prompt and with the prompt
+of another user task of the same suite; paired bootstrap over traces (src/rank_metrics.py paired_delta).
 cv: cross-validation over --folds task folds x --folds injection-task folds (src/tracegen_gnn.py). Every run is tested
 once, by a guard that saw neither its user task nor its injection task, and the cells are pooled per seed. This is the
 headline number: the fixed test split holds only a few followed attacks.
@@ -47,9 +52,14 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 GUARD_NAME = {"majority": "Majority", "tool-lookup": "Tool lookup", "mlp": "MLP (no graph)", "gnn": "GNN",
-              "gnn+files": "GNN + files", "transformer": "Transformer"}
+              "gnn+files": "GNN + files", "transformer": "Transformer", "edge-gnn": "Edge GNN",
+              "gnn+files+prompt": "GNN + files + prompt", "edge-gnn+prompt": "Edge GNN + prompt"}
 ABL_NAME = {"files": "file edges", "observation": "observations", "injected": "injected text", "copies": "copies edges",
             "mentions": "mentions edges", "tool_feat": "tool features", "attacker_values": "attacker constants masked"}
+EDGE_ABL_NAME = {"directed": "reverse edges (directed only)", "entities": "entity nodes", "returned": "returned edges",
+                 "task_mentions": "task mentions edges", "observation": "observations",
+                 "attacker_values": "attacker constants masked"}
+CTL_NAME = {"prompt_zero": "zeroed prompt", "prompt_shuffle": "shuffled prompt (other task, same suite)"}
 
 
 # ---------------------------------------------------------------- workers
@@ -290,8 +300,42 @@ def cv_section(cv, folds, n_cells, n_seeds):
     return L
 
 
-def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), n_cv=0):
-    from src.tracegen_gnn import ABLATE, GUARDS
+def _cmp_name(name):
+    """'edge-gnn+prompt vs prompt_zero' -> 'Edge GNN + prompt vs zeroed prompt'."""
+    a, b = name.split(" vs ")
+    return "%s vs %s" % (GUARD_NAME[a], GUARD_NAME.get(b) or CTL_NAME.get(b, b))
+
+
+def prompt_rows(effects, ev):
+    """Rows of the prompt-study table for one evaluation ('cv' or 'test')."""
+    rows = []
+    for e in (x for x in effects if x["eval"] == ev):
+        S = e["seeds"]
+        lo = nanmean([s["d_auprc_ci"][0] for s in S if s["d_auprc_ci"]])
+        hi = nanmean([s["d_auprc_ci"][1] for s in S if s["d_auprc_ci"]])
+        rows.append([_cmp_name(e["name"]), S[0]["n_reject"],
+                     pm([s["d_auprc"] for s in S], 3), "–" if lo != lo else "[%+.3f, %+.3f]" % (lo, hi),
+                     pm([s["p_le0"] for s in S]), pm([s["d_recall_at_fpr"] for s in S], 3)])
+    return rows
+
+
+def prompt_suite_rows(effects, ev):
+    suites = sorted({k for e in effects if e["eval"] == ev for s in e["seeds"] for k in s["suites"]})
+    rows = [[_cmp_name(e["name"])] + [pm([s["suites"].get(c) for s in e["seeds"]], 3) for c in suites]
+            for e in effects if e["eval"] == ev]
+    return suites, rows
+
+
+PHEAD = ["comparison", "reject actions", "ΔAUPRC", "95% paired CI", "P(Δ ≤ 0)", "Δ reject recall @ 1% FPR"]
+PNOTE = ("Δ = guard minus the comparison, on the same traces; the interval and P(Δ ≤ 0) come from a paired bootstrap "
+         "over traces (both guards scored on every resample), averaged over seeds. Reading rule: the prompt embedding "
+         "helps only if the real prompt beats the model without it AND both controls (zeroed, shuffled) with an "
+         "interval above 0. Beating the zeroed prompt but not the shuffled one means the gain is suite identity or "
+         "extra capacity, not the meaning of the prompt.")
+
+
+def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), n_cv=0, effects=()):
+    from src.tracegen_gnn import ABLATE, EDGE_ABLATE, GUARDS
     main = runs_of(store, "main", seeds)
     evs = sorted({k for r in main for k in r})
     suites = [e.split("=", 1)[1] for e in evs if e.startswith("test|suite=")]
@@ -342,6 +386,31 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
               "Full model: AUPRC %s, 95%% CI %s. A change smaller than the interval is not a finding." % (
                   pm(base), ci(main, "test", "gnn+files", "ap")), "",
               md_table(["removed", "AUPRC", "Δ vs full", "95% CI", "reject recall @ 1% FPR"], rows), ""]
+    ebase = metric(main, "test", "edge-gnn", M["ap"])
+    rows = []
+    for ab in EDGE_ABLATE:
+        r = runs_of(store, "ablate-edge/%s" % ab, seeds)
+        if r:
+            v = metric(r, "test", "edge-gnn", M["ap"])
+            rows.append([EDGE_ABL_NAME[ab], pm(v), "%+.3f" % (nanmean(v) - nanmean(ebase)), ci(r, "test", "edge-gnn", "ap"),
+                         pm(metric(r, "test", "edge-gnn", M["rf"]))])
+    if rows:
+        L += ["## Ablations (Edge GNN, test)", "",
+              "Full model: AUPRC %s, 95%% CI %s. A change smaller than the interval is not a finding." % (
+                  pm(ebase), ci(main, "test", "edge-gnn", "ap")), "",
+              md_table(["removed", "AUPRC", "Δ vs full", "95% CI", "reject recall @ 1% FPR"], rows), ""]
+    if effects:
+        L += ["## Does the prompt embedding help?", "",
+              "Frozen sentence embedding of the user prompt (src/prompt_embed.py) added to the task node and the "
+              "readout of GNN + files and Edge GNN. Controls: the same guard with an all-zero embedding, and with the "
+              "prompt of another user task of the same suite.", ""]
+        for ev, title in (("cv", "Cross-validation (pooled, the deciding number)"), ("test", "Fixed split: test")):
+            rows = prompt_rows(effects, ev)
+            if rows:
+                suites, srows = prompt_suite_rows(effects, ev)
+                L += ["### %s" % title, "", md_table(PHEAD, rows), "",
+                      "ΔAUPRC per suite:", "", md_table(["comparison"] + suites, srows), ""]
+        L += [PNOTE, ""]
     if transfer:
         L += ["## Cross-agent transfer (test AUPRC)", "",
               md_table(["train → test", "test reject actions"] + [GUARD_NAME[g] for g in GUARDS],
@@ -359,7 +428,7 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
                                                         status.count("failed")),
           "Platform: %s, Python %s." % (platform.platform(), platform.python_version()), ""]
     md = "\n".join(L)
-    return md, render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv)
+    return md, render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv, effects)
 
 
 def _git():
@@ -395,10 +464,11 @@ def bars(items, title):
     return "".join(out)
 
 
-def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv=()):
+def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv=(), effects=()):
     from report_page import CSS, JS, div_color, esc, heatmap, seq_color, table
     from src.tracegen_gnn import ABLATE, GUARDS
-    cls = {"majority": "nog", "tool-lookup": "s4", "mlp": "s3", "gnn": "s2", "gnn+files": "s1", "transformer": "s5"}
+    cls = {"majority": "nog", "tool-lookup": "s4", "mlp": "s3", "gnn": "s2", "gnn+files": "s1", "transformer": "s5",
+           "edge-gnn": "s6", "gnn+files+prompt": "s7", "edge-gnn+prompt": "s8"}
     head = cv or main   # the headline numbers: pooled cross-validation when it is complete
     te = lambda g: metric(head, "test", g, M["ap"])
     tot = {k: sum(s[k] for s in summary.values()) for k in ("traces", "attack_traces", "reject", "actions")}
@@ -461,6 +531,11 @@ def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, 
                  'finding.</p><div class="panel">%s</div></section>'
                  % (esc(pm(base)), esc(ci(main, "test", "gnn+files", "ap")),
                     heatmap([ABL_NAME[ab] for ab, _ in rows], ["Δ AUPRC"], acell, "ablations")))
+    for ev, title in (("cv", "cross-validation"), ("test", "fixed test split")):
+        rows = prompt_rows(effects, ev)
+        if rows:
+            S.append('<section><h2>Does the prompt embedding help? (%s)</h2><div class="panel">%s</div><p>%s</p>'
+                     '</section>' % (esc(title), table(PHEAD, [[esc(c) for c in r] for r in rows]), esc(PNOTE)))
     if transfer:
         def tcell(r, c):
             g = [k for k, v in GUARD_NAME.items() if v == c][0]
@@ -492,7 +567,7 @@ def main():
     ap.add_argument("--tracegen", default=os.path.join(ROOT, "data", "tracegen"), help="tracegen output dir")
     ap.add_argument("--agentdojo", default=os.path.join(ROOT, "data", "agentdojo"), help="static AgentDojo export")
     ap.add_argument("--outdir", default=os.path.join(ROOT, "results", "tracegen"))
-    ap.add_argument("--sections", default="main,cv,ablate,transfer")
+    ap.add_argument("--sections", default="main,cv,ablate,transfer,cvprompt")
     ap.add_argument("--folds", type=int, default=5, help="cv: task folds and injection-task folds (>= 3)")
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--epochs", type=int, default=60)
@@ -541,8 +616,12 @@ def main():
                 json.dump(store, f, indent=1, sort_keys=True)
             os.replace(path + ".tmp", path)
 
-        from src.tracegen_gnn import cell_spec
+        from src.tracegen_gnn import PROMPT_GUARDS, cell_spec
         ntrain = {k: len(cell_spec(data, k)[0]) for k in {k for k, _ in jobs}}
+        if any(set(cell_spec(data, k)[3]) & set(PROMPT_GUARDS) for k in ntrain):
+            from src.prompt_embed import cache_path, encoder_name
+            print("prompt embeddings (%s): %d distinct prompts -> %s" % (
+                encoder_name(), len(data.prompt_table()), cache_path()), flush=True)   # workers read the cache
         prog = os.path.join(a.outdir, "progress.json")
         print("progress file:", prog, flush=True)
         res = run_parallel(jobs, devices, a, weight={(k, s): ntrain[k] for k, s in jobs}, on_done=save,
@@ -555,7 +634,9 @@ def main():
     cv = cv_reports(data, cur, seeds, a.folds) if n_cv else []
     if n_cv and len(cv) < len(seeds):
         print("cross-validation: %d of %d seeds have every cell; the others are left out of the report" % (len(cv), len(seeds)))
-    md, page = build_report(a, cur, summary, leak, data.stats, seeds, devices, status, cv, n_cv)
+    from src.tracegen_gnn import prompt_effects
+    effects = prompt_effects(data, cur, seeds, a.folds)
+    md, page = build_report(a, cur, summary, leak, data.stats, seeds, devices, status, cv, n_cv, effects)
     for name, text in (("REPORT.md", md), ("report.html", page)):
         with open(os.path.join(a.outdir, name), "w", encoding="utf-8", newline="\n") as f:
             f.write(text)

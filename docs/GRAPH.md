@@ -110,6 +110,50 @@ placeholder token in the task, action and observation text, in benign and attack
 The model is `FileHeteroGNN` (`src/model/gnn_files.py`). It has the same architecture as `HeteroGNN`, but takes the node
 and edge type lists as parameters.
 
+## Edge graph (`src/graph/edges.py`, tracegen guard `edge-gnn`)
+
+This graph flips the representation: artifacts are nodes and actions are edges.
+
+**Nodes:**
+- `agent`: a generic assistant node.
+- `task`: the user prompt.
+- `memory`
+- `tool`
+- `file`: the same rules as the file nodes above.
+- `entity`: argument values of 4–64 characters, such as an IBAN, an email, a channel, a URL or a hotel name. An entity
+  is keyed by its lowercased value, so a recipient and the same string in an earlier tool result are one node.
+
+**Edges.** A past action j is a group of edges, each carrying `feat(text, step j)` as an edge feature:
+- `agent –calls→ tool`
+- `tool –acts_on→ entity|file`: one per argument.
+- `tool –returns→ agent`: the observation.
+- `tool –returned→ entity|file`: the values the observation names.
+
+Context edges are `task|memory –mentions→ entity|file`. Every edge has a `rev_` twin, so messages flow both ways.
+
+**Causality.** It comes from snapshots, not from edge direction. The graph holds one block-diagonal snapshot per
+action. Snapshot k is built only from the prompt, the tools, events < k and the arguments of action k. Action k is the
+snapshot's `query`, and read-only `q_*` index edges point at its agent, task, tool and argument nodes.
+
+**Model.** `EdgeGNN` (`src/model/edge_gnn.py`) runs 2 `HeteroConv` layers of `GINEConv`, which uses the edge features,
+with residual connections. The readout is `[h_agent; h_task; h_tool; mean h_args; query features]`.
+
+**Ablations:** `directed`, `entities`, `returned`, `task_mentions`, `observation` and `attacker_values`.
+
+## Prompt embedding (`src/prompt_embed.py`, guards `gnn+files+prompt`, `edge-gnn+prompt`)
+
+A frozen `sentence-transformers/all-MiniLM-L6-v2` embedding of the user prompt (384-d, mean-pooled, L2-normalised,
+cached in `data/cache/`) is projected and used in two places:
+- it is added to the task node's initial state;
+- it is concatenated into the readout.
+
+There are two controls:
+- `prompt_zero`: an all-zero embedding.
+- `prompt_shuffle`: the prompt of another user task in the same suite.
+
+The report compares each prompt guard with its no-prompt model and with both controls. It uses a paired bootstrap
+over traces.
+
 ## Model on top
 
 - `HeteroGNN`: a per-type `Linear(F, 64)` + ReLU, then 2 `HeteroConv` layers (one `SAGEConv` per edge type, summed),

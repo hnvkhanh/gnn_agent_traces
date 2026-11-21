@@ -1,0 +1,270 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tracegen GNN guard</title><style>
+/* Layout: one reading column of sections; each chart sits beside or above its table. */
+:root{
+  --page:#f7f8f6; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#7a7873; --grid:#e1e0d9; --axis:#c3c2b7;
+  --mid:#e8e7e3; --ring:#fcfcfb; --accent:#1c5cab; --good:#006300; --bad:#b93636;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#8a5cd1; --nog:#898781;
+  --s6:#c7417b; --s7:#0f8ea6; --s8:#7a7f1f;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --page:#0f100f; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a988f; --grid:#2c2c2a; --axis:#383835;
+  --mid:#383835; --ring:#1a1a19; --accent:#86b6ef; --good:#0ca30c; --bad:#e66767;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#9b72e0; --nog:#898781;
+  --s6:#e0609a; --s7:#2aa9c2; --s8:#a3a83a;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --page:#0f100f; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#9a988f; --grid:#2c2c2a; --axis:#383835;
+  --mid:#383835; --ring:#1a1a19; --accent:#86b6ef; --good:#0ca30c; --bad:#e66767;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#9b72e0; --nog:#898781;
+  --s6:#e0609a; --s7:#2aa9c2; --s8:#a3a83a;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:980px;margin:0 auto;padding-block:40px 64px;display:grid;gap:44px}
+header{display:grid;gap:10px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font:600 clamp(30px,5vw,44px)/1.05 var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font:600 24px/1.15 var(--f-display);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--f-body);margin:0}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+section{display:grid;gap:16px}
+.lede{font-size:17px;color:var(--ink2);max-width:70ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--grid);border-radius:6px;padding:14px 16px;display:grid;gap:4px}
+.tile .k{font:500 12px/1.2 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font:600 30px/1.1 var(--f-display)}
+.tile .s{font-size:13px;color:var(--ink2)}
+.panel{background:var(--surface);border:1px solid var(--grid);border-radius:6px;padding:16px;display:grid;gap:12px}
+.panel svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+th{font:500 12px/1.3 var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+.pill{display:inline-block;font:500 11.5px/1 var(--f-mono);padding:4px 7px;border-radius:999px;border:1px solid var(--grid);white-space:nowrap}
+.pill.ok{color:var(--good);border-color:currentColor}
+.pill.bad{color:var(--bad);border-color:currentColor}
+.pill.new{color:var(--accent);border-color:currentColor}
+ul.notes{margin:0;padding-left:20px;color:var(--ink2);display:grid;gap:6px;max-width:72ch}
+details summary{cursor:pointer;color:var(--ink2);font-size:14px}
+details summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg text{font-family:var(--f-body)}
+svg .tick{font:11px var(--f-mono);fill:var(--muted)}
+svg .cat{font-size:12.5px;fill:var(--ink2)}
+svg .val{font:600 11.5px var(--f-mono);fill:var(--ink)}
+svg .val.muted{fill:var(--muted);font-weight:500}
+svg .cellv{font:500 12px var(--f-mono)}
+svg .grid{stroke:var(--grid);stroke-width:1}
+svg .axis{stroke:var(--axis);stroke-width:1}
+svg .whisker{stroke:var(--ink2);stroke-width:1.25}
+svg .rail{stroke:var(--axis);stroke-width:2}
+svg .empty{fill:none;stroke:var(--grid)}
+svg .s1{fill:var(--s1)} svg .s2{fill:var(--s2)} svg .s3{fill:var(--s3)} svg .s4{fill:var(--s4)} svg .s5{fill:var(--s5)}
+svg .s6{fill:var(--s6)} svg .s7{fill:var(--s7)} svg .s8{fill:var(--s8)}
+svg .nog{fill:var(--surface);stroke:var(--nog);stroke-width:2}
+svg .ring{stroke:var(--ring);stroke-width:2}
+svg [data-tip]{cursor:default}
+svg [data-tip]:hover{opacity:.82}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--page);font:12.5px/1.4 var(--f-body);
+  padding:6px 9px;border-radius:4px;max-width:300px;z-index:20}
+footer{font-size:13px;color:var(--muted)}
+@media (max-width:560px){main{padding-block:24px 48px;gap:36px}.tile .v{font-size:26px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><main><header><div class="eyebrow">tracegen · AgentDojo · llama3.1:8b, qwen2.5:14b, qwen2.5:7b, qwen3.8:27b</div><h1>GNN guard on real agent traces, with file nodes</h1><p class="lede">Per-action approve/reject on AgentDojo runs from tracegen. Held-out splits have unseen user tasks (with all their paraphrases) and unseen injection tasks. Highest AUPRC: <b>Transformer</b>.</p></header><div class="tiles"><div class="tile"><div class="k">traces</div><div class="v">9632</div><div class="s">8073 attacked</div></div><div class="tile"><div class="k">reject actions</div><div class="v">1147</div><div class="s">of 30865 actions</div></div><div class="tile"><div class="k">GNN + files, test AUPRC</div><div class="v">0.58</div><div class="s">95% CI [0.23, 0.81] · 13 reject actions tested</div></div><div class="tile"><div class="k">leakage audit</div><div class="v">clean</div><div class="s">hard overlaps all 0</div></div></div><section><h2>Fixed split: test AUPRC</h2><p>13 reject actions of 1900 (586 traces). Chance AUPRC is the reject share, 0.007.</p><div class="panel"><svg viewBox="0 0 760 304" role="img" aria-label="Fixed split: test AUPRC by guard"><line class="grid" x1="200.0" x2="200.0" y1="8" y2="280"/><text class="tick" x="200.0" y="296" text-anchor="middle">0.00</text><line class="grid" x1="327.5" x2="327.5" y1="8" y2="280"/><text class="tick" x="327.5" y="296" text-anchor="middle">0.25</text><line class="grid" x1="455.0" x2="455.0" y1="8" y2="280"/><text class="tick" x="455.0" y="296" text-anchor="middle">0.50</text><line class="grid" x1="582.5" x2="582.5" y1="8" y2="280"/><text class="tick" x="582.5" y="296" text-anchor="middle">0.75</text><line class="grid" x1="710.0" x2="710.0" y1="8" y2="280"/><text class="tick" x="710.0" y="296" text-anchor="middle">1.00</text><text class="cat" x="190" y="23.0" text-anchor="end" dy="0.32em">Majority</text><rect class="nog" x="200.0" y="14.0" width="3.5" height="18" rx="3" data-tip="Majority: 0.007 ± 0.000"/><text class="val" x="211.5" y="23.0" dy="0.32em">0.01</text><text class="cat" x="190" y="53.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect class="s4" x="200.0" y="44.0" width="6.0" height="18" rx="3" data-tip="Tool lookup: 0.012 ± 0.000"/><text class="val" x="214.0" y="53.0" dy="0.32em">0.01</text><text class="cat" x="190" y="83.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect class="s3" x="200.0" y="74.0" width="112.7" height="18" rx="3" data-tip="MLP (no graph): 0.221 ± 0.000"/><text class="val" x="320.7" y="83.0" dy="0.32em">0.22</text><text class="cat" x="190" y="113.0" text-anchor="end" dy="0.32em">GNN</text><rect class="s2" x="200.0" y="104.0" width="280.6" height="18" rx="3" data-tip="GNN: 0.550 ± 0.000"/><text class="val" x="488.6" y="113.0" dy="0.32em">0.55</text><text class="cat" x="190" y="143.0" text-anchor="end" dy="0.32em">GNN + files</text><rect class="s1" x="200.0" y="134.0" width="293.3" height="18" rx="3" data-tip="GNN + files: 0.575 ± 0.000"/><text class="val" x="501.3" y="143.0" dy="0.32em">0.58</text><text class="cat" x="190" y="173.0" text-anchor="end" dy="0.32em">Transformer</text><rect class="s5" x="200.0" y="164.0" width="316.5" height="18" rx="3" data-tip="Transformer: 0.621 ± 0.000"/><text class="val" x="524.5" y="173.0" dy="0.32em">0.62</text><text class="cat" x="190" y="203.0" text-anchor="end" dy="0.32em">Edge GNN</text><rect class="s6" x="200.0" y="194.0" width="272.5" height="18" rx="3" data-tip="Edge GNN: 0.534 ± 0.000"/><text class="val" x="480.5" y="203.0" dy="0.32em">0.53</text><text class="cat" x="190" y="233.0" text-anchor="end" dy="0.32em">GNN + files + prompt</text><rect class="s7" x="200.0" y="224.0" width="271.2" height="18" rx="3" data-tip="GNN + files + prompt: 0.532 ± 0.000"/><text class="val" x="479.2" y="233.0" dy="0.32em">0.53</text><text class="cat" x="190" y="263.0" text-anchor="end" dy="0.32em">Edge GNN + prompt</text><rect class="s8" x="200.0" y="254.0" width="217.4" height="18" rx="3" data-tip="Edge GNN + prompt: 0.426 ± 0.000"/><text class="val" x="425.4" y="263.0" dy="0.32em">0.43</text><line class="axis" x1="200.0" x2="200.0" y1="8" y2="280"/></svg><div class="tbl"><table class=""><thead><tr><th>guard</th><th>AUPRC</th><th>95% CI</th><th>reject recall @ 1% FPR</th><th>95% CI</th><th>reject recall</th><th>approve FPR</th><th>macro-F1</th><th>ASR no guard → guard</th><th>benign traces blocked</th></tr></thead><tbody><tr><td>Majority</td><td>0.01</td><td>[0.00, 0.01]</td><td>0.00</td><td>[0.00, 0.00]</td><td>0.00</td><td>0.00</td><td>0.50</td><td>0.03 → 0.03</td><td>0.00</td></tr><tr><td>Tool lookup</td><td>0.01</td><td>[0.00, 0.03]</td><td>0.00</td><td>[0.00, 0.00]</td><td>0.00</td><td>0.02</td><td>0.49</td><td>0.03 → 0.03</td><td>0.05</td></tr><tr><td>MLP (no graph)</td><td>0.22</td><td>[0.10, 0.47]</td><td>0.62</td><td>[0.21, 0.86]</td><td>0.23</td><td>0.01</td><td>0.61</td><td>0.03 → 0.02</td><td>0.02</td></tr><tr><td>GNN</td><td>0.55</td><td>[0.24, 0.80]</td><td>0.62</td><td>[0.33, 0.88]</td><td>0.61</td><td>0.00</td><td>0.82</td><td>0.03 → 0.01</td><td>0.00</td></tr><tr><td>GNN + files</td><td>0.58</td><td>[0.23, 0.81]</td><td>0.62</td><td>[0.29, 0.88]</td><td>0.61</td><td>0.01</td><td>0.74</td><td>0.03 → 0.01</td><td>0.00</td></tr><tr><td>Transformer</td><td>0.62</td><td>[0.34, 0.89]</td><td>0.77</td><td>[0.50, 1.00]</td><td>0.61</td><td>0.00</td><td>0.85</td><td>0.03 → 0.01</td><td>0.00</td></tr><tr><td>Edge GNN</td><td>0.53</td><td>[0.27, 0.80]</td><td>0.69</td><td>[0.43, 0.93]</td><td>0.61</td><td>0.00</td><td>0.82</td><td>0.03 → 0.01</td><td>0.00</td></tr><tr><td>GNN + files + prompt</td><td>0.53</td><td>[0.20, 0.77]</td><td>0.62</td><td>[0.25, 0.88]</td><td>0.39</td><td>0.00</td><td>0.74</td><td>0.03 → 0.02</td><td>0.00</td></tr><tr><td>Edge GNN + prompt</td><td>0.43</td><td>[0.20, 0.70]</td><td>0.54</td><td>[0.28, 0.85]</td><td>0.54</td><td>0.01</td><td>0.73</td><td>0.03 → 0.02</td><td>0.00</td></tr></tbody></table></div></div><p>AUPRC and reject recall at 1% approve FPR use the scores (no threshold); the interval is a bootstrap over traces, averaged over seeds. The last five columns use the reject threshold tuned on validation.</p></section><section><h2>Fixed split: validation (used for model selection) AUPRC</h2><p>81 reject actions of 2064 (627 traces). Chance AUPRC is the reject share, 0.039.</p><div class="panel"><svg viewBox="0 0 760 304" role="img" aria-label="Fixed split: validation (used for model selection) AUPRC by guard"><line class="grid" x1="200.0" x2="200.0" y1="8" y2="280"/><text class="tick" x="200.0" y="296" text-anchor="middle">0.00</text><line class="grid" x1="327.5" x2="327.5" y1="8" y2="280"/><text class="tick" x="327.5" y="296" text-anchor="middle">0.25</text><line class="grid" x1="455.0" x2="455.0" y1="8" y2="280"/><text class="tick" x="455.0" y="296" text-anchor="middle">0.50</text><line class="grid" x1="582.5" x2="582.5" y1="8" y2="280"/><text class="tick" x="582.5" y="296" text-anchor="middle">0.75</text><line class="grid" x1="710.0" x2="710.0" y1="8" y2="280"/><text class="tick" x="710.0" y="296" text-anchor="middle">1.00</text><text class="cat" x="190" y="23.0" text-anchor="end" dy="0.32em">Majority</text><rect class="nog" x="200.0" y="14.0" width="20.0" height="18" rx="3" data-tip="Majority: 0.039 ± 0.000"/><text class="val" x="228.0" y="23.0" dy="0.32em">0.04</text><text class="cat" x="190" y="53.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect class="s4" x="200.0" y="44.0" width="284.3" height="18" rx="3" data-tip="Tool lookup: 0.558 ± 0.000"/><text class="val" x="492.3" y="53.0" dy="0.32em">0.56</text><text class="cat" x="190" y="83.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect class="s3" x="200.0" y="74.0" width="321.5" height="18" rx="3" data-tip="MLP (no graph): 0.630 ± 0.000"/><text class="val" x="529.5" y="83.0" dy="0.32em">0.63</text><text class="cat" x="190" y="113.0" text-anchor="end" dy="0.32em">GNN</text><rect class="s2" x="200.0" y="104.0" width="382.3" height="18" rx="3" data-tip="GNN: 0.750 ± 0.000"/><text class="val" x="590.3" y="113.0" dy="0.32em">0.75</text><text class="cat" x="190" y="143.0" text-anchor="end" dy="0.32em">GNN + files</text><rect class="s1" x="200.0" y="134.0" width="387.7" height="18" rx="3" data-tip="GNN + files: 0.760 ± 0.000"/><text class="val" x="595.7" y="143.0" dy="0.32em">0.76</text><text class="cat" x="190" y="173.0" text-anchor="end" dy="0.32em">Transformer</text><rect class="s5" x="200.0" y="164.0" width="314.6" height="18" rx="3" data-tip="Transformer: 0.617 ± 0.000"/><text class="val" x="522.6" y="173.0" dy="0.32em">0.62</text><text class="cat" x="190" y="203.0" text-anchor="end" dy="0.32em">Edge GNN</text><rect class="s6" x="200.0" y="194.0" width="366.4" height="18" rx="3" data-tip="Edge GNN: 0.718 ± 0.000"/><text class="val" x="574.4" y="203.0" dy="0.32em">0.72</text><text class="cat" x="190" y="233.0" text-anchor="end" dy="0.32em">GNN + files + prompt</text><rect class="s7" x="200.0" y="224.0" width="375.9" height="18" rx="3" data-tip="GNN + files + prompt: 0.737 ± 0.000"/><text class="val" x="583.9" y="233.0" dy="0.32em">0.74</text><text class="cat" x="190" y="263.0" text-anchor="end" dy="0.32em">Edge GNN + prompt</text><rect class="s8" x="200.0" y="254.0" width="329.5" height="18" rx="3" data-tip="Edge GNN + prompt: 0.646 ± 0.000"/><text class="val" x="537.5" y="263.0" dy="0.32em">0.65</text><line class="axis" x1="200.0" x2="200.0" y1="8" y2="280"/></svg><div class="tbl"><table class=""><thead><tr><th>guard</th><th>AUPRC</th><th>95% CI</th><th>reject recall @ 1% FPR</th><th>95% CI</th><th>reject recall</th><th>approve FPR</th><th>macro-F1</th><th>ASR no guard → guard</th><th>benign traces blocked</th></tr></thead><tbody><tr><td>Majority</td><td>0.04</td><td>[0.03, 0.05]</td><td>0.00</td><td>[0.00, 0.00]</td><td>0.00</td><td>0.00</td><td>0.49</td><td>0.17 → 0.17</td><td>0.00</td></tr><tr><td>Tool lookup</td><td>0.56</td><td>[0.47, 0.65]</td><td>0.63</td><td>[0.19, 0.72]</td><td>0.63</td><td>0.01</td><td>0.84</td><td>0.17 → 0.07</td><td>0.02</td></tr><tr><td>MLP (no graph)</td><td>0.63</td><td>[0.55, 0.73]</td><td>0.58</td><td>[0.49, 0.69]</td><td>0.58</td><td>0.00</td><td>0.85</td><td>0.17 → 0.08</td><td>0.00</td></tr><tr><td>GNN</td><td>0.75</td><td>[0.66, 0.83]</td><td>0.68</td><td>[0.58, 0.78]</td><td>0.67</td><td>0.00</td><td>0.88</td><td>0.17 → 0.07</td><td>0.00</td></tr><tr><td>GNN + files</td><td>0.76</td><td>[0.67, 0.84]</td><td>0.67</td><td>[0.56, 0.77]</td><td>0.64</td><td>0.00</td><td>0.87</td><td>0.17 → 0.07</td><td>0.00</td></tr><tr><td>Transformer</td><td>0.62</td><td>[0.54, 0.70]</td><td>0.49</td><td>[0.38, 0.60]</td><td>0.49</td><td>0.01</td><td>0.79</td><td>0.17 → 0.10</td><td>0.00</td></tr><tr><td>Edge GNN</td><td>0.72</td><td>[0.63, 0.80]</td><td>0.63</td><td>[0.54, 0.75]</td><td>0.62</td><td>0.00</td><td>0.86</td><td>0.17 → 0.07</td><td>0.00</td></tr><tr><td>GNN + files + prompt</td><td>0.74</td><td>[0.65, 0.82]</td><td>0.57</td><td>[0.49, 0.74]</td><td>0.56</td><td>0.00</td><td>0.85</td><td>0.17 → 0.08</td><td>0.00</td></tr><tr><td>Edge GNN + prompt</td><td>0.65</td><td>[0.53, 0.75]</td><td>0.56</td><td>[0.41, 0.67]</td><td>0.93</td><td>0.03</td><td>0.83</td><td>0.17 → 0.01</td><td>0.02</td></tr></tbody></table></div></div><p>AUPRC and reject recall at 1% approve FPR use the scores (no threshold); the interval is a bootstrap over traces, averaged over seeds. The last five columns use the reject threshold tuned on validation.</p></section><section><h2>Test AUPRC per suite</h2><p>In brackets: reject actions in the slice. A slice with none has no score.</p><div class="panel"><svg viewBox="0 0 662 340" role="img" aria-label="AUPRC per suite" style="max-width:662px"><text class="cat" x="266.0" y="20" text-anchor="middle">banking (0)</text><text class="cat" x="378.0" y="20" text-anchor="middle">slack (7)</text><text class="cat" x="490.0" y="20" text-anchor="middle">travel (3)</text><text class="cat" x="602.0" y="20" text-anchor="middle">workspace (3)</text><text class="cat" x="200" y="47.0" text-anchor="end" dy="0.32em">Majority</text><rect class="empty" x="211" y="31" width="110" height="32" rx="3"/><rect x="323" y="31" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Majority · slack (7): AUPRC 0.02"/><text x="378.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.02</text><rect x="435" y="31" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Majority · travel (3): AUPRC 0.00"/><text x="490.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.00</text><rect x="547" y="31" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Majority · workspace (3): AUPRC 0.00"/><text x="602.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.00</text><text class="cat" x="200" y="81.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect class="empty" x="211" y="65" width="110" height="32" rx="3"/><rect x="323" y="65" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Tool lookup · slack (7): AUPRC 0.02"/><text x="378.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.02</text><rect x="435" y="65" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="Tool lookup · travel (3): AUPRC 0.75"/><text x="490.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.75</text><rect x="547" y="65" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Tool lookup · workspace (3): AUPRC 0.01"/><text x="602.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.01</text><text class="cat" x="200" y="115.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect class="empty" x="211" y="99" width="110" height="32" rx="3"/><rect x="323" y="99" width="110" height="32" rx="3" style="fill:#86b6ef" data-tip="MLP (no graph) · slack (7): AUPRC 0.24"/><text x="378.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.24</text><rect x="435" y="99" width="110" height="32" rx="3" style="fill:#0d366b" data-tip="MLP (no graph) · travel (3): AUPRC 1.00"/><text x="490.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">1.00</text><rect x="547" y="99" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="MLP (no graph) · workspace (3): AUPRC 0.77"/><text x="602.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.77</text><text class="cat" x="200" y="149.0" text-anchor="end" dy="0.32em">GNN</text><rect class="empty" x="211" y="133" width="110" height="32" rx="3"/><rect x="323" y="133" width="110" height="32" rx="3" style="fill:#2a78d6" data-tip="GNN · slack (7): AUPRC 0.59"/><text x="378.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.59</text><rect x="435" y="133" width="110" height="32" rx="3" style="fill:#0d366b" data-tip="GNN · travel (3): AUPRC 1.00"/><text x="490.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">1.00</text><rect x="547" y="133" width="110" height="32" rx="3" style="fill:#256abf" data-tip="GNN · workspace (3): AUPRC 0.67"/><text x="602.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.67</text><text class="cat" x="200" y="183.0" text-anchor="end" dy="0.32em">GNN + files</text><rect class="empty" x="211" y="167" width="110" height="32" rx="3"/><rect x="323" y="167" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="GNN + files · slack (7): AUPRC 0.74"/><text x="378.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.74</text><rect x="435" y="167" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="GNN + files · travel (3): AUPRC 0.72"/><text x="490.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.72</text><rect x="547" y="167" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="GNN + files · workspace (3): AUPRC 0.71"/><text x="602.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.71</text><text class="cat" x="200" y="217.0" text-anchor="end" dy="0.32em">Transformer</text><rect class="empty" x="211" y="201" width="110" height="32" rx="3"/><rect x="323" y="201" width="110" height="32" rx="3" style="fill:#2a78d6" data-tip="Transformer · slack (7): AUPRC 0.60"/><text x="378.0" y="217.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.60</text><rect x="435" y="201" width="110" height="32" rx="3" style="fill:#0d366b" data-tip="Transformer · travel (3): AUPRC 1.00"/><text x="490.0" y="217.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">1.00</text><rect x="547" y="201" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="Transformer · workspace (3): AUPRC 0.73"/><text x="602.0" y="217.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.73</text><text class="cat" x="200" y="251.0" text-anchor="end" dy="0.32em">Edge GNN</text><rect class="empty" x="211" y="235" width="110" height="32" rx="3"/><rect x="323" y="235" width="110" height="32" rx="3" style="fill:#256abf" data-tip="Edge GNN · slack (7): AUPRC 0.67"/><text x="378.0" y="251.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.67</text><rect x="435" y="235" width="110" height="32" rx="3" style="fill:#104281" data-tip="Edge GNN · travel (3): AUPRC 0.92"/><text x="490.0" y="251.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.92</text><rect x="547" y="235" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="Edge GNN · workspace (3): AUPRC 0.50"/><text x="602.0" y="251.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.50</text><text class="cat" x="200" y="285.0" text-anchor="end" dy="0.32em">GNN + files + prompt</text><rect class="empty" x="211" y="269" width="110" height="32" rx="3"/><rect x="323" y="269" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="GNN + files + prompt · slack (7): AUPRC 0.75"/><text x="378.0" y="285.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.75</text><rect x="435" y="269" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files + prompt · travel (3): AUPRC 0.47"/><text x="490.0" y="285.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.47</text><rect x="547" y="269" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN + files + prompt · workspace (3): AUPRC 0.51"/><text x="602.0" y="285.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.51</text><text class="cat" x="200" y="319.0" text-anchor="end" dy="0.32em">Edge GNN + prompt</text><rect class="empty" x="211" y="303" width="110" height="32" rx="3"/><rect x="323" y="303" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="Edge GNN + prompt · slack (7): AUPRC 0.73"/><text x="378.0" y="319.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.73</text><rect x="435" y="303" width="110" height="32" rx="3" style="fill:#2a78d6" data-tip="Edge GNN + prompt · travel (3): AUPRC 0.59"/><text x="490.0" y="319.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.59</text><rect x="547" y="303" width="110" height="32" rx="3" style="fill:#9ec5f4" data-tip="Edge GNN + prompt · workspace (3): AUPRC 0.18"/><text x="602.0" y="319.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.18</text></svg></div></section><section><h2>Test AUPRC per agent</h2><p>In brackets: reject actions in the slice. A slice with none has no score.</p><div class="panel"><svg viewBox="0 0 662 340" role="img" aria-label="AUPRC per agent" style="max-width:662px"><text class="cat" x="266.0" y="20" text-anchor="middle">llama3.1:8b (0)</text><text class="cat" x="378.0" y="20" text-anchor="middle">qwen2.5:14b (8)</text><text class="cat" x="490.0" y="20" text-anchor="middle">qwen2.5:7b (5)</text><text class="cat" x="602.0" y="20" text-anchor="middle">qwen3.8:27b (0)</text><text class="cat" x="200" y="47.0" text-anchor="end" dy="0.32em">Majority</text><rect class="empty" x="211" y="31" width="110" height="32" rx="3"/><rect x="323" y="31" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Majority · qwen2.5:14b (8): AUPRC 0.01"/><text x="378.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.01</text><rect x="435" y="31" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Majority · qwen2.5:7b (5): AUPRC 0.01"/><text x="490.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.01</text><rect class="empty" x="547" y="31" width="110" height="32" rx="3"/><text class="cat" x="200" y="81.0" text-anchor="end" dy="0.32em">Tool lookup</text><rect class="empty" x="211" y="65" width="110" height="32" rx="3"/><rect x="323" y="65" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Tool lookup · qwen2.5:14b (8): AUPRC 0.02"/><text x="378.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.02</text><rect x="435" y="65" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="Tool lookup · qwen2.5:7b (5): AUPRC 0.03"/><text x="490.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.03</text><rect class="empty" x="547" y="65" width="110" height="32" rx="3"/><text class="cat" x="200" y="115.0" text-anchor="end" dy="0.32em">MLP (no graph)</text><rect class="empty" x="211" y="99" width="110" height="32" rx="3"/><rect x="323" y="99" width="110" height="32" rx="3" style="fill:#5598e7" data-tip="MLP (no graph) · qwen2.5:14b (8): AUPRC 0.43"/><text x="378.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.43</text><rect x="435" y="99" width="110" height="32" rx="3" style="fill:#9ec5f4" data-tip="MLP (no graph) · qwen2.5:7b (5): AUPRC 0.15"/><text x="490.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.15</text><rect class="empty" x="547" y="99" width="110" height="32" rx="3"/><text class="cat" x="200" y="149.0" text-anchor="end" dy="0.32em">GNN</text><rect class="empty" x="211" y="133" width="110" height="32" rx="3"/><rect x="323" y="133" width="110" height="32" rx="3" style="fill:#256abf" data-tip="GNN · qwen2.5:14b (8): AUPRC 0.68"/><text x="378.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.68</text><rect x="435" y="133" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="GNN · qwen2.5:7b (5): AUPRC 0.47"/><text x="490.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.47</text><rect class="empty" x="547" y="133" width="110" height="32" rx="3"/><text class="cat" x="200" y="183.0" text-anchor="end" dy="0.32em">GNN + files</text><rect class="empty" x="211" y="167" width="110" height="32" rx="3"/><rect x="323" y="167" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="GNN + files · qwen2.5:14b (8): AUPRC 0.75"/><text x="378.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.75</text><rect x="435" y="167" width="110" height="32" rx="3" style="fill:#6da7ec" data-tip="GNN + files · qwen2.5:7b (5): AUPRC 0.33"/><text x="490.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.33</text><rect class="empty" x="547" y="167" width="110" height="32" rx="3"/><text class="cat" x="200" y="217.0" text-anchor="end" dy="0.32em">Transformer</text><rect class="empty" x="211" y="201" width="110" height="32" rx="3"/><rect x="323" y="201" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="Transformer · qwen2.5:14b (8): AUPRC 0.72"/><text x="378.0" y="217.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.72</text><rect x="435" y="201" width="110" height="32" rx="3" style="fill:#2a78d6" data-tip="Transformer · qwen2.5:7b (5): AUPRC 0.62"/><text x="490.0" y="217.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.62</text><rect class="empty" x="547" y="201" width="110" height="32" rx="3"/><text class="cat" x="200" y="251.0" text-anchor="end" dy="0.32em">Edge GNN</text><rect class="empty" x="211" y="235" width="110" height="32" rx="3"/><rect x="323" y="235" width="110" height="32" rx="3" style="fill:#256abf" data-tip="Edge GNN · qwen2.5:14b (8): AUPRC 0.65"/><text x="378.0" y="251.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.65</text><rect x="435" y="235" width="110" height="32" rx="3" style="fill:#5598e7" data-tip="Edge GNN · qwen2.5:7b (5): AUPRC 0.40"/><text x="490.0" y="251.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.40</text><rect class="empty" x="547" y="235" width="110" height="32" rx="3"/><text class="cat" x="200" y="285.0" text-anchor="end" dy="0.32em">GNN + files + prompt</text><rect class="empty" x="211" y="269" width="110" height="32" rx="3"/><rect x="323" y="269" width="110" height="32" rx="3" style="fill:#1c5cab" data-tip="GNN + files + prompt · qwen2.5:14b (8): AUPRC 0.76"/><text x="378.0" y="285.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.76</text><rect x="435" y="269" width="110" height="32" rx="3" style="fill:#6da7ec" data-tip="GNN + files + prompt · qwen2.5:7b (5): AUPRC 0.36"/><text x="490.0" y="285.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.36</text><rect class="empty" x="547" y="269" width="110" height="32" rx="3"/><text class="cat" x="200" y="319.0" text-anchor="end" dy="0.32em">Edge GNN + prompt</text><rect class="empty" x="211" y="303" width="110" height="32" rx="3"/><rect x="323" y="303" width="110" height="32" rx="3" style="fill:#256abf" data-tip="Edge GNN + prompt · qwen2.5:14b (8): AUPRC 0.64"/><text x="378.0" y="319.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">0.64</text><rect x="435" y="303" width="110" height="32" rx="3" style="fill:#6da7ec" data-tip="Edge GNN + prompt · qwen2.5:7b (5): AUPRC 0.35"/><text x="490.0" y="319.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">0.35</text><rect class="empty" x="547" y="303" width="110" height="32" rx="3"/></svg></div></section><section><h2>Ablations</h2><p>Change in test AUPRC of GNN + files when one input is removed (full model 0.58, 95% CI [0.23, 0.81]). Red means the input helps. A change smaller than the interval is not a finding.</p><div class="panel"><svg viewBox="0 0 326 272" role="img" aria-label="ablations" style="max-width:326px"><text class="cat" x="266.0" y="20" text-anchor="middle">Δ AUPRC</text><text class="cat" x="200" y="47.0" text-anchor="end" dy="0.32em">file edges</text><rect x="211" y="31" width="110" height="32" rx="3" style="fill:#9ec5f4" data-tip="without file edges: AUPRC 0.62 (full 0.575)"/><text x="266.0" y="47.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">+0.049</text><text class="cat" x="200" y="81.0" text-anchor="end" dy="0.32em">observations</text><rect x="211" y="65" width="110" height="32" rx="3" style="fill:#6da7ec" data-tip="without observations: AUPRC 0.68 (full 0.575)"/><text x="266.0" y="81.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">+0.106</text><text class="cat" x="200" y="115.0" text-anchor="end" dy="0.32em">injected text</text><rect x="211" y="99" width="110" height="32" rx="3" style="fill:#f5a9a8" data-tip="without injected text: AUPRC 0.52 (full 0.575)"/><text x="266.0" y="115.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">-0.055</text><text class="cat" x="200" y="149.0" text-anchor="end" dy="0.32em">copies edges</text><rect x="211" y="133" width="110" height="32" rx="3" style="fill:#b93636" data-tip="without copies edges: AUPRC 0.41 (full 0.575)"/><text x="266.0" y="149.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">-0.169</text><text class="cat" x="200" y="183.0" text-anchor="end" dy="0.32em">mentions edges</text><rect x="211" y="167" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="without mentions edges: AUPRC 0.58 (full 0.575)"/><text x="266.0" y="183.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">+0.009</text><text class="cat" x="200" y="217.0" text-anchor="end" dy="0.32em">tool features</text><rect x="211" y="201" width="110" height="32" rx="3" style="fill:#cde2fb" data-tip="without tool features: AUPRC 0.58 (full 0.575)"/><text x="266.0" y="217.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#0b0b0b">+0.008</text><text class="cat" x="200" y="251.0" text-anchor="end" dy="0.32em">attacker constants masked</text><rect x="211" y="235" width="110" height="32" rx="3" style="fill:#3987e5" data-tip="without attacker constants masked: AUPRC 0.70 (full 0.575)"/><text x="266.0" y="251.0" text-anchor="middle" dy="0.32em" class="cellv" style="fill:#ffffff">+0.125</text></svg></div></section><section><h2>Does the prompt embedding help? (fixed test split)</h2><div class="panel"><div class="tbl"><table class=""><thead><tr><th>comparison</th><th>reject actions</th><th>ΔAUPRC</th><th>95% paired CI</th><th>P(Δ ≤ 0)</th><th>Δ reject recall @ 1% FPR</th></tr></thead><tbody><tr><td>GNN + files + prompt vs GNN + files</td><td>13</td><td>-0.043</td><td>[-0.144, +0.028]</td><td>0.85</td><td>0.000</td></tr><tr><td>GNN + files + prompt vs zeroed prompt</td><td>13</td><td>-0.102</td><td>[-0.263, -0.016]</td><td>0.99</td><td>0.000</td></tr><tr><td>GNN + files + prompt vs shuffled prompt (other task, same suite)</td><td>13</td><td>-0.056</td><td>[-0.270, +0.099]</td><td>0.80</td><td>0.000</td></tr><tr><td>Edge GNN + prompt vs Edge GNN</td><td>13</td><td>-0.108</td><td>[-0.327, +0.061]</td><td>0.89</td><td>-0.154</td></tr><tr><td>Edge GNN + prompt vs zeroed prompt</td><td>13</td><td>-0.010</td><td>[-0.161, +0.182]</td><td>0.39</td><td>0.077</td></tr><tr><td>Edge GNN + prompt vs shuffled prompt (other task, same suite)</td><td>13</td><td>0.049</td><td>[-0.323, +0.340]</td><td>0.35</td><td>0.077</td></tr></tbody></table></div></div><p>Δ = guard minus the comparison, on the same traces; the interval and P(Δ ≤ 0) come from a paired bootstrap over traces (both guards scored on every resample), averaged over seeds. Reading rule: the prompt embedding helps only if the real prompt beats the model without it AND both controls (zeroed, shuffled) with an interval above 0. Beating the zeroed prompt but not the shuffled one means the gain is suite identity or extra capacity, not the meaning of the prompt.</p></section><section><h2>Data and leakage</h2><div class="panel"><div class="tbl"><table class=""><thead><tr><th>split</th><th>traces</th><th>attacked</th><th>followed attack</th><th>actions</th><th>reject</th><th>tasks</th><th>injection tasks</th></tr></thead><tbody><tr><td>train</td><td>8419</td><td>7340</td><td>512</td><td>26901</td><td>1053</td><td>68</td><td>24</td></tr><tr><td>val</td><td>627</td><td>380</td><td>63</td><td>2064</td><td>81</td><td>15</td><td>6</td></tr><tr><td>test</td><td>586</td><td>353</td><td>11</td><td>1900</td><td>13</td><td>14</td><td>5</td></tr></tbody></table></div><div class="tbl"><table class=""><thead><tr><th>overlap (must be 0)</th><th>count</th></tr></thead><tbody><tr><td>task_groups train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>injection_tasks train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>injected_texts train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>prompts train∩val</td><td><span class="pill ok">0</span></td></tr><tr><td>task_groups train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>injection_tasks train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>injected_texts train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>prompts train∩test</td><td><span class="pill ok">0</span></td></tr><tr><td>task_groups val∩test</td><td><span class="pill ok">0</span></td></tr></tbody></table></div><div class="tbl"><table class=""><thead><tr><th>check</th><th>value</th></tr></thead><tbody><tr><td>attacker_values_val</td><td>11</td></tr><tr><td>attacker_values_val_in_train</td><td>5</td></tr><tr><td>attacker_values_test</td><td>17</td></tr><tr><td>attacker_values_test_in_train</td><td>13</td></tr><tr><td>mean_actions_benign</td><td>3.48</td></tr><tr><td>mean_actions_attack</td><td>3.15</td></tr></tbody></table></div></div></section><details><summary>Markdown report</summary><pre style="white-space:pre-wrap"># GNN guard on tracegen traces (AgentDojo, with file nodes)
+
+Generated 2026-11-20 18:05 by `scripts/run_tracegen_gnn.py` · seeds [0] · epochs 10 · devices cuda:0,cuda:1 · git 5ac3541.
+
+Per-action approve/reject. A held-out split has unseen user tasks (and all their paraphrases) and unseen injection tasks. Scores are mean ± std over seeds. Each guard uses the epoch with the best validation AUPRC and the reject threshold with the best validation reject F1, so validation scores are optimistic and test is the unbiased number. A set with no reject action has no AUPRC, recall or macro-F1 (shown as –).
+
+## Data
+
+| split | traces | benign | attacked | followed attack | security true | actions | reject | tasks | injection tasks |
+|---|---|---|---|---|---|---|---|---|---|
+| train | 8419 | 1079 | 7340 | 512 | 426 | 26901 | 1053 | 68 | 24 |
+| val | 627 | 247 | 380 | 63 | 62 | 2064 | 81 | 15 | 6 |
+| test | 586 | 233 | 353 | 11 | 7 | 1900 | 13 | 14 | 5 |
+
+Records read: 10099; dropped with no tool call: 447; attack runs outside the fixed split because the injection task is in another split (used by the cross-validation only): 20.
+
+Calls dropped as repeats of an earlier call with the same arguments and result: 7507. Runs cut at the length cap: 12 (104 calls, 2 of them reject).
+
+A call is `reject` only if it matches an attacker call, comes after a tool result that carried the injected text, and is not a call that benign runs of the same user task make.
+
+## Fixed split: test
+
+13 reject actions of 1900 (586 traces). Chance AUPRC is the reject share, 0.007.
+
+| guard | AUPRC | 95% CI | reject recall @ 1% FPR | 95% CI | reject recall | approve FPR | macro-F1 | ASR no guard → guard | benign traces blocked |
+|---|---|---|---|---|---|---|---|---|---|
+| Majority | 0.01 | [0.00, 0.01] | 0.00 | [0.00, 0.00] | 0.00 | 0.00 | 0.50 | 0.03 → 0.03 | 0.00 |
+| Tool lookup | 0.01 | [0.00, 0.03] | 0.00 | [0.00, 0.00] | 0.00 | 0.02 | 0.49 | 0.03 → 0.03 | 0.05 |
+| MLP (no graph) | 0.22 | [0.10, 0.47] | 0.62 | [0.21, 0.86] | 0.23 | 0.01 | 0.61 | 0.03 → 0.02 | 0.02 |
+| GNN | 0.55 | [0.24, 0.80] | 0.62 | [0.33, 0.88] | 0.61 | 0.00 | 0.82 | 0.03 → 0.01 | 0.00 |
+| GNN + files | 0.58 | [0.23, 0.81] | 0.62 | [0.29, 0.88] | 0.61 | 0.01 | 0.74 | 0.03 → 0.01 | 0.00 |
+| Transformer | 0.62 | [0.34, 0.89] | 0.77 | [0.50, 1.00] | 0.61 | 0.00 | 0.85 | 0.03 → 0.01 | 0.00 |
+| Edge GNN | 0.53 | [0.27, 0.80] | 0.69 | [0.43, 0.93] | 0.61 | 0.00 | 0.82 | 0.03 → 0.01 | 0.00 |
+| GNN + files + prompt | 0.53 | [0.20, 0.77] | 0.62 | [0.25, 0.88] | 0.39 | 0.00 | 0.74 | 0.03 → 0.02 | 0.00 |
+| Edge GNN + prompt | 0.43 | [0.20, 0.70] | 0.54 | [0.28, 0.85] | 0.54 | 0.01 | 0.73 | 0.03 → 0.02 | 0.00 |
+
+AUPRC and reject recall at 1% approve FPR use the scores (no threshold); the interval is a bootstrap over traces, averaged over seeds. The last five columns use the reject threshold tuned on validation.
+
+## Fixed split: validation (used for model selection)
+
+81 reject actions of 2064 (627 traces). Chance AUPRC is the reject share, 0.039.
+
+| guard | AUPRC | 95% CI | reject recall @ 1% FPR | 95% CI | reject recall | approve FPR | macro-F1 | ASR no guard → guard | benign traces blocked |
+|---|---|---|---|---|---|---|---|---|---|
+| Majority | 0.04 | [0.03, 0.05] | 0.00 | [0.00, 0.00] | 0.00 | 0.00 | 0.49 | 0.17 → 0.17 | 0.00 |
+| Tool lookup | 0.56 | [0.47, 0.65] | 0.63 | [0.19, 0.72] | 0.63 | 0.01 | 0.84 | 0.17 → 0.07 | 0.02 |
+| MLP (no graph) | 0.63 | [0.55, 0.73] | 0.58 | [0.49, 0.69] | 0.58 | 0.00 | 0.85 | 0.17 → 0.08 | 0.00 |
+| GNN | 0.75 | [0.66, 0.83] | 0.68 | [0.58, 0.78] | 0.67 | 0.00 | 0.88 | 0.17 → 0.07 | 0.00 |
+| GNN + files | 0.76 | [0.67, 0.84] | 0.67 | [0.56, 0.77] | 0.64 | 0.00 | 0.87 | 0.17 → 0.07 | 0.00 |
+| Transformer | 0.62 | [0.54, 0.70] | 0.49 | [0.38, 0.60] | 0.49 | 0.01 | 0.79 | 0.17 → 0.10 | 0.00 |
+| Edge GNN | 0.72 | [0.63, 0.80] | 0.63 | [0.54, 0.75] | 0.62 | 0.00 | 0.86 | 0.17 → 0.07 | 0.00 |
+| GNN + files + prompt | 0.74 | [0.65, 0.82] | 0.57 | [0.49, 0.74] | 0.56 | 0.00 | 0.85 | 0.17 → 0.08 | 0.00 |
+| Edge GNN + prompt | 0.65 | [0.53, 0.75] | 0.56 | [0.41, 0.67] | 0.93 | 0.03 | 0.83 | 0.17 → 0.01 | 0.02 |
+
+AUPRC and reject recall at 1% approve FPR use the scores (no threshold); the interval is a bootstrap over traces, averaged over seeds. The last five columns use the reject threshold tuned on validation.
+
+## Model selection (fixed split)
+
+| guard | best epoch | reject threshold | validation AUPRC |
+|---|---|---|---|
+| Majority | – | 0.50 | – |
+| Tool lookup | – | 0.45 | – |
+| MLP (no graph) | 9 | 0.95 | 0.63 |
+| GNN | 6 | 1.00 | 0.75 |
+| GNN + files | 2 | 0.99 | 0.76 |
+| Transformer | 2 | 0.96 | 0.62 |
+| Edge GNN | 1 | 0.96 | 0.72 |
+| GNN + files + prompt | 8 | 0.98 | 0.74 |
+| Edge GNN + prompt | 1 | 0.77 | 0.65 |
+
+## Fixed split: test AUPRC per suite
+
+| guard | banking (0 reject) | slack (7 reject) | travel (3 reject) | workspace (3 reject) |
+|---|---|---|---|---|
+| Majority | – | 0.02 | 0.00 | 0.00 |
+| Tool lookup | – | 0.02 | 0.75 | 0.01 |
+| MLP (no graph) | – | 0.24 | 1.00 | 0.77 |
+| GNN | – | 0.59 | 1.00 | 0.67 |
+| GNN + files | – | 0.74 | 0.72 | 0.71 |
+| Transformer | – | 0.60 | 1.00 | 0.73 |
+| Edge GNN | – | 0.67 | 0.92 | 0.50 |
+| GNN + files + prompt | – | 0.75 | 0.47 | 0.51 |
+| Edge GNN + prompt | – | 0.73 | 0.59 | 0.18 |
+
+## Fixed split: test AUPRC per agent
+
+| guard | llama3.1:8b (0 reject) | qwen2.5:14b (8 reject) | qwen2.5:7b (5 reject) | qwen3.8:27b (0 reject) |
+|---|---|---|---|---|
+| Majority | – | 0.01 | 0.01 | – |
+| Tool lookup | – | 0.02 | 0.03 | – |
+| MLP (no graph) | – | 0.43 | 0.15 | – |
+| GNN | – | 0.68 | 0.47 | – |
+| GNN + files | – | 0.75 | 0.33 | – |
+| Transformer | – | 0.72 | 0.62 | – |
+| Edge GNN | – | 0.65 | 0.40 | – |
+| GNN + files + prompt | – | 0.76 | 0.36 | – |
+| Edge GNN + prompt | – | 0.64 | 0.35 | – |
+
+## Ablations (GNN + files, test)
+
+Full model: AUPRC 0.58, 95% CI [0.23, 0.81]. A change smaller than the interval is not a finding.
+
+| removed | AUPRC | Δ vs full | 95% CI | reject recall @ 1% FPR |
+|---|---|---|---|---|
+| file edges | 0.62 | +0.049 | [0.28, 0.86] | 0.69 |
+| observations | 0.68 | +0.106 | [0.37, 0.95] | 0.85 |
+| injected text | 0.52 | -0.055 | [0.23, 0.79] | 0.69 |
+| copies edges | 0.41 | -0.169 | [0.16, 0.71] | 0.77 |
+| mentions edges | 0.58 | +0.009 | [0.25, 0.82] | 0.62 |
+| tool features | 0.58 | +0.008 | [0.28, 0.81] | 0.69 |
+| attacker constants masked | 0.70 | +0.125 | [0.41, 0.91] | 0.77 |
+
+## Ablations (Edge GNN, test)
+
+Full model: AUPRC 0.53, 95% CI [0.27, 0.80]. A change smaller than the interval is not a finding.
+
+| removed | AUPRC | Δ vs full | 95% CI | reject recall @ 1% FPR |
+|---|---|---|---|---|
+| reverse edges (directed only) | 0.24 | -0.291 | [0.09, 0.62] | 0.54 |
+| entity nodes | 0.45 | -0.087 | [0.22, 0.76] | 0.46 |
+| returned edges | 0.54 | +0.001 | [0.25, 0.83] | 0.77 |
+| task mentions edges | 0.32 | -0.218 | [0.11, 0.63] | 0.38 |
+| observations | 0.26 | -0.277 | [0.06, 0.58] | 0.38 |
+| attacker constants masked | 0.35 | -0.186 | [0.04, 0.62] | 0.31 |
+
+## Does the prompt embedding help?
+
+Frozen sentence embedding of the user prompt (src/prompt_embed.py) added to the task node and the readout of GNN + files and Edge GNN. Controls: the same guard with an all-zero embedding, and with the prompt of another user task of the same suite.
+
+### Fixed split: test
+
+| comparison | reject actions | ΔAUPRC | 95% paired CI | P(Δ ≤ 0) | Δ reject recall @ 1% FPR |
+|---|---|---|---|---|---|
+| GNN + files + prompt vs GNN + files | 13 | -0.043 | [-0.144, +0.028] | 0.85 | 0.000 |
+| GNN + files + prompt vs zeroed prompt | 13 | -0.102 | [-0.263, -0.016] | 0.99 | 0.000 |
+| GNN + files + prompt vs shuffled prompt (other task, same suite) | 13 | -0.056 | [-0.270, +0.099] | 0.80 | 0.000 |
+| Edge GNN + prompt vs Edge GNN | 13 | -0.108 | [-0.327, +0.061] | 0.89 | -0.154 |
+| Edge GNN + prompt vs zeroed prompt | 13 | -0.010 | [-0.161, +0.182] | 0.39 | 0.077 |
+| Edge GNN + prompt vs shuffled prompt (other task, same suite) | 13 | 0.049 | [-0.323, +0.340] | 0.35 | 0.077 |
+
+ΔAUPRC per suite:
+
+| comparison | banking | slack | travel | workspace |
+|---|---|---|---|---|
+| GNN + files + prompt vs GNN + files | – | 0.011 | -0.248 | -0.209 |
+| GNN + files + prompt vs zeroed prompt | – | 0.011 | 0.087 | -0.265 |
+| GNN + files + prompt vs shuffled prompt (other task, same suite) | – | 0.116 | -0.159 | -0.415 |
+| Edge GNN + prompt vs Edge GNN | – | 0.059 | -0.329 | -0.322 |
+| Edge GNN + prompt vs zeroed prompt | – | 0.012 | 0.211 | 0.127 |
+| Edge GNN + prompt vs shuffled prompt (other task, same suite) | – | 0.397 | -0.279 | -0.232 |
+
+Δ = guard minus the comparison, on the same traces; the interval and P(Δ ≤ 0) come from a paired bootstrap over traces (both guards scored on every resample), averaged over seeds. Reading rule: the prompt embedding helps only if the real prompt beats the model without it AND both controls (zeroed, shuffled) with an interval above 0. Beating the zeroed prompt but not the shuffled one means the gain is suite identity or extra capacity, not the meaning of the prompt.
+
+## Leakage audit
+
+Hard overlaps (must be 0): all 0.
+
+| overlap | count |
+|---|---|
+| task_groups train∩val | 0 |
+| injection_tasks train∩val | 0 |
+| injected_texts train∩val | 0 |
+| prompts train∩val | 0 |
+| task_groups train∩test | 0 |
+| injection_tasks train∩test | 0 |
+| injected_texts train∩test | 0 |
+| prompts train∩test | 0 |
+| task_groups val∩test | 0 |
+
+| check | value |
+|---|---|
+| attacker_values_val | 11 |
+| attacker_values_val_in_train | 5 |
+| attacker_values_test | 17 |
+| attacker_values_test_in_train | 13 |
+| mean_actions_benign | 3.48 |
+| mean_actions_attack | 3.15 |
+
+`attacker_values_*_in_train` counts attacker argument strings of held-out attacks that also occur in training actions or observations (AgentDojo reuses constants such as the banking attacker IBAN across injection tasks). The `attacker constants masked` ablation shows how much the guard depends on them.
+
+## Provenance
+
+Runs reused: 1, trained: 15, failed: 0.
+Platform: Windows-11-10.0.26300-SP0, Python 3.14.4.
+</pre></details><footer>scripts/run_tracegen_gnn.py · 2026-11-20 18:05</footer></main><div id="tip" hidden></div><script>
+(function(){var t=document.getElementById('tip');
+function show(e){var s=e.target.closest('[data-tip]');if(!s){t.hidden=true;return;}
+t.textContent=s.getAttribute('data-tip');t.hidden=false;var x=e.clientX+14,y=e.clientY+14;
+var r=t.getBoundingClientRect();if(x+r.width>innerWidth-8)x=e.clientX-r.width-14;if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
+t.style.left=x+'px';t.style.top=y+'px';}
+document.addEventListener('mousemove',show);document.addEventListener('mouseleave',function(){t.hidden=true;});})();
+</script></body></html>

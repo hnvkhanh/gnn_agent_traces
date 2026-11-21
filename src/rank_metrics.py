@@ -51,6 +51,33 @@ def threshold_for_f1(y, s):
     return bt
 
 
+def paired_delta(y, sa, sb, lens, n_boot=200, seed=0, fpr=FPR):
+    """metric(sa) - metric(sb) on the same actions (two guards scoring the same traces), for AUPRC and recall at FPR.
+    The interval is a paired bootstrap: each resample of traces scores both guards. `p_le0` is the share of resamples
+    where the AUPRC difference is <= 0 (small = guard a is better). Values are None without a reject action."""
+    y, sa, sb = np.asarray(y, dtype=int), np.asarray(sa, dtype=float), np.asarray(sb, dtype=float)
+    sub = lambda f, *a: None if any(v is None for v in a) else f(*a)
+    d = lambda m, yy, I=None: sub(lambda p, q: p - q, m(yy, sa if I is None else sa[I]), m(yy, sb if I is None else sb[I]))
+    out = dict(d_auprc=d(average_precision, y), d_recall_at_fpr=d(lambda yy, s: recall_at_fpr(yy, s, fpr), y),
+               d_auprc_ci=None, d_recall_at_fpr_ci=None, p_le0=None)
+    if out["d_auprc"] is None or not n_boot or y.all():
+        return out
+    ends = np.cumsum(lens)
+    idx = [np.arange(e - n, e) for e, n in zip(ends, lens)]
+    rng, ap, rc = np.random.default_rng(seed), [], []
+    for _ in range(n_boot):
+        I = np.concatenate([idx[t] for t in rng.integers(0, len(idx), len(idx))])
+        yy = y[I]
+        if yy.any() and not yy.all():
+            ap.append(d(average_precision, yy, I))
+            rc.append(d(lambda q, s: recall_at_fpr(q, s, fpr), yy, I))
+    if ap:
+        out["d_auprc_ci"] = [float(v) for v in np.percentile(ap, [2.5, 97.5])]
+        out["d_recall_at_fpr_ci"] = [float(v) for v in np.percentile(rc, [2.5, 97.5])]
+        out["p_le0"] = float(np.mean(np.asarray(ap) <= 0))
+    return out
+
+
 def rank_report(y, s, lens, n_boot=200, seed=0, fpr=FPR):
     y, s = np.asarray(y, dtype=int), np.asarray(s, dtype=float)
     out = dict(auprc=average_precision(y, s), recall_at_fpr=recall_at_fpr(y, s, fpr), fpr=fpr,

@@ -14,6 +14,7 @@ results/.run_experiments.lock
 results/continual/.lock
 data/tracegen/logs/
 data/tracegen/tracegen.log
+data/cache/
 
 
 # tracegen.agentlab
