@@ -17,7 +17,10 @@ python scripts/run_tracegen_gnn.py --seeds 1 --epochs 3 --devices cpu --outdir /
   ground-truth calls (recorded by tracegen as `injection_ground_truth_calls`), keyed on the attacker-chosen argument
   values. Values that the user task uses too, such as the transfer date, are ignored. The call must also come after a
   tool result that carried the injected text, and must not be a call that benign runs of the same user task make.
-  Every other call, and every call of a benign run, is `approve`. Nothing is replayed synthetically, so an attack the
+  Every other call, and every call of a benign run, is `approve`. AgentDojo gives workspace injection tasks 6–13 no
+  ground-truth calls (bulk exfiltration, checked only by `security()`). For them, a `send_email` naming the attacker
+  address and a `delete_email` of that mail are `reject` (`EMPTY_GT_RECIPIENT`, since 2026-11-22). Results produced
+  before that date used the old labels; see [the workspace finding](../findings/2026-11-22-workspace-auprc-gap.md). Nothing is replayed synthetically, so an attack the
   agent ignores adds no `reject`.
 - **Events**: a call that repeats an earlier call of the run with the same arguments and result is dropped, and a run
   is cut after 30 calls (`MAX_EVENTS`). The report counts both.
@@ -63,6 +66,10 @@ New since the first GNN + files results:
   `STABLE_GUARDS` is only `["edge-gnn"]`; the other guards keep the old settings. `--stable` applies it to every
   guard and `--stable-guards=` to none. Compare runs with `python scripts/compare_training.py <dirs>`; the stored
   comparison is `results/training_compare.json`.
+- **Per-suite gap.** Workspace AUPRC (0.10) is far below banking (0.73) mostly because of its 0.7% reject share
+  and because AgentDojo gives workspace injection tasks 6–13 no ground-truth calls, so their attacks are labelled
+  `approve`. Those attacks are now labelled by a rule (labels v2; workspace rejects 88 → 395). See
+  [the workspace finding](../findings/2026-11-22-workspace-auprc-gap.md) and `scripts/suite_gap.py`.
 - **Open:** the same comparison for the transformer (`results/tracegen_all_repo20_tf`, `results/tracegen_all_stable_tf`)
   was still running at the last commit. Rerunning the same command resumes it.
 - Results: `results/tracegen_all_edge/` (first run), `results/tracegen_all_repo20/` (old settings) and

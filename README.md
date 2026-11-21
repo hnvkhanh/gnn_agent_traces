@@ -202,6 +202,8 @@ One JSON object per line, with these fields:
 | [docs/AGENTLAB.md](docs/AGENTLAB.md) | `python -m tracegen.agentlab`: AgentLAB tool-chaining attacks in SHADE-Arena environments |
 | [docs/TRACEGEN_GNN.md](docs/TRACEGEN_GNN.md) | `scripts/run_tracegen_gnn.py`: guards (GNN, GNN + files, edge GNN, transformer) on tracegen traces, CV protocol, latest progress and stable training |
 | [docs/GRAPH.md](docs/GRAPH.md) | Graph schema, node and edge types |
+| [HISTORY.md](HISTORY.md) | Work log: every change, its results and the prioritized Next list (change → track → analyze → decide next) |
+| [findings/](findings/README.md) | One file per investigation of results (e.g. the workspace AUPRC gap), with an index |
 
 ## Cross-LLM transfer experiment
 
