@@ -22,3 +22,7 @@ external/
 data/agentlab/logs/
 data/agentlab/tracegen.log
 data/agentlab_smoke/
+
+# large raw data; committed gzipped instead (gunzip -k to restore)
+data/tracegen_all/traces.jsonl
+data/tracegen_all/splits/train.jsonl
