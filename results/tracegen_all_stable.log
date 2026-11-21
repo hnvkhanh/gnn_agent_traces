@@ -1,0 +1,515 @@
+﻿python.exe : C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: 
+FutureWarning: `torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or 
+`torch.export`.
+At line:1 char:663
++ ... repo20.log; & $py scripts\run_tracegen_gnn.py @common --outdir result ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\khanh\...`torch.export`.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+traces: {"train": [8419, 7340, 1053], "val": [627, 380, 81], "test": [586, 353, 13]} (traces, attacked, reject actions)
+78 runs: 0 reused, 78 to train on cuda:0,cuda:0,cuda:1,cuda:1
+prompt embeddings (sentence-transformers/all-MiniLM-L6-v2): 420 distinct prompts -> C:\Users\khanh\Documents\gnn_agent_traces\data\cache\prompt_emb_sentence-transformers_all-MiniLM-L6-v2.pt
+progress file: results\tracegen_all_stable\progress.json
+[cuda:0] start main                              seed 0  (elapsed 0:00:00)
+[cuda:0] start main                              seed 1  (elapsed 0:00:00)
+[cuda:1] start main                              seed 2  (elapsed 0:00:00)
+[cuda:1] start cv/5/0-0                          seed 0  (elapsed 0:00:00)
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:365: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:365: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:365: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:365: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+[cuda:1] done  cv/5/0-0                          seed 0    361s  (1/78, 1% of work)  elapsed 0:06:09  ETA 9:34:53  (~07:06)
+[cuda:1] start cv/5/0-0                          seed 1  (elapsed 0:06:09)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-0                          seed 1    238s  (2/78, 2% of work)  elapsed 0:10:08  ETA 7:47:39  (~05:23)
+[cuda:1] start cv/5/0-0                          seed 2  (elapsed 0:10:08)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  main                              seed 0    673s  (3/78, 5% of work)  elapsed 0:11:22  ETA 3:45:16  (~01:22)
+[cuda:0] start cv/5/0-1                          seed 0  (elapsed 0:11:22)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  main                              seed 1    674s  (4/78, 8% of work)  elapsed 0:11:22  ETA 2:20:38  (~23:57)
+[cuda:0] start cv/5/0-1                          seed 1  (elapsed 0:11:22)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  main                              seed 2    678s  (5/78, 10% of work)  elapsed 0:11:26  ETA 1:41:03  (~23:17)
+[cuda:1] start cv/5/0-1                          seed 2  (elapsed 0:11:26)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-0                          seed 2    222s  (6/78, 11% of work)  elapsed 0:13:50  ETA 1:49:28  (~23:28)
+[cuda:1] start cv/5/0-2                          seed 0  (elapsed 0:13:50)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/0-1                          seed 0    232s  (7/78, 12% of work)  elapsed 0:15:13  ETA 1:47:52  (~23:28)
+[cuda:0] start cv/5/0-2                          seed 1  (elapsed 0:15:13)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/0-1                          seed 1    234s  (8/78, 14% of work)  elapsed 0:15:16  ETA 1:37:46  (~23:18)
+[cuda:0] start cv/5/0-2                          seed 2  (elapsed 0:15:16)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-1                          seed 2    235s  (9/78, 15% of work)  elapsed 0:15:21  ETA 1:29:20  (~23:10)
+[cuda:1] start cv/5/0-3                          seed 0  (elapsed 0:15:21)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-2                          seed 0    231s  (10/78, 16% of work)  elapsed 0:17:41  ETA 1:34:15  (~23:17)
+[cuda:1] start cv/5/0-3                          seed 1  (elapsed 0:17:41)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/0-2                          seed 1    223s  (11/78, 17% of work)  elapsed 0:18:57  ETA 1:32:52  (~23:17)
+[cuda:0] start cv/5/0-3                          seed 2  (elapsed 0:18:57)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/0-2                          seed 2    223s  (12/78, 18% of work)  elapsed 0:18:59  ETA 1:25:58  (~23:10)
+[cuda:0] start cv/5/0-4                          seed 0  (elapsed 0:18:59)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-3                          seed 0    225s  (13/78, 19% of work)  elapsed 0:19:05  ETA 1:20:25  (~23:05)
+[cuda:1] start cv/5/0-4                          seed 1  (elapsed 0:19:05)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-3                          seed 1    215s  (14/78, 20% of work)  elapsed 0:21:17  ETA 1:23:39  (~23:10)
+[cuda:1] start cv/5/0-4                          seed 2  (elapsed 0:21:17)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/0-3                          seed 2    206s  (15/78, 21% of work)  elapsed 0:22:24  ETA 1:22:23  (~23:10)
+[cuda:0] start cv/5/1-0                          seed 0  (elapsed 0:22:24)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/0-4                          seed 0    213s  (16/78, 22% of work)  elapsed 0:22:33  ETA 1:17:36  (~23:05)
+[cuda:0] start cv/5/1-0                          seed 1  (elapsed 0:22:33)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-4                          seed 1    218s  (17/78, 24% of work)  elapsed 0:22:44  ETA 1:13:21  (~23:01)
+[cuda:1] start cv/5/1-0                          seed 2  (elapsed 0:22:44)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/0-4                          seed 2    234s  (18/78, 25% of work)  elapsed 0:25:11  ETA 1:16:21  (~23:07)
+[cuda:1] start cv/5/1-1                          seed 0  (elapsed 0:25:11)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/1-0                          seed 0    242s  (19/78, 26% of work)  elapsed 0:26:26  ETA 1:15:22  (~23:07)
+[cuda:0] start cv/5/1-1                          seed 1  (elapsed 0:26:26)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/1-0                          seed 1    243s  (20/78, 27% of work)  elapsed 0:26:36  ETA 1:11:30  (~23:03)
+[cuda:0] start cv/5/1-1                          seed 2  (elapsed 0:26:36)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/1-0                          seed 2    247s  (21/78, 28% of work)  elapsed 0:26:51  ETA 1:08:08  (~23:00)
+[cuda:1] start cv/5/1-2                          seed 0  (elapsed 0:26:51)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/1-1                          seed 0    277s  (22/78, 30% of work)  elapsed 0:29:49  ETA 1:11:04  (~23:06)
+[cuda:1] start cv/5/1-2                          seed 1  (elapsed 0:29:49)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/1-1                          seed 1    267s  (23/78, 31% of work)  elapsed 0:30:53  ETA 1:09:15  (~23:05)
+[cuda:0] start cv/5/1-2                          seed 2  (elapsed 0:30:53)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/1-1                          seed 2    268s  (24/78, 32% of work)  elapsed 0:31:05  ETA 1:05:39  (~23:02)
+[cuda:0] start cv/5/1-3                          seed 0  (elapsed 0:31:05)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/1-2                          seed 0    266s  (25/78, 33% of work)  elapsed 0:31:17  ETA 1:02:21  (~22:59)
+[cuda:1] start cv/5/1-3                          seed 1  (elapsed 0:31:17)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/1-2                          seed 1    262s  (26/78, 35% of work)  elapsed 0:34:11  ETA 1:04:19  (~23:04)
+[cuda:1] start cv/5/1-3                          seed 2  (elapsed 0:34:11)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/1-3                          seed 0    243s  (27/78, 36% of work)  elapsed 0:35:07  ETA 1:02:44  (~23:03)
+[cuda:0] done  cv/5/1-2                          seed 2    254s  (28/78, 37% of work)  elapsed 0:35:08  ETA 0:59:21  (~22:59)
+[cuda:0] start cv/5/1-4                          seed 0  (elapsed 0:35:08)
+[cuda:0] start cv/5/1-4                          seed 1  (elapsed 0:35:08)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/1-3                          seed 1    241s  (29/78, 38% of work)  elapsed 0:35:19  ETA 0:56:43  (~22:57)
+[cuda:1] start cv/5/1-4                          seed 2  (elapsed 0:35:19)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/1-3                          seed 2    228s  (30/78, 40% of work)  elapsed 0:37:59  ETA 0:58:02  (~23:01)
+[cuda:1] start cv/5/2-0                          seed 0  (elapsed 0:37:59)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/1-4                          seed 1    228s  (31/78, 41% of work)  elapsed 0:38:56  ETA 0:56:31  (~23:00)
+[cuda:0] done  cv/5/1-4                          seed 0    228s  (32/78, 42% of work)  elapsed 0:38:56  ETA 0:53:43  (~22:58)
+[cuda:0] start cv/5/2-0                          seed 1  (elapsed 0:38:56)
+[cuda:0] start cv/5/2-0                          seed 2  (elapsed 0:38:56)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/1-4                          seed 2    227s  (33/78, 43% of work)  elapsed 0:39:07  ETA 0:51:18  (~22:55)
+[cuda:1] start cv/5/2-1                          seed 0  (elapsed 0:39:07)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/2-0                          seed 0    239s  (34/78, 44% of work)  elapsed 0:41:58  ETA 0:52:23  (~22:59)
+[cuda:1] start cv/5/2-1                          seed 1  (elapsed 0:41:58)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/2-0                          seed 2    238s  (35/78, 46% of work)  elapsed 0:42:55  ETA 0:50:58  (~22:59)
+[cuda:0] start cv/5/2-1                          seed 2  (elapsed 0:42:55)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/2-0                          seed 1    239s  (36/78, 47% of work)  elapsed 0:42:55  ETA 0:48:31  (~22:56)
+[cuda:0] start cv/5/2-2                          seed 0  (elapsed 0:42:55)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/2-1                          seed 0    264s  (37/78, 48% of work)  elapsed 0:43:31  ETA 0:46:32  (~22:55)
+[cuda:1] start cv/5/2-2                          seed 1  (elapsed 0:43:31)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/2-1                          seed 1    265s  (38/78, 50% of work)  elapsed 0:46:24  ETA 0:46:55  (~22:58)
+[cuda:1] start cv/5/2-2                          seed 2  (elapsed 0:46:24)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/2-1                          seed 2    260s  (39/78, 51% of work)  elapsed 0:47:16  ETA 0:45:12  (~22:57)
+[cuda:0] start cv/5/2-3                          seed 0  (elapsed 0:47:16)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/2-2                          seed 0    263s  (40/78, 52% of work)  elapsed 0:47:19  ETA 0:42:47  (~22:55)
+[cuda:0] start cv/5/2-3                          seed 1  (elapsed 0:47:19)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/2-2                          seed 1    265s  (41/78, 54% of work)  elapsed 0:47:57  ETA 0:41:00  (~22:54)
+[cuda:1] start cv/5/2-3                          seed 2  (elapsed 0:47:57)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/2-2                          seed 2    259s  (42/78, 55% of work)  elapsed 0:50:43  ETA 0:40:59  (~22:57)
+[cuda:1] start cv/5/2-4                          seed 0  (elapsed 0:50:43)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/2-3                          seed 0    232s  (43/78, 57% of work)  elapsed 0:51:08  ETA 0:39:16  (~22:55)
+[cuda:0] start cv/5/2-4                          seed 1  (elapsed 0:51:08)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/2-3                          seed 1    231s  (44/78, 58% of work)  elapsed 0:51:10  ETA 0:37:19  (~22:53)
+[cuda:0] start cv/5/2-4                          seed 2  (elapsed 0:51:10)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/2-3                          seed 2    233s  (45/78, 59% of work)  elapsed 0:51:51  ETA 0:35:54  (~22:53)
+[cuda:1] start cv/5/3-0                          seed 0  (elapsed 0:51:51)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/2-4                          seed 0    244s  (46/78, 60% of work)  elapsed 0:54:48  ETA 0:35:57  (~22:56)
+[cuda:1] start cv/5/3-0                          seed 1  (elapsed 0:54:48)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/2-4                          seed 1    244s  (47/78, 62% of work)  elapsed 0:55:13  ETA 0:34:17  (~22:55)
+[cuda:0] done  cv/5/2-4                          seed 2    242s  (48/78, 63% of work)  elapsed 0:55:13  ETA 0:32:26  (~22:53)
+[cuda:0] start cv/5/3-0                          seed 2  (elapsed 0:55:13)
+[cuda:0] start cv/5/3-1                          seed 0  (elapsed 0:55:13)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-0                          seed 0    243s  (49/78, 64% of work)  elapsed 0:55:54  ETA 0:31:06  (~22:52)
+[cuda:1] start cv/5/3-1                          seed 1  (elapsed 0:55:54)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-0                          seed 1    245s  (50/78, 66% of work)  elapsed 0:58:53  ETA 0:30:59  (~22:55)
+[cuda:1] start cv/5/3-1                          seed 2  (elapsed 0:58:53)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/3-0                          seed 2    241s  (51/78, 67% of work)  elapsed 0:59:14  ETA 0:29:28  (~22:54)
+[cuda:0] start cv/5/3-2                          seed 0  (elapsed 0:59:14)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/3-1                          seed 0    266s  (52/78, 68% of work)  elapsed 0:59:40  ETA 0:27:48  (~22:52)
+[cuda:0] start cv/5/3-2                          seed 1  (elapsed 0:59:40)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-1                          seed 1    271s  (53/78, 70% of work)  elapsed 1:00:25  ETA 0:26:20  (~22:52)
+[cuda:1] start cv/5/3-2                          seed 2  (elapsed 1:00:25)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-1                          seed 2    271s  (54/78, 71% of work)  elapsed 1:03:24  ETA 0:25:47  (~22:54)
+[cuda:1] start cv/5/3-3                          seed 0  (elapsed 1:03:24)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/3-2                          seed 0    262s  (55/78, 72% of work)  elapsed 1:03:37  ETA 0:24:09  (~22:53)
+[cuda:0] start cv/5/3-3                          seed 1  (elapsed 1:03:37)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/3-2                          seed 1    262s  (56/78, 74% of work)  elapsed 1:04:02  ETA 0:22:38  (~22:52)
+[cuda:0] start cv/5/3-3                          seed 2  (elapsed 1:04:02)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-2                          seed 2    264s  (57/78, 75% of work)  elapsed 1:04:50  ETA 0:21:17  (~22:51)
+[cuda:1] start cv/5/3-4                          seed 0  (elapsed 1:04:50)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-3                          seed 0    231s  (58/78, 76% of work)  elapsed 1:07:15  ETA 0:20:38  (~22:53)
+[cuda:1] start cv/5/3-4                          seed 1  (elapsed 1:07:15)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/3-3                          seed 1    227s  (59/78, 78% of work)  elapsed 1:07:24  ETA 0:19:16  (~22:52)
+[cuda:0] start cv/5/3-4                          seed 2  (elapsed 1:07:24)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/3-3                          seed 2    225s  (60/78, 79% of work)  elapsed 1:07:48  ETA 0:18:00  (~22:51)
+[cuda:0] start cv/5/4-0                          seed 0  (elapsed 1:07:48)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-4                          seed 0    240s  (61/78, 80% of work)  elapsed 1:08:51  ETA 0:16:50  (~22:51)
+[cuda:1] start cv/5/4-0                          seed 1  (elapsed 1:08:51)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/4-0                          seed 0    209s  (62/78, 81% of work)  elapsed 1:11:18  ETA 0:16:18  (~22:53)
+[cuda:0] start cv/5/4-0                          seed 2  (elapsed 1:11:18)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/3-4                          seed 1    250s  (63/78, 83% of work)  elapsed 1:11:26  ETA 0:14:55  (~22:51)
+[cuda:1] start cv/5/4-1                          seed 0  (elapsed 1:11:26)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/3-4                          seed 2    248s  (64/78, 84% of work)  elapsed 1:11:33  ETA 0:13:35  (~22:50)
+[cuda:0] start cv/5/4-1                          seed 1  (elapsed 1:11:33)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/4-0                          seed 1    213s  (65/78, 85% of work)  elapsed 1:12:24  ETA 0:12:41  (~22:50)
+[cuda:1] start cv/5/4-1                          seed 2  (elapsed 1:12:24)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/4-0                          seed 2    224s  (66/78, 86% of work)  elapsed 1:15:03  ETA 0:12:04  (~22:52)
+[cuda:0] start cv/5/4-2                          seed 0  (elapsed 1:15:03)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/4-1                          seed 0    252s  (67/78, 87% of work)  elapsed 1:15:38  ETA 0:10:57  (~22:52)
+[cuda:1] start cv/5/4-2                          seed 1  (elapsed 1:15:38)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/4-1                          seed 1    249s  (68/78, 88% of work)  elapsed 1:15:43  ETA 0:09:48  (~22:51)
+[cuda:0] start cv/5/4-2                          seed 2  (elapsed 1:15:43)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/4-1                          seed 2    253s  (69/78, 90% of work)  elapsed 1:16:38  ETA 0:08:45  (~22:50)
+[cuda:1] start cv/5/4-3                          seed 0  (elapsed 1:16:38)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/4-2                          seed 0    246s  (70/78, 91% of work)  elapsed 1:19:10  ETA 0:07:53  (~22:52)
+[cuda:0] start cv/5/4-3                          seed 1  (elapsed 1:19:10)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/4-2                          seed 1    248s  (71/78, 92% of work)  elapsed 1:19:47  ETA 0:06:48  (~22:52)
+[cuda:0] done  cv/5/4-2                          seed 2    244s  (72/78, 93% of work)  elapsed 1:19:48  ETA 0:05:41  (~22:50)
+[cuda:1] start cv/5/4-3                          seed 2  (elapsed 1:19:48)
+[cuda:0] start cv/5/4-4                          seed 0  (elapsed 1:19:48)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'tool', 
+'task', 'file', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'tool', 'task', 'memory'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/4-3                          seed 0    227s  (73/78, 94% of work)  elapsed 1:20:26  ETA 0:04:44  (~22:50)
+[cuda:1] start cv/5/4-4                          seed 1  (elapsed 1:20:26)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'memory', 
+'file', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:0] done  cv/5/4-3                          seed 1    212s  (74/78, 96% of work)  elapsed 1:22:42  ETA 0:03:52  (~22:52)
+[cuda:0] start cv/5/4-4                          seed 2  (elapsed 1:22:42)
+C:\Users\khanh\Documents\gnn_agent_traces\src\model\gnn_files.py:28: UserWarning: There exist node types ({'file', 
+'memory', 'tool', 'task'}) whose representations do not get updated during message passing as they do not occur as 
+destination type in any edge type. This may lead to unexpected behavior.
+  HeteroConv({et: SAGEConv((hidden, hidden), hidden) for et in self.edge_types}, aggr="sum")
+[cuda:1] done  cv/5/4-3                          seed 2    216s  (75/78, 97% of work)  elapsed 1:23:25  ETA 0:02:55  (~22:51)
+[cuda:0] done  cv/5/4-4                          seed 0    218s  (76/78, 98% of work)  elapsed 1:23:27  ETA 0:01:55  (~22:50)
+[cuda:1] done  cv/5/4-4                          seed 1    218s  (77/78, 99% of work)  elapsed 1:24:04  ETA 0:00:57  (~22:50)
+[cuda:0] done  cv/5/4-4                          seed 2    171s  (78/78, 100% of work)  elapsed 1:25:34  ETA 0:00:00  (~22:51)
+wrote results\tracegen_all_stable\REPORT.md and report.html

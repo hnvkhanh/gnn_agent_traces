@@ -142,8 +142,10 @@ Edge GNN plus epoch averaging does.
 
 ### Fixes, in order of value
 
-1. **lr 1e-3 and `clip_grad_norm_(…, 1.0)` in `fit_select`.** This removes Edge GNN's loss spikes and collapse, and
-   halves its seed sd (0.15 → 0.07). A learning-rate decay probably helps further (not tested).
+1. **lr 1e-3 and `clip_grad_norm_(…, 1.0)` in `fit_select`, for Edge GNN only.** This removes Edge GNN's loss
+   spikes and collapse, and halves its seed sd (0.15 → 0.07). The CV check below confirms the gain for Edge GNN and
+   shows it hurts GNN + files. A learning-rate decay probably helps further (not tested). Now available as
+   `run_tracegen_gnn.py --stable` (or `--lr/--clip/--score/--select` separately).
 2. **Replace argmax-validation epoch selection with averaging:** average the predictions (rank-average or mean
    logits) over the last half of training, or average the weights (SWA). With fix 1, Edge GNN's runs land at
    0.68–0.71 (sd 0.01). This needs no validation set; keep validation only for the threshold.
@@ -153,30 +155,76 @@ Edge GNN plus epoch averaging does.
    doesn't reduce the spread between runs.
 
 Caveats: these numbers are all on the fixed test split with 13 rejects, so the 0.70 for stabilized Edge GNN needs CV
-confirmation. The stabilized sets have 4 runs each. The 10–20 averaging window was chosen before looking at results,
-but training ran 20 epochs where the repo uses 10.
+confirmation. The stabilized sets have 4 runs each. The 10–20 averaging window was picked while the per-epoch test
+curves were in view, so treat the 0.70 as optimistic, and training ran 20 epochs where the repo uses 10. The CV check
+below fixes the window in advance (the second half of training) and separates the epoch count.
+
+### CV confirmation (2026-11-21)
+
+Two configs, both 20 epochs, 3 seeds, main + all 25 CV cells (1,155 rejects pooled), guards Edge GNN and GNN + files:
+
+- `results/tracegen_all_repo20`: repo settings (lr 3e-3, no clipping, probability score).
+- `results/tracegen_all_stable`: `--stable` (lr 1e-3, clip 1.0, logit-margin score).
+
+Each run is scored under several selection rules from the same training run: best validation epoch over 20 epochs,
+best within the first 10 (what a 10-epoch repo run would pick), and the mean score over epochs 11–20 ("avg").
+Produced by `scripts/run_tracegen_gnn.py --extra`; summarized by `scripts/compare_training.py` into
+`results/training_compare.json`. "Pooled" is the CV AUPRC over all cells. "Per cell" is the mean of the 25 cell AUPRCs,
+which doesn't depend on scores being comparable across cells. "Cell seed sd" is the sd over seeds within a cell,
+averaged over cells. ± is the sd over 3 seeds.
+
+| guard · settings · selection | pooled CV AUPRC | CV recall @1% FPR | per-cell AUPRC | cell seed sd | test AUPRC (13 rejects) |
+|---|---|---|---|---|---|
+| Edge GNN · repo · best of 10 | 0.282 ± 0.015 | 0.216 | – | 0.094 | 0.29 ± 0.12 |
+| Edge GNN · repo · best of 20 | 0.294 ± 0.012 | 0.224 | 0.459 | 0.091 | 0.34 ± 0.14 |
+| Edge GNN · repo · avg | 0.354 ± 0.029 | 0.289 | 0.489 | 0.062 | 0.35 ± 0.20 |
+| Edge GNN · stable · best of 20 | 0.347 ± 0.020 | 0.312 | 0.488 | 0.052 | 0.66 ± 0.06 |
+| **Edge GNN · stable · avg** | **0.377 ± 0.015** | **0.321** | **0.509** | **0.027** | 0.65 ± 0.05 |
+| GNN + files · repo · best of 10 | 0.233 ± 0.006 | 0.189 | – | 0.058 | 0.44 ± 0.03 |
+| GNN + files · repo · best of 20 | 0.218 ± 0.007 | 0.189 | **0.418** | 0.065 | 0.44 ± 0.03 |
+| GNN + files · repo · avg | **0.258 ± 0.011** | **0.222** | 0.399 | 0.046 | 0.48 ± 0.04 |
+| GNN + files · stable · best of 20 | 0.203 ± 0.027 | 0.199 | 0.390 | 0.052 | 0.48 ± 0.03 |
+| GNN + files · stable · avg | 0.228 ± 0.011 | 0.210 | 0.355 | 0.044 | 0.48 ± 0.03 |
+
+What the CV shows:
+
+1. **The big seed swings were mostly the 13-reject test split.** Pooled over 1,155 rejects, the seed sd is 0.01–0.03
+   for every setting, against 0.03–0.20 on the test split. Single cells do move with the seed (cell seed sd 0.03–0.09).
+2. **Epoch count doesn't matter.** Best of 10 vs best of 20: 0.28 vs 0.29 (Edge GNN) and 0.23 vs 0.22 (GNN + files).
+3. **Edge GNN: both fixes help.** Averaging adds +0.06 pooled at the repo learning rate. Lower lr + clipping add
+   +0.05 under best-epoch selection and +0.02 under averaging. Together: 0.294 → 0.377 pooled, 0.459 → 0.509 per cell,
+   and the within-cell seed sd drops from 0.091 to 0.027.
+4. **GNN + files: lower lr + clipping hurt** (avg 0.258 → 0.228 pooled, 0.399 → 0.355 per cell), with no gain in
+   stability. Averaging improves pooled AUPRC (0.218 → 0.258) but slightly lowers per-cell AUPRC (0.418 → 0.399), so
+   its pooled gain is mostly scores becoming more comparable across cells, not better ranking inside a cell.
+5. **GNN + files overfits early.** In CV cell 0-0 (stable, seed 0) validation AUPRC peaks at epoch 1 (0.31) and falls
+   to about 0.14 while training loss reaches 0.006. Averaging the second half averages overfit epochs. Earlier
+   stopping or stronger regularization is the likelier fix for this guard (not tested).
+6. **Edge GNN beats GNN + files on CV under every setting** (pooled 0.29–0.38 vs 0.20–0.26; per cell 0.46–0.51 vs
+   0.36–0.42). This still needs the attacker-constants check (Evidence 6).
+
+Remaining confounds: the stable config also switches from probabilities to logit margins, so "lower lr + clipping" is
+not separated from the score type (this matters only for averaging and cross-cell pooling). Learning rate and
+clipping were changed together. Only Edge GNN and GNN + files were run.
 
 ## What this means for the claims
 
 | claim one might make from REPORT.md | supported? |
 |---|---|
 | Transformer beats the GNNs | No. It ranks last among the graph guards at seed 1 and on CV 0-0. |
-| Edge GNN matches or beats GNN + files | Not yet. It is best on CV 0-0 (1 seed) and drops to 0.13 on test seed 1. |
+| Edge GNN matches or beats GNN + files | On the 25-cell CV, yes, under every training setting (pooled 0.29–0.38 vs 0.20–0.26, 3 seeds). Whether it survives masking attacker constants is untested. |
 | Prompt embedding helps | No. The zeroed prompt beats the real one for GNN + files. |
 | Graph guards beat MLP and tool lookup | Yes. This holds on every split, seed and run. |
 | Ablation X matters | No ablation separates from the full model's seed spread at 13 rejects. |
 
 ## Recommended next runs
 
-1. **CV for the new guards, ≥ 3 seeds**:
-   `python scripts/run_tracegen_gnn.py --tracegen data/tracegen_all --outdir results/tracegen_all_edge --sections cv,cvprompt --seeds 3 --epochs 10`.
-   This gives 1,155 rejects over 25 cells. The reuse fingerprints keep the work already done.
-   The earlier full plan estimated about 18 h on 2 GPUs; `--folds 3` cuts that roughly in half.
-2. **Stabilize training first** (see "Why the seed has such a large effect"): lr 1e-3, gradient clipping, and epoch
-   averaging instead of argmax-validation selection. Otherwise the CV in step 1 measures the noise of the training
-   procedure.
-3. **Training length.** Per-epoch logs (seedvar/) show that validation AUPRC peaks at epoch 1–2 and then plateaus,
-   while test keeps drifting. Training longer doesn't help unless the predictions are averaged.
+1. **Done (2026-11-21): CV of the training fix** for Edge GNN and GNN + files. See "CV confirmation" above.
+2. **Per-guard training settings.** `--stable` for Edge GNN (and Edge GNN + prompt). For GNN + files, keep lr 3e-3 and
+   try earlier stopping or more regularization, since it overfits within 1–2 epochs. Then run the CV for the other
+   guards (MLP, GNN, Transformer, prompt variants) and the ablations, ≥ 3 seeds. Main + CV for two guards took
+   about 1.5 h per config on 2 GPUs with 2 workers each (`--devices cuda:0,cuda:0,cuda:1,cuda:1`).
+3. **Separate the score type.** Rerun the stable config with `--score prob` to split lr/clipping from the logit switch.
 4. **Edge GNN with attacker constants masked, 3 seeds**, to check whether its CV lead survives without memorized constants.
 5. **Relay pattern.** Count third-party relay calls in train. If they are rare, report them as their own category.
 

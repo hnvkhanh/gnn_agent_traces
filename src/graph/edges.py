@@ -110,10 +110,12 @@ def snapshot(tr, k, ablate=frozenset()):
     file_x = [feat(f) for f in fkeys]
 
     E = {et: ([], []) for et in CTX_EDGE_TYPES}            # et -> (pairs, attr rows)
+    info = {et: [] for et in CTX_EDGE_TYPES}               # et -> [(text, step)], parallel to E (for the viewer)
 
     def add(et, s, d, text, step):
         E[et][0].append([s, d])
         E[et][1].append(feat(text, step))
+        info[et].append((text, step))
 
     for j, e in enumerate(ev[:k]):                         # past actions = edge groups
         t, st = tool_ix[e["tool"]], e["step"]
@@ -150,7 +152,8 @@ def snapshot(tr, k, ablate=frozenset()):
     q = ev[k]
     query = dict(x=feat(_call_text(q), q["step"]), y=LABELS.index(q["label"]), tool=tool_ix[q["tool"]],
                  ents=sorted({n for _, n in per_action_ents[k]}), files=sorted({f for f, i in ftargets if i == k}))
-    return dict(tool=tool_x, entity=ent_x, file=file_x, memory=[feat(m) for m in tr["memory"]], edges=E, query=query)
+    return dict(tool=tool_x, entity=ent_x, file=file_x, memory=[feat(m) for m in tr["memory"]], edges=E, query=query,
+                names=dict(tool=list(tool_ix), entity=ent_val, file=fkeys), info=info)   # names/info: viewer only
 
 
 def trace_to_graph_edges(tr, ablate=frozenset()):

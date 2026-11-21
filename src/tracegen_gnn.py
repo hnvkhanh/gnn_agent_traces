@@ -4,8 +4,12 @@ Used by scripts/run_tracegen_gnn.py (CLI, parallel devices, report). Cells:
   main                  train split -> val and test; guards majority, tool-lookup, mlp, gnn, gnn+files, transformer
                         (src/model/transformer.py: attention over the gnn+files graph, same nodes / features / causality),
                         edge-gnn (src/graph/edges.py + src/model/edge_gnn.py: artifacts are nodes, actions are edges),
-                        gnn+files+prompt and edge-gnn+prompt (plus the frozen prompt embedding, src/prompt_embed.py)
+                        gnn+files+prompt and edge-gnn+prompt (plus the frozen prompt embedding, src/prompt_embed.py),
+                        mlp+content and gnn+files+content (plus frozen MiniLM embeddings of action / observation
+                        text, src/node_embed.py, after Zavrak, arXiv:2605.11053)
   ablate/<a>            gnn+files with ablation <a> (src/graph/files.py FILE_ABLATIONS)
+  ablate-content/<a>    the two content guards with ablation <a> (CONTENT_ABLATE); the text ablations also apply to
+                        the embedded text
   ablate-edge/<a>       edge-gnn with ablation <a> (src/graph/edges.py EDGE_ABLATIONS)
   ablate-prompt/<a>     the two prompt guards with the prompt control <a>: prompt_zero (all-zero embedding) or
                         prompt_shuffle (the prompt of another user task of the same suite)
@@ -52,15 +56,18 @@ from .rank_metrics import average_precision, paired_delta, rank_report, threshol
 from .sandbox.policy import LABELS
 
 GUARDS = ["majority", "tool-lookup", "mlp", "gnn", "gnn+files", "transformer", "edge-gnn", "gnn+files+prompt",
-          "edge-gnn+prompt"]
+          "edge-gnn+prompt", "mlp+content", "gnn+files+content"]
 PROMPT_GUARDS = ["gnn+files+prompt", "edge-gnn+prompt"]
 PROMPT_BASE = {"gnn+files+prompt": "gnn+files", "edge-gnn+prompt": "edge-gnn"}   # the same model without the prompt
+CONTENT_GUARDS = ["mlp+content", "gnn+files+content"]
+CONTENT_BASE = {"mlp+content": "mlp", "gnn+files+content": "gnn+files"}   # the same model without the content
+CONTENT_ABLATE = ["observation", "injected", "attacker_values"]
 ABLATE = ["files", "observation", "injected", "copies", "mentions", "tool_feat", "attacker_values"]
 EDGE_ABLATE = list(EDGE_ABLATIONS)
 PROMPT_ABLATE = ["prompt_zero", "prompt_shuffle"]
 CODE = TRAIN_CODE + ["src/tracegen_gnn.py", "src/graph/build.py", "src/graph/files.py", "src/model/gnn_files.py",
                      "src/model/transformer.py", "src/benchmarks/tracegen.py", "src/rank_metrics.py",
-                     "src/graph/edges.py", "src/model/edge_gnn.py", "src/prompt_embed.py"]
+                     "src/graph/edges.py", "src/model/edge_gnn.py", "src/prompt_embed.py", "src/node_embed.py"]
 POOLED = ("main", "cv/", "cvprompt/", "ablate-prompt/")   # cells that store per-action test scores (_pool)
 
 
@@ -83,11 +90,13 @@ class Data:
         for m, t in zip(self.metas, self.trs):
             m.update(suite=t["suite"], split=t["split"], trace_id=t["trace_id"])
         self._g, self._folds, self._prompted, self._pvec = {}, {}, set(), None
+        self._contented, self._cvec = set(), {}
 
-    def graphs(self, kind="files", ablate=(), prompt=False):
+    def graphs(self, kind="files", ablate=(), prompt=False, content=False):
         """Graphs of every trace. kind: plain (build.py), files (files.py) or edges (edges.py). An ablation name
         'edge:<a>' applies to the edges graphs only, 'prompt:<a>' is the prompt control; plain names go to plain /
-        files. prompt=True attaches g['task'].prompt (one embedding row per task node)."""
+        files. prompt=True attaches g['task'].prompt (one embedding row per task node). content=True (plain / files
+        only) attaches g['action'].emb and g['observation'].emb (src/node_embed.py, under the same text ablations)."""
         key = (kind, tuple(sorted(ablate)))
         if key not in self._g:
             if kind == "edges":
@@ -102,7 +111,29 @@ class Data:
             for g, v in zip(gs, self.prompt_rows(ctl[0] if ctl else None)):
                 g["task"].prompt = v.unsqueeze(0).expand(g["task"].x.shape[0], -1).contiguous()
             self._prompted.add(key)
+        if content and key not in self._contented:
+            assert kind != "edges", "content embeddings are for action / observation nodes (plain or files graphs)"
+            for g, (va, vo) in zip(gs, self.content_rows([a for a in ablate if ":" not in a])):
+                if g is not None:
+                    g["action"].emb, g["observation"].emb = va, vo
+            self._contented.add(key)
         return gs
+
+    def content_rows(self, ablate=()):
+        """Per trace (action embeddings [n, DIM], observation embeddings [n, DIM]) under the text ablations in `ablate`
+        (src/node_embed.py; computed once per text, then read from its cache)."""
+        from .node_embed import TEXT_ABLATIONS, node_texts, node_vectors
+        key = tuple(sorted(set(ablate) & set(TEXT_ABLATIONS)))
+        if key not in self._cvec:
+            T = [node_texts(t, key) for t in self.trs]
+            V = node_vectors([x for a, o in T for x in a + o])
+            out, k = [], 0
+            for a, _ in T:
+                n = len(a)
+                out.append((V[k:k + n], V[k + n:k + 2 * n]))
+                k += 2 * n
+            self._cvec[key] = out
+        return self._cvec[key]
 
     def prompt_table(self):
         """{user prompt: frozen embedding} (src/prompt_embed.py; computed once, then read from its cache)."""
@@ -223,6 +254,7 @@ def cells(data, sections=("main", "ablate", "transfer"), folds=5):
         out += ["ablate/%s" % a for a in ABLATE]
         out += ["ablate-edge/%s" % a for a in EDGE_ABLATE]
         out += ["ablate-prompt/%s" % a for a in PROMPT_ABLATE]
+        out += ["ablate-content/%s" % a for a in CONTENT_ABLATE]
     if "cvprompt" in sections:
         out += ["cvprompt/%s/%d/%d-%d" % (p, folds, a, b) for p in PROMPT_ABLATE for a in range(folds)
                 for b in range(folds) if cv_spec(data, folds, a, b)[2]]
@@ -258,6 +290,11 @@ def cell_spec(data, key):
         assert a in PROMPT_ABLATE, a
         va = data.idx("val")
         return data.idx("train"), va, {"val": va, "test": data.idx("test")}, list(PROMPT_GUARDS), ("prompt:" + a,)
+    if key.startswith("ablate-content/"):
+        a = key.split("/", 1)[1]
+        assert a in CONTENT_ABLATE, a
+        va = data.idx("val")
+        return data.idx("train"), va, {"val": va, "test": data.idx("test")}, list(CONTENT_GUARDS), (a,)
     if key.startswith("cvprompt/"):
         p, k, ab = key.split("/")[1:]
         assert p in PROMPT_ABLATE, p
@@ -277,7 +314,7 @@ def fingerprint(data, key, seed, epochs, lr, hidden, code=None, opts=None):
     """opts: the other run_cell options (clip, score, select, extra, guards); only non-default ones enter the hash."""
     tr, va, ev, guards, ab = cell_spec(data, key)
     opts = {k: list(v) if isinstance(v, tuple) else v for k, v in (opts or {}).items()
-            if v is not None and v != REPO.get(k) and v not in ((), [])}
+            if v is not None and v != REPO.get(k) and not (isinstance(v, (tuple, list, dict)) and not v)}
     if opts.get("guards"):
         guards = [g for g in guards if g in opts["guards"]]
     allev = sorted({i for v in ev.values() for i in v})
@@ -288,6 +325,9 @@ def fingerprint(data, key, seed, epochs, lr, hidden, code=None, opts=None):
                 evals={k: [data.metas[i]["trace_id"] for i in v] for k, v in ev.items()}, data=data_hash(parts))
     if opts:
         blob["opts"] = opts
+    if set(guards) & set(CONTENT_GUARDS):   # encoder / windowing decide the content vectors
+        from .node_embed import config
+        blob["content"] = config()
     return hashlib.sha256(json.dumps(blob, sort_keys=True, default=str).encode()).hexdigest()
 
 
@@ -339,18 +379,20 @@ def _rule(rule, val_ap, epochs):
     raise ValueError(rule)
 
 
-def fit_select(model, train, val, evalg, epochs, lr, weights, clip=None, score="prob", rules=("best",)):
+def fit_select(model, train, val, evalg, epochs, lr, weights, clip=None, score="prob", rules=("best",), test_mask=None):
     """Train like src/train.py fit (Adam, batch 32, class-weighted cross entropy), optionally clipping the gradient norm
     at `clip`, and score validation and eval graphs after every epoch. Returns {rule: (validation scores, eval scores,
     info)} for every selection rule in `rules` (see _rule); an averaging rule's scores are the per-action mean over its
-    epochs. One training run serves every rule."""
+    epochs. One training run serves every rule. test_mask (bool per eval action): also log the test AUPRC of every
+    epoch (diagnostic only, never used for selection)."""
     from torch_geometric.loader import DataLoader
     from .train import DEVICE
     model, weights = model.to(DEVICE), weights.to(DEVICE)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     loader = DataLoader(train, batch_size=32, shuffle=True)
     yv = _ys(val).numpy()
-    SV, SE, VA, LOSS, GN = [], [], [], [], []
+    yt = _ys(evalg).numpy()[test_mask] if test_mask is not None else None
+    SV, SE, VA, LOSS, GN, TA = [], [], [], [], [], []
     for ep in range(1, epochs + 1):
         model.train()
         tot, gn, nb = 0.0, 0.0, 0
@@ -366,6 +408,7 @@ def fit_select(model, train, val, evalg, epochs, lr, weights, clip=None, score="
         SV.append(_scores(model, val, DEVICE, score))
         SE.append(_scores(model, evalg, DEVICE, score))
         VA.append(average_precision(yv, SV[-1]) if yv.any() else None)
+        TA.append(round(float(average_precision(yt, SE[-1][test_mask])), 4) if yt is not None and yt.any() else None)
         LOSS.append(round(tot / max(1, nb), 5))
         GN.append(round(gn / max(1, nb), 4) if clip is not None else None)
     out = {}
@@ -376,7 +419,7 @@ def fit_select(model, train, val, evalg, epochs, lr, weights, clip=None, score="
         out[r] = (sv, se, dict(best_epoch=E[0] if len(E) == 1 else None, epochs_used=[E[0], E[-1]], val_auprc=va,
                                selected=r.startswith("best") and VA[0] is not None, rule=r))
     out[rules[0]][2].update(train_loss=LOSS, val_auprc_by_epoch=[None if a is None else round(a, 4) for a in VA],
-                            grad_norm=GN)
+                            test_auprc_by_epoch=TA, grad_norm=GN)
     return out
 
 
@@ -393,24 +436,26 @@ def tool_rate_scores(train_meta, train_y, metas):
 
 
 def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200, clip=None, score="prob", select="best",
-             extra=(), guards=None):
+             extra=(), guards=None, guard_opts=None):
     """Train every guard of the cell once (seed) and score every eval set.
 
-    clip / score / select: see fit_select and _rule (REPO and STABLE above). extra: more selection rules, read off the
-    same training run and reported as pseudo-guards '<guard>@<rule>' (e.g. 'edge-gnn@best10'). guards: train only these
-    of the cell's guards (None: all)."""
+    lr / clip / score / select: see fit_select and _rule (REPO and STABLE above). guard_opts {guard: {lr, clip, score,
+    select}} overrides them per guard. extra: more selection rules, read off the same training run and reported as
+    pseudo-guards '<guard>@<rule>' (e.g. 'edge-gnn@best10'). guards: train only these of the cell's guards (None: all)."""
     from .model.edge_gnn import EdgeGNN
     from .model.gnn import ActionMLP, HeteroGNN
-    from .model.gnn_files import FileHeteroGNN
+    from .model.gnn_files import ContentMLP, FileHeteroGNN
     from .model.transformer import GraphTransformer
     tr, va, ev, cell_guards, ab = cell_spec(data, key)
     guards = [g for g in cell_guards if guards is None or g in guards]
-    rules = [select] + [r for r in extra if r != select]
     allev = sorted({i for v in ev.values() for i in v})
-    gf, gp = data.graphs("files", tuple(a for a in ab if ":" not in a)), data.graphs("plain", ())
+    fab = tuple(a for a in ab if ":" not in a)
+    gf, gp = data.graphs("files", fab), data.graphs("plain", ())
     graphs_of = {"gnn": lambda: gp, "edge-gnn": lambda: data.graphs("edges", ab),
                  "edge-gnn+prompt": lambda: data.graphs("edges", ab, prompt=True),
-                 "gnn+files+prompt": lambda: data.graphs("files", ab, prompt=True)}
+                 "gnn+files+prompt": lambda: data.graphs("files", ab, prompt=True),
+                 "mlp+content": lambda: data.graphs("files", fab, content=True),
+                 "gnn+files+content": lambda: data.graphs("files", fab, content=True)}
     ncls = len(LABELS)
     ytr = _ys([gf[i] for i in tr])
     yva = _ys([gf[i] for i in va]).numpy()
@@ -418,10 +463,14 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200, clip=No
     w = cnt.sum() / (ncls * cnt)
     trm, vam, evm = ([data.metas[i] for i in I] for I in (tr, va, allev))
     n_act = [len(data.trs[i]["events"]) for i in allev]
-    scores, info, names = {}, {}, []
+    test = set(ev.get("test", ()))
+    test_mask = np.concatenate([np.full(n, i in test) for i, n in zip(allev, n_act)]) if allev else None
+    scores, info, names, used = {}, {}, [], {}
     for gname in guards:
         torch.manual_seed(seed)
         np.random.seed(seed)
+        o = dict(dict(lr=lr, clip=clip, score=score, select=select), **(guard_opts or {}).get(gname, {}))
+        rules = [o["select"]] + [r for r in extra if r != o["select"]]
         inf = dict(best_epoch=None, val_auprc=None, selected=False)
         if gname == "majority":   # constant score: predicts the majority training label, no threshold to tune
             res = {None: (None, np.full(sum(n_act), float(ytr.bincount(minlength=ncls).argmax())), inf)}
@@ -434,14 +483,17 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200, clip=No
                      "transformer": lambda: GraphTransformer(hidden, classes=ncls),
                      "edge-gnn": lambda: EdgeGNN(hidden, classes=ncls),
                      "gnn+files+prompt": lambda: FileHeteroGNN(hidden, classes=ncls, prompt=True),
-                     "edge-gnn+prompt": lambda: EdgeGNN(hidden, classes=ncls, prompt=True)}[gname]()
-            res = fit_select(model, [G[i] for i in tr], [G[i] for i in va], [G[i] for i in allev], epochs, lr, w,
-                             clip, score, rules)
-            res = {(None if r == select else r): v for r, v in res.items()}
+                     "edge-gnn+prompt": lambda: EdgeGNN(hidden, classes=ncls, prompt=True),
+                     "mlp+content": lambda: ContentMLP(hidden, ncls),
+                     "gnn+files+content": lambda: FileHeteroGNN(hidden, classes=ncls, content=True)}[gname]()
+            res = fit_select(model, [G[i] for i in tr], [G[i] for i in va], [G[i] for i in allev], epochs, o["lr"], w,
+                             o["clip"], o["score"], rules, test_mask)
+            res = {(None if r == o["select"] else r): v for r, v in res.items()}
+            used[gname] = o
         for r, (sv, se, inf) in res.items():
             name = gname if r is None else "%s@%s" % (gname, r)
             thr = threshold_for_f1(yva, sv) if sv is not None and yva.any() else None
-            dflt = 0.5 if score == "prob" or gname in ("majority", "tool-lookup") else 0.0
+            dflt = 0.5 if o["score"] == "prob" or gname in ("majority", "tool-lookup") else 0.0
             info[name] = dict(inf, threshold=dflt if thr is None else thr, threshold_tuned=thr is not None)
             per, k = {}, 0
             for i, n in zip(allev, n_act):
@@ -462,7 +514,7 @@ def run_cell(data, key, seed, epochs=60, lr=3e-3, hidden=64, n_boot=200, clip=No
             trace_ids=[data.metas[i]["trace_id"] for i in I],
             scores={g: [round(float(x), 6) for i in I for x in scores[g][i]] for g in names},
             preds={g: [int(x >= info[g]["threshold"]) for i in I for x in scores[g][i]] for g in names})
-    out["_train"] = dict(epochs=epochs, lr=lr, clip=clip, score=score, select=select, extra=list(extra))
+    out["_train"] = dict(epochs=epochs, extra=list(extra), guards=used)   # the settings each trained guard used
     return out
 
 
@@ -547,12 +599,31 @@ def prompt_comparisons(data, folds):
     return out
 
 
+def content_comparisons(data, folds):
+    """Like prompt_comparisons, for the content embedding (src/node_embed.py): each content guard against the same model
+    without content, and gnn+files+content against mlp+content (does the graph still add anything once both see the
+    content? the question Zavrak, arXiv:2605.11053, Sec. 6.2, answers 'barely' for whole sessions)."""
+    cv = cells(data, ["cv"], folds)
+    pairs = [(g, CONTENT_BASE[g]) for g in CONTENT_GUARDS] + [("gnn+files+content", "mlp+content")]
+    return [("%s vs %s" % (a, b), ev, (k, a), (k, b)) for a, b in pairs for ev, k in (("cv", cv), ("test", ["main"]))]
+
+
 def prompt_effects(data, store, seeds, folds, n_boot=200):
-    """Does the prompt embedding help? Per comparison and seed: paired ΔAUPRC / Δ recall@FPR (src/rank_metrics.py
-    paired_delta) on the traces both sides scored, plus ΔAUPRC per suite. Comparisons with a side missing are left out.
+    """Does the prompt embedding help? See paired_effects."""
+    return paired_effects(data, store, seeds, prompt_comparisons(data, folds), n_boot)
+
+
+def content_effects(data, store, seeds, folds, n_boot=200):
+    """Does the action / observation content embedding help? See paired_effects."""
+    return paired_effects(data, store, seeds, content_comparisons(data, folds), n_boot)
+
+
+def paired_effects(data, store, seeds, comparisons, n_boot=200):
+    """Per comparison and seed: paired ΔAUPRC / Δ recall@FPR (src/rank_metrics.py paired_delta) on the traces both sides
+    scored, plus ΔAUPRC per suite. Comparisons with a side missing are left out.
     Returns [{name, eval, seeds: [{seed, n_traces, n_reject, d_auprc, d_auprc_ci, ..., suites: {s: d}}]}]."""
     out = []
-    for name, ev, (ka, ga), (kb, gb) in prompt_comparisons(data, folds):
+    for name, ev, (ka, ga), (kb, gb) in comparisons:
         per = []
         for sd in seeds:
             A, B = pooled(data, store, ka, sd, [ga]), pooled(data, store, kb, sd, [gb])

@@ -12,8 +12,12 @@ Guards: majority, tool-lookup, mlp (no graph), gnn (docs/GRAPH.md graph), gnn+fi
 src/graph/files.py), transformer (attention over the gnn+files graph: same nodes, features, edges as attention bias,
 causal mask; src/model/transformer.py), edge-gnn (artifacts are nodes, actions are edges, one causal snapshot per
 action; src/graph/edges.py, src/model/edge_gnn.py), gnn+files+prompt and edge-gnn+prompt (plus a frozen sentence
-embedding of the user prompt; src/prompt_embed.py). Sections: main (val + test, per suite, per agent), cv, ablate
-(gnn+files, edge-gnn and the prompt controls), cvprompt (cross-validation of the prompt controls), transfer (agent -> agent).
+embedding of the user prompt; src/prompt_embed.py), mlp+content and gnn+files+content (plus frozen all-MiniLM-L6-v2
+embeddings of action and observation text, src/node_embed.py; content features after Zavrak, "Content-Aware Attack
+Detection in LLM Agent Tool-Call Traffic", arXiv:2605.11053). Sections: main (val + test, per suite, per agent), cv,
+ablate (gnn+files, edge-gnn, the prompt controls and the content guards), cvprompt (cross-validation of the prompt
+controls), transfer (agent -> agent).
+Content study: each content guard against the same model without content, and gnn+files+content against mlp+content.
 Prompt study: each prompt guard against the same model without the prompt, with an all-zero prompt and with the prompt
 of another user task of the same suite; paired bootstrap over traces (src/rank_metrics.py paired_delta).
 cv: cross-validation over --folds task folds x --folds injection-task folds (src/tracegen_gnn.py). Every run is tested
@@ -23,7 +27,13 @@ Splits: tracegen's task-level split; injection tasks have their own split, so he
 unseen attacks (src/benchmarks/tracegen.py). The leakage audit runs first and the script refuses to train if a hard
 overlap is not 0.
 
-Model selection: per guard, the epoch with the best validation AUPRC and the reject threshold with the best validation
+Training settings (src/tracegen_gnn.py REPO / STABLE): guards in STABLE_GUARDS (below, the ones the CV confirmed) train
+with lr 1e-3, gradient clip 1.0, logit-margin scores and the mean score of the second half of training; every other
+guard keeps the repo settings (lr 3e-3, no clip, probabilities, the epoch with the best validation AUPRC). --stable puts
+every guard on the stable settings, --stable-guards= every guard on the repo settings; --lr/--clip/--score/--select set
+the non-stable guards; --extra stores more selection rules from the same training run as '<guard>@<rule>'.
+
+Model selection: per guard, the epoch picked by its selection rule and the reject threshold with the best validation
 reject F1 (src/tracegen_gnn.py). Scores: AUPRC and reject recall at 1% approve FPR with bootstrap intervals over traces
 (src/rank_metrics.py), then the thresholded numbers. A set with no reject action shows "–", not a macro-F1 of 0.50.
 
@@ -53,7 +63,10 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 GUARD_NAME = {"majority": "Majority", "tool-lookup": "Tool lookup", "mlp": "MLP (no graph)", "gnn": "GNN",
               "gnn+files": "GNN + files", "transformer": "Transformer", "edge-gnn": "Edge GNN",
-              "gnn+files+prompt": "GNN + files + prompt", "edge-gnn+prompt": "Edge GNN + prompt"}
+              "gnn+files+prompt": "GNN + files + prompt", "edge-gnn+prompt": "Edge GNN + prompt",
+              "mlp+content": "MLP + content (no graph)", "gnn+files+content": "GNN + files + content"}
+PAPER = ("Zavrak, \"Content-Aware Attack Detection in LLM Agent Tool-Call Traffic: An Empirical Study of Features, "
+         "Architectures, and Evaluation Protocols\", arXiv:2605.11053 (2026)")
 ABL_NAME = {"files": "file edges", "observation": "observations", "injected": "injected text", "copies": "copies edges",
             "mentions": "mentions edges", "tool_feat": "tool features", "attacker_values": "attacker constants masked"}
 EDGE_ABL_NAME = {"directed": "reverse edges (directed only)", "entities": "entity nodes", "returned": "returned edges",
@@ -80,9 +93,17 @@ def _job(key, seed, epochs, lr, hidden, opts):
     return run_cell(_W["data"], key, seed, epochs, lr, hidden, **opts), time.time() - t0
 
 
+# Guards trained with the STABLE settings (src/tracegen_gnn.py) by default: only those where the pooled 25-cell CV
+# (3 seeds) confirmed that they beat the repo settings, see results/tracegen_all_edge/ANALYSIS.md "CV confirmation".
+# GNN + files is worse with them; guards not listed were not tested and keep the repo settings.
+STABLE_GUARDS = ["edge-gnn"]
+
+
 def train_opts(a):
     """run_cell options from the command line (fingerprinted with the run)."""
-    return dict(clip=a.clip, score=a.score, select=a.select, extra=tuple(a.extra), guards=a.guards)
+    from src.tracegen_gnn import STABLE
+    return dict(clip=a.clip, score=a.score, select=a.select, extra=tuple(a.extra), guards=a.guards,
+                guard_opts={g: dict(STABLE) for g in a.stable_guards} if not a.stable else {})
 
 
 def devices_of(spec):
@@ -339,7 +360,29 @@ PNOTE = ("Δ = guard minus the comparison, on the same traces; the interval and 
          "extra capacity, not the meaning of the prompt.")
 
 
-def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), n_cv=0, effects=()):
+CNOTE = ("Δ = guard minus the comparison, on the same traces; paired bootstrap over traces as above. MLP + content "
+         "sees only the action's own call text; GNN + files + content also sees earlier observations through the graph. "
+         "Content embeddings: frozen all-MiniLM-L6-v2 over the whole action / observation text in token windows, "
+         "[mean ; max] over windows (src/node_embed.py), after the content features of " + PAPER + ", Sec. 4.2, which "
+         "truncates to 512 characters instead.")
+
+
+def content_ablation_rows(store, seeds, main):
+    """Rows of the content-guard ablation table: per content guard and ablation, test AUPRC and Δ vs the full guard."""
+    from src.tracegen_gnn import CONTENT_ABLATE, CONTENT_GUARDS
+    rows = []
+    for g in CONTENT_GUARDS:
+        base = metric(main, "test", g, M["ap"])
+        for ab in CONTENT_ABLATE:
+            r = runs_of(store, "ablate-content/%s" % ab, seeds)
+            v = metric(r, "test", g, M["ap"]) if r else []
+            if v:
+                rows.append([GUARD_NAME[g], ABL_NAME[ab], pm(v), "%+.3f" % (nanmean(v) - nanmean(base)),
+                             ci(r, "test", g, "ap"), pm(metric(r, "test", g, M["rf"]))])
+    return rows
+
+
+def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), n_cv=0, effects=(), ceffects=()):
     from src.tracegen_gnn import ABLATE, EDGE_ABLATE, GUARDS
     main = runs_of(store, "main", seeds)
     evs = sorted({k for r in main for k in r})
@@ -348,9 +391,11 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
     transfer = sorted(k for k in store if k.startswith("transfer/"))
     L = ["# GNN guard on tracegen traces (AgentDojo, with file nodes)", "",
          "Generated %s by `scripts/run_tracegen_gnn.py` · seeds %s · epochs %d · lr %g · clip %s · score %s · "
-         "select %s · devices %s · git %s." % (
+         "select %s%s · devices %s · git %s." % (
              datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), list(seeds), a.epochs, a.lr,
-             "off" if a.clip is None else "%g" % a.clip, a.score, a.select, ",".join(devices), _git()), "",
+             "off" if a.clip is None else "%g" % a.clip, a.score, a.select,
+             "" if a.stable or not a.stable_guards else " · stable settings (lr 1e-3, clip 1, logit, avg) for %s"
+             % ", ".join(a.stable_guards), ",".join(devices), _git()), "",
          "Per-action approve/reject. A held-out split has unseen user tasks (and all their paraphrases) and unseen "
          "injection tasks. Scores are mean ± std over seeds. Each guard uses %s "
          "and the reject threshold with the best validation reject F1, so validation scores are optimistic and test "
@@ -420,6 +465,23 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
                 L += ["### %s" % title, "", md_table(PHEAD, rows), "",
                       "ΔAUPRC per suite:", "", md_table(["comparison"] + suites, srows), ""]
         L += [PNOTE, ""]
+    crows = content_ablation_rows(store, seeds, main)
+    if crows:
+        L += ["## Ablations (content guards, test)", "",
+              "The text ablations (injected text, attacker constants) also apply to the embedded text.", "",
+              md_table(["guard", "removed", "AUPRC", "Δ vs full", "95% CI", "reject recall @ 1% FPR"], crows), ""]
+    if ceffects:
+        L += ["## Does node content help?", "",
+              "Frozen all-MiniLM-L6-v2 embeddings of the action and observation text added to the initial state of "
+              "those nodes (GNN + files + content) or to the action features (MLP + content). The content features "
+              "follow %s." % PAPER, ""]
+        for ev, title in (("cv", "Cross-validation (pooled, the deciding number)"), ("test", "Fixed split: test")):
+            rows = prompt_rows(ceffects, ev)
+            if rows:
+                suites_, srows = prompt_suite_rows(ceffects, ev)
+                L += ["### %s" % title, "", md_table(PHEAD, rows), "",
+                      "ΔAUPRC per suite:", "", md_table(["comparison"] + suites_, srows), ""]
+        L += [CNOTE, ""]
     if transfer:
         L += ["## Cross-agent transfer (test AUPRC)", "",
               md_table(["train → test", "test reject actions"] + [GUARD_NAME[g] for g in GUARDS],
@@ -437,7 +499,8 @@ def build_report(a, store, summary, leak, stats, seeds, devices, status, cv=(), 
                                                         status.count("failed")),
           "Platform: %s, Python %s." % (platform.platform(), platform.python_version()), ""]
     md = "\n".join(L)
-    return md, render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv, effects)
+    return md, render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv, effects,
+                           ceffects)
 
 
 def _git():
@@ -473,11 +536,13 @@ def bars(items, title):
     return "".join(out)
 
 
-def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv=(), effects=()):
+def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, base, md, cv=(), effects=(),
+                ceffects=()):
     from report_page import CSS, JS, div_color, esc, heatmap, seq_color, table
     from src.tracegen_gnn import ABLATE, GUARDS
     cls = {"majority": "nog", "tool-lookup": "s4", "mlp": "s3", "gnn": "s2", "gnn+files": "s1", "transformer": "s5",
-           "edge-gnn": "s6", "gnn+files+prompt": "s7", "edge-gnn+prompt": "s8"}
+           "edge-gnn": "s6", "gnn+files+prompt": "s7", "edge-gnn+prompt": "s8", "mlp+content": "s9",
+           "gnn+files+content": "s10"}
     head = cv or main   # the headline numbers: pooled cross-validation when it is complete
     te = lambda g: metric(head, "test", g, M["ap"])
     tot = {k: sum(s[k] for s in summary.values()) for k in ("traces", "attack_traces", "reject", "actions")}
@@ -545,6 +610,16 @@ def render_html(a, store, summary, leak, seeds, main, suites, agents, transfer, 
         if rows:
             S.append('<section><h2>Does the prompt embedding help? (%s)</h2><div class="panel">%s</div><p>%s</p>'
                      '</section>' % (esc(title), table(PHEAD, [[esc(c) for c in r] for r in rows]), esc(PNOTE)))
+    crows = content_ablation_rows(store, seeds, main)
+    if crows:
+        S.append('<section><h2>Ablations (content guards, test)</h2><div class="panel">%s</div></section>'
+                 % table(["guard", "removed", "AUPRC", "Δ vs full", "95% CI", "reject recall @ 1% FPR"],
+                         [[esc(c) for c in r] for r in crows]))
+    for ev, title in (("cv", "cross-validation"), ("test", "fixed test split")):
+        rows = prompt_rows(ceffects, ev)
+        if rows:
+            S.append('<section><h2>Does node content help? (%s)</h2><div class="panel">%s</div><p>%s</p>'
+                     '</section>' % (esc(title), table(PHEAD, [[esc(c) for c in r] for r in rows]), esc(CNOTE)))
     if transfer:
         def tcell(r, c):
             g = [k for k, v in GUARD_NAME.items() if v == c][0]
@@ -590,8 +665,11 @@ def main():
     ap.add_argument("--extra", default="", help="more selection rules from the same training run, stored as "
                                                  "'<guard>@<rule>' pseudo-guards, e.g. best10,avg")
     ap.add_argument("--stable", action="store_true",
-                    help="lr 1e-3, clip 1.0, logit score, select avg (results/tracegen_all_edge/ANALYSIS.md); "
-                         "explicit flags override")
+                    help="every guard: lr 1e-3, clip 1.0, logit score, select avg (results/tracegen_all_edge/"
+                         "ANALYSIS.md); explicit flags override")
+    ap.add_argument("--stable-guards", default=",".join(STABLE_GUARDS),
+                    help="without --stable: guards that still get the stable settings (default: %(default)s, the "
+                         "ones the CV confirmed); '' = repo settings for every guard")
     ap.add_argument("--guards", default="", help="train only these guards (comma separated; default all)")
     ap.add_argument("--hidden", type=int, default=64)
     ap.add_argument("--devices", default="auto",
@@ -605,6 +683,7 @@ def main():
             setattr(a, k, v)
     a.extra = [r for r in a.extra.split(",") if r]
     a.guards = [g for g in a.guards.split(",") if g] or None
+    a.stable_guards = [g for g in a.stable_guards.split(",") if g]
 
     from src.tracegen_gnn import Data, GUARDS, audit, cells, code_hash, cv_reports, fingerprint
     data = Data(a.tracegen, a.agentdojo)
@@ -650,6 +729,17 @@ def main():
             from src.prompt_embed import cache_path, encoder_name
             print("prompt embeddings (%s): %d distinct prompts -> %s" % (
                 encoder_name(), len(data.prompt_table()), cache_path()), flush=True)   # workers read the cache
+        from src.tracegen_gnn import CONTENT_GUARDS
+        cjobs = {k for k in ntrain if set(cell_spec(data, k)[3]) & set(CONTENT_GUARDS)
+                 and (a.guards is None or set(a.guards) & set(CONTENT_GUARDS))}
+        if cjobs:   # every text ablation the content jobs need, so workers never write the cache concurrently
+            from src import node_embed as NE
+            for ab in sorted({tuple(sorted(set(cell_spec(data, k)[4]) & set(NE.TEXT_ABLATIONS))) for k in cjobs}):
+                t0 = time.time()
+                rows = data.content_rows(ab)
+                print("content embeddings (%s, %s, ablation %s): %d nodes in %.0fs -> %s" % (
+                    NE.encoder_name(), NE.mode(), ",".join(ab) or "none", 2 * sum(len(x) for x, _ in rows),
+                    time.time() - t0, NE.cache_path()), flush=True)
         prog = os.path.join(a.outdir, "progress.json")
         print("progress file:", prog, flush=True)
         res = run_parallel(jobs, devices, a, weight={(k, s): ntrain[k] for k, s in jobs}, on_done=save,
@@ -663,9 +753,10 @@ def main():
         if n_cv else []
     if n_cv and len(cv) < len(seeds):
         print("cross-validation: %d of %d seeds have every cell; the others are left out of the report" % (len(cv), len(seeds)))
-    from src.tracegen_gnn import prompt_effects
+    from src.tracegen_gnn import content_effects, prompt_effects
     effects = prompt_effects(data, cur, seeds, a.folds)
-    md, page = build_report(a, cur, summary, leak, data.stats, seeds, devices, status, cv, n_cv, effects)
+    ceffects = content_effects(data, cur, seeds, a.folds)
+    md, page = build_report(a, cur, summary, leak, data.stats, seeds, devices, status, cv, n_cv, effects, ceffects)
     for name, text in (("REPORT.md", md), ("report.html", page)):
         with open(os.path.join(a.outdir, name), "w", encoding="utf-8", newline="\n") as f:
             f.write(text)

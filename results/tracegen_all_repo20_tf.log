@@ -1,0 +1,72 @@
+﻿python.exe : C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: 
+FutureWarning: `torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or 
+`torch.export`.
+At line:1 char:501
++ ... Split(" "); & $py scripts\run_tracegen_gnn.py @common --outdir result ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\khanh\...`torch.export`.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+traces: {"train": [8419, 7340, 1053], "val": [627, 380, 81], "test": [586, 353, 13]} (traces, attacked, reject actions)
+78 runs: 0 reused, 78 to train on cuda:0,cuda:0,cuda:1,cuda:1
+prompt embeddings (sentence-transformers/all-MiniLM-L6-v2): 420 distinct prompts -> C:\Users\khanh\Documents\gnn_agent_traces\data\cache\prompt_emb_sentence-transformers_all-MiniLM-L6-v2.pt
+progress file: results\tracegen_all_repo20_tf\progress.json
+[cuda:0] start main                              seed 0  (elapsed 0:00:00)
+[cuda:1] start main                              seed 2  (elapsed 0:00:00)
+[cuda:0] start main                              seed 1  (elapsed 0:00:00)
+[cuda:1] start cv/5/0-0                          seed 0  (elapsed 0:00:00)
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\.venv-win\Lib\site-packages\torch\jit\_script.py:1485: FutureWarning: 
+`torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:367: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:367: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:367: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+C:\Users\khanh\Documents\gnn_agent_traces\src\tracegen_gnn.py:367: UserWarning: Converting a tensor with 
+requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at 
+C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:821.)
+  tot, nb = tot + float(loss), nb + 1
+[cuda:1] done  cv/5/0-0                          seed 0     76s  (1/78, 1% of work)  elapsed 0:01:25  ETA 2:12:33  (~01:42)
+[cuda:1] start cv/5/0-0                          seed 1  (elapsed 0:01:25)
+[cuda:0] done  main                              seed 0    131s  (2/78, 4% of work)  elapsed 0:02:20  ETA 1:00:06  (~00:30)
+[cuda:0] start cv/5/0-0                          seed 2  (elapsed 0:02:20)
+[cuda:1] done  cv/5/0-0                          seed 1     56s  (3/78, 5% of work)  elapsed 0:02:21  ETA 0:46:43  (~00:17)
+[cuda:1] start cv/5/0-1                          seed 0  (elapsed 0:02:21)
+[cuda:0] done  main                              seed 1    149s  (4/78, 8% of work)  elapsed 0:02:38  ETA 0:32:36  (~00:03)
+[cuda:0] start cv/5/0-1                          seed 1  (elapsed 0:02:38)
+[cuda:1] done  main                              seed 2    152s  (5/78, 10% of work)  elapsed 0:02:41  ETA 0:23:44  (~23:54)
+[cuda:1] start cv/5/0-1                          seed 2  (elapsed 0:02:41)
+[cuda:0] done  cv/5/0-0                          seed 2     50s  (6/78, 11% of work)  elapsed 0:03:10  ETA 0:25:02  (~23:56)
+[cuda:0] start cv/5/0-2                          seed 0  (elapsed 0:03:10)
+[cuda:1] done  cv/5/0-1                          seed 0     64s  (7/78, 12% of work)  elapsed 0:03:25  ETA 0:24:16  (~23:55)
+[cuda:1] start cv/5/0-2                          seed 1  (elapsed 0:03:25)
+[cuda:0] done  cv/5/0-1                          seed 1     61s  (8/78, 14% of work)  elapsed 0:03:39  ETA 0:23:23  (~23:55)
+[cuda:0] start cv/5/0-2                          seed 2  (elapsed 0:03:39)
+[cuda:1] done  cv/5/0-1                          seed 2     64s  (9/78, 15% of work)  elapsed 0:03:44  ETA 0:21:49  (~23:53)
+[cuda:1] start cv/5/0-3                          seed 0  (elapsed 0:03:44)
+[cuda:0] done  cv/5/0-2                          seed 0     53s  (10/78, 16% of work)  elapsed 0:04:03  ETA 0:21:34  (~23:53)
+[cuda:0] start cv/5/0-3                          seed 1  (elapsed 0:04:03)
+[cuda:1] done  cv/5/0-2                          seed 1     62s  (11/78, 17% of work)  elapsed 0:04:27  ETA 0:21:50  (~23:54)
+[cuda:1] start cv/5/0-3                          seed 2  (elapsed 0:04:27)
